@@ -1,5 +1,6 @@
 /* ============================================================
-   CHOICE OF WEALTH — Elevate Pack v2 (CSS)
+   CHOICE OF WEALTH — Elevate Pack v3 (CSS)
+   Direction: Mercury-style editorial restraint.
    Load this AFTER your existing site CSS/head embeds.
    ============================================================ */
 
@@ -18,105 +19,129 @@
   display: grid !important;
   place-items: center !important;
 }
-
-.member-eyebrow, .heading-41, .hero-sub, .hero-stat-member{
+/* eyebrow/sub keep the old fix; heading + stat panel get transform freed up for parallax below */
+.member-eyebrow, .hero-sub{
   animation: none !important;
   opacity: 1 !important;
   transform: none !important;
 }
+.heading-41, .hero-stat-member{
+  animation: none !important;
+  opacity: 1 !important;
+}
 
-/* ---------- 2. REVEAL ENGINE (scroll + load) ---------- */
+/* ---------- 2. REVEAL ENGINE — restrained target list ---------- */
 .cw-reveal{
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1);
+  transform: translateY(18px);
+  transition: opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1);
 }
 .cw-reveal.cw-in{ opacity: 1; transform: translateY(0); }
-@media (prefers-reduced-motion: reduce){
-  .cw-reveal{ opacity: 1; transform: none; transition: none; }
+@media (prefers-reduced-motion: reduce){ .cw-reveal{ opacity:1; transform:none; transition:none; } }
+
+/* ---------- 3. TABULAR NUMERALS — money/number discipline ---------- */
+.text-block-25, .cw-count-target, .result-row .val, .calc-display,
+.split-legend .amt, .goal-head .pct, .np-title, .np-times, .cw-tabular {
+  font-variant-numeric: tabular-nums;
 }
 
-/* ---------- 3. TOOLS HUB ---------- */
+/* ---------- 4. TOOLS HUB ---------- */
 .toool-card{ position: relative; }
 .tool-mini-viz{ margin-top: 14px; height: 34px; display: flex; align-items: flex-end; gap: 3px; }
 .tool-mini-viz .bar{
   flex: 1; height: 4px; border-radius: 2px 2px 0 0;
-  background: linear-gradient(180deg, var(--pink-hot), var(--pink-deep));
+  background: var(--teal-deep);
   transition: height .8s cubic-bezier(.16,1,.3,1);
 }
 .toool-card.cw-in .tool-mini-viz .bar{ height: var(--h); }
 .tool-card-open .text-block-21{ display: inline-block; transition: transform .25s ease; }
 .toool-card:hover .text-block-21{ transform: translateX(4px); }
 
-/* ---------- 4. WORKSHEETS ---------- */
-.worksheet{ position: relative; overflow: hidden; }
+/* ---------- 5. WORKSHEETS — monochrome, no wobble ---------- */
+.worksheets-grid .worksheet:nth-child(1),
+.worksheets-grid .worksheet:nth-child(2),
+.worksheets-grid .worksheet:nth-child(3),
+.worksheets-grid .worksheet:nth-child(4),
+.worksheets-grid .worksheet:nth-child(5){
+  border-left-color: var(--teal-deep);
+}
+.worksheet{ position: relative; overflow: hidden; transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s ease; }
+.worksheet:hover{ transform: translateY(-4px); box-shadow: 0 16px 28px -16px rgba(22,79,92,.24); }
 .worksheet-icon{
-  width: 30px; height: 30px;
+  width: 30px; height: 30px; color: var(--teal-deep);
   display: flex; align-items: center; justify-content: center;
-  color: var(--teal-deep);
-  opacity: 0; transform: scale(.6);
-  transition: opacity .5s ease .1s, transform .5s cubic-bezier(.34,1.56,.64,1) .1s;
+  opacity: 0; transform: scale(.8);
+  transition: opacity .5s ease .1s, transform .5s ease .1s;
 }
 .worksheet.cw-in .worksheet-icon{ opacity: 1; transform: scale(1); }
-.worksheet:hover{ transform: translateY(-6px) rotate(-0.4deg); }
 .worksheet .dl-icon{ transition: transform .2s ease; }
 .worksheet .dl-icon:hover{ transform: translateY(-2px); }
 
-/* ---------- 5. DISPATCHES ---------- */
+/* ---------- 6. DISPATCHES — editorial ---------- */
 .briefing-readtime{ font-size: 11px; color: var(--body-gray); font-weight: 500; margin-left: 8px; }
 .briefing h4{ position: relative; display: inline-block; }
 .briefing h4::after{
-  content: ''; position: absolute; left: 0; bottom: -3px;
-  width: 0; height: 1px; background: var(--pink-deep);
-  transition: width .3s ease;
+  content:''; position:absolute; left:0; bottom:-3px; width:0; height:1px;
+  background: var(--pink-deep); transition: width .3s ease;
 }
 .briefing:hover h4::after{ width: 100%; }
 .cw-ticker-wrap{
-  overflow: hidden;
-  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  overflow: hidden; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
   margin: 20px 0 32px; padding: 10px 0;
 }
-.cw-ticker{ display: flex; gap: 48px; white-space: nowrap; width: max-content; animation: cwTickerScroll 28s linear infinite; }
+.cw-ticker{ display: flex; gap: 48px; white-space: nowrap; width: max-content; animation: cwTickerScroll 32s linear infinite; }
 .cw-ticker span{ font-size: 12px; letter-spacing: .05em; color: var(--teal-deep); font-weight: 600; }
 .cw-ticker span em{ color: var(--pink-deep); font-style: normal; margin-right: 6px; }
 @keyframes cwTickerScroll{ from{ transform: translateX(0); } to{ transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce){ .cw-ticker{ animation: none; } }
 
-/* ---------- 6. NAV — underline sweep on hover ---------- */
-.member-tools{ position: relative; transition: color .25s ease; }
-.member-tools::after{
-  content:''; position:absolute; left:0; right:100%; bottom:-2px; height:2px;
-  background: var(--pink-deep); transition: right .3s cubic-bezier(.16,1,.3,1);
-}
-.member-tools:hover::after{ right:0; }
+/* ---------- 7. NAV / FOOTER — color-only, no motion ---------- */
+.member-tools{ transition: color .25s ease; }
 .member-tools:hover{ color: var(--pink-deep); }
+.footer-text{ transition: opacity .2s ease; }
+.footer-text:hover{ opacity: .6; }
 
-/* ---------- 7. AUDIO EPISODE ROWS — hover glide ---------- */
-.episode{ transition: background .2s ease, transform .25s ease, box-shadow .25s ease; }
-.episode:hover{ transform: translateX(4px); box-shadow: -3px 0 0 var(--pink-hot); }
+/* ---------- 8. EPISODE ROWS — minimal glide ---------- */
+.episode{ transition: transform .25s cubic-bezier(.16,1,.3,1); }
+.episode:hover{ transform: translateX(3px); }
 
-/* ---------- 8. HERO STAT ROWS — scroll reveal ---------- */
-.member-stat-row{ opacity: 0; transform: translateY(10px); transition: opacity .5s ease, transform .5s ease; }
-.member-stat-row.cw-in{ opacity: 1; transform: translateY(0); }
-
-/* ---------- 9. STORIES BAR — stagger on load ---------- */
-.story-item{ opacity: 0; transform: translateY(10px); transition: opacity .5s ease, transform .5s ease; }
-.story-item.cw-in{ opacity: 1; transform: translateY(0); }
-
-/* ---------- 10. LIBRARY — cover tilt on hover ---------- */
+/* ---------- 9. LIBRARY — lift, no rotate ---------- */
 .featured-book-cover, .planner-cover{ transition: transform .35s cubic-bezier(.16,1,.3,1), box-shadow .35s ease; }
 .featured-book:hover .featured-book-cover,
-.featured-book:hover .planner-cover{ transform: rotate(-1.5deg) translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,.18); }
+.featured-book:hover .planner-cover{ transform: translateY(-6px); box-shadow: 0 18px 36px rgba(0,0,0,.16); }
 
-/* ---------- 11. CTA BUTTONS — lift + glow ---------- */
-.button-6{ transition: transform .2s ease, box-shadow .25s ease; }
-.button-6:hover{ transform: translateY(-2px); box-shadow: 0 10px 24px rgba(196,25,122,.28); }
-
-/* ---------- 12. FOOTER LINKS — underline sweep ---------- */
-.footer-text{ position: relative; transition: color .2s ease; }
-.footer-text::after{
-  content:''; position:absolute; left:0; right:100%; bottom:-2px; height:1px;
-  background: var(--pink-hot); transition: right .3s ease;
+/* ---------- 10. EDITORIAL PULL-QUOTE (Mercury-style) ---------- */
+.tool-card.quote{
+  background: var(--teal-deep);
+  color: var(--cream);
+  position: relative;
+  padding: 40px 36px;
+  overflow: hidden;
 }
-.footer-text:hover::after{ right:0; }
-.footer-text:hover{ color: var(--pink-hot); }
+.tool-card.quote::before{
+  content: '\201C';
+  position: absolute; top: 0px; left: 18px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 96px; line-height: 1; color: var(--pink-hot);
+  opacity: .3;
+}
+.tool-card.quote .q{
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic; font-weight: 400;
+  font-size: 24px; line-height: 1.35;
+  position: relative; z-index: 1;
+}
+.tool-card.quote .qsig{
+  margin-top: 16px; font-size: 10px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--pink-soft); font-weight: 600;
+}
+
+/* ---------- 11. MAGNETIC BUTTONS ---------- */
+.cw-magnetic{
+  display: inline-block;
+  transition: transform .15s cubic-bezier(.16,1,.3,1);
+  will-change: transform;
+}
+
+/* ---------- 12. PARALLAX LAYERS ---------- */
+.cw-parallax{ will-change: transform; }
