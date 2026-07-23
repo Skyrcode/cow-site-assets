@@ -1,5 +1,5 @@
 /* ============================================================
-   CHOICE OF WEALTH — Elevate Pack (JS)
+   CHOICE OF WEALTH — Elevate Pack v2 (JS)
    Load this AFTER your existing site scripts, and AFTER
    cow-elevate.css.
    ============================================================ */
@@ -12,14 +12,23 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   }, 2500);
 
-  /* ---------- 1. TAG REVEAL TARGETS + OBSERVE ---------- */
+  /* ---------- AVATAR SAFETY NET ---------- */
+  setTimeout(function(){
+    var avatar = document.querySelector('.member-avatar');
+    if(avatar && !avatar.textContent.trim()){
+      avatar.textContent = 'M';
+    }
+  }, 1800);
+
+  /* ---------- REVEAL: tag + observe every target ---------- */
   var revealSelectors = [
-    '.toool-card', '.worksheet', '.briefing', '.featured-book', '.lesson'
+    '.toool-card', '.worksheet', '.briefing', '.featured-book', '.lesson',
+    '.member-stat-row', '.story-item', '.episode', '.footer-div'
   ];
   var revealEls = document.querySelectorAll(revealSelectors.join(','));
   revealEls.forEach(function(el, i){
     el.classList.add('cw-reveal');
-    el.style.transitionDelay = Math.min(i * 0.06, 0.4) + 's';
+    el.style.transitionDelay = Math.min((i % 8) * 0.06, 0.4) + 's';
   });
 
   if('IntersectionObserver' in window){
@@ -36,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function(){
     revealEls.forEach(function(el){ el.classList.add('cw-in'); });
   }
 
-  /* ---------- 2. TOOLS HUB — mini bar visualizations ---------- */
+  /* ---------- TOOLS HUB — mini bar visualizations ---------- */
   var toolBars = {
     budget:   [50, 30, 20, 45, 60],
     networth: [70, 45, 85, 30, 95],
@@ -56,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function(){
     card.appendChild(viz);
   });
 
-  /* ---------- 3. WORKSHEETS — icon per card ---------- */
+  /* ---------- WORKSHEETS — icon per card ---------- */
   var worksheetIcons = [
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.5" fill="currentColor"/></svg>',
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12A9 9 0 1 1 12 3v9z"/></svg>',
@@ -65,14 +74,14 @@ document.addEventListener('DOMContentLoaded', function(){
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M2 20c0-3 3-5 7-5s7 2 7 5"/></svg>'
   ];
   document.querySelectorAll('.worksheets-grid .worksheet').forEach(function(card, i){
-    if(card.classList.contains('work')) return; // skip the "coming soon" card
+    if(card.classList.contains('work')) return;
     var icon = document.createElement('div');
     icon.className = 'worksheet-icon';
     icon.innerHTML = worksheetIcons[i % worksheetIcons.length];
     card.insertBefore(icon, card.firstChild);
   });
 
-  /* ---------- 4. DISPATCHES — read time + headline ticker ---------- */
+  /* ---------- DISPATCHES — read time + headline ticker ---------- */
   document.querySelectorAll('.briefing').forEach(function(card){
     var p = card.querySelector('p');
     var meta = card.querySelector('.text-block-28');
@@ -89,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function(){
   if(headlineEls.length > 1){
     var items = [];
     headlineEls.forEach(function(h){ items.push(h.textContent.trim()); });
-    var loopItems = items.concat(items); // duplicated for seamless scroll
+    var loopItems = items.concat(items);
     var track = document.createElement('div');
     track.className = 'cw-ticker';
     loopItems.forEach(function(text){
@@ -102,6 +111,52 @@ document.addEventListener('DOMContentLoaded', function(){
     wrap.appendChild(track);
     var briefingsList = document.querySelector('.briefings-list');
     if(briefingsList) briefingsList.insertAdjacentElement('afterend', wrap);
+  }
+
+  /* ---------- HERO STATS — count up on scroll into view ---------- */
+  function animateCount(el){
+    var textNode = null;
+    for(var i = 0; i < el.childNodes.length; i++){
+      if(el.childNodes[i].nodeType === 3 && el.childNodes[i].textContent.trim()){
+        textNode = el.childNodes[i]; break;
+      }
+    }
+    if(!textNode) return;
+    var raw = textNode.textContent;
+    var match = raw.match(/[\d,]+\.?\d*/);
+    if(!match) return;
+    var numStr = match[0];
+    var num = parseFloat(numStr.replace(/,/g, ''));
+    if(isNaN(num)) return;
+    var prefix = raw.slice(0, match.index);
+    var suffix = raw.slice(match.index + numStr.length);
+    var hasComma = numStr.indexOf(',') !== -1;
+    var decimals = (numStr.split('.')[1] || '').length;
+    var duration = 1200, startTime = null;
+    function frame(ts){
+      if(!startTime) startTime = ts;
+      var progress = Math.min((ts - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var current = num * eased;
+      var display = decimals ? current.toFixed(decimals) : Math.round(current).toString();
+      if(hasComma) display = Number(display).toLocaleString('en-US');
+      textNode.textContent = prefix + display + suffix;
+      if(progress < 1) requestAnimationFrame(frame);
+      else textNode.textContent = raw; // restore exact original formatting
+    }
+    requestAnimationFrame(frame);
+  }
+  var statNums = document.querySelectorAll('.hero-stat-member .text-block-25');
+  if(statNums.length && 'IntersectionObserver' in window){
+    var io2 = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          animateCount(entry.target);
+          io2.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.4 });
+    statNums.forEach(function(el){ io2.observe(el); });
   }
 
 });
