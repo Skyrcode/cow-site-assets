@@ -1,11 +1,9 @@
 /* ============================================================
-   CHOICE OF WEALTH — Elevate Pack (CSS)
+   CHOICE OF WEALTH — Elevate Pack v2 (CSS)
    Load this AFTER your existing site CSS/head embeds.
    ============================================================ */
 
 /* ---------- 1. VISIBILITY SAFETY NET ---------- */
-/* Nothing here should ever be permanently invisible, no matter
-   what happens with load order, truncation, or missing scripts. */
 .member-topbar, .membertopbar-inner, .members-brand,
 .member-brandmark, .member-brandmark img, .memberbrand-name,
 .member-chip, .member-avatar, .member-name-chip {
@@ -14,10 +12,13 @@
 }
 .members-brand{ overflow: visible; min-width: 160px; }
 .member-brandmark{ min-width: 44px; min-height: 44px; }
+.member-avatar{
+  background: var(--teal-deep) !important;
+  color: var(--cream) !important;
+  display: grid !important;
+  place-items: center !important;
+}
 
-/* Retire the old load-triggered keyframe animation on the hero —
-   replaced by the .cw-reveal system below (JS-driven, can't get
-   stuck at opacity:0 if a script ever fails to load). */
 .member-eyebrow, .heading-41, .hero-sub, .hero-stat-member{
   animation: none !important;
   opacity: 1 !important;
@@ -35,12 +36,9 @@
   .cw-reveal{ opacity: 1; transform: none; transition: none; }
 }
 
-/* ---------- 3. TOOLS HUB — more visual energy ---------- */
+/* ---------- 3. TOOLS HUB ---------- */
 .toool-card{ position: relative; }
-.tool-mini-viz{
-  margin-top: 14px; height: 34px;
-  display: flex; align-items: flex-end; gap: 3px;
-}
+.tool-mini-viz{ margin-top: 14px; height: 34px; display: flex; align-items: flex-end; gap: 3px; }
 .tool-mini-viz .bar{
   flex: 1; height: 4px; border-radius: 2px 2px 0 0;
   background: linear-gradient(180deg, var(--pink-hot), var(--pink-deep));
@@ -50,7 +48,7 @@
 .tool-card-open .text-block-21{ display: inline-block; transition: transform .25s ease; }
 .toool-card:hover .text-block-21{ transform: translateX(4px); }
 
-/* ---------- 4. WORKSHEETS — shelf feel ---------- */
+/* ---------- 4. WORKSHEETS ---------- */
 .worksheet{ position: relative; overflow: hidden; }
 .worksheet-icon{
   width: 30px; height: 30px;
@@ -64,7 +62,7 @@
 .worksheet .dl-icon{ transition: transform .2s ease; }
 .worksheet .dl-icon:hover{ transform: translateY(-2px); }
 
-/* ---------- 5. DISPATCHES — editorial energy ---------- */
+/* ---------- 5. DISPATCHES ---------- */
 .briefing-readtime{ font-size: 11px; color: var(--body-gray); font-weight: 500; margin-left: 8px; }
 .briefing h4{ position: relative; display: inline-block; }
 .briefing h4::after{
@@ -73,18 +71,52 @@
   transition: width .3s ease;
 }
 .briefing:hover h4::after{ width: 100%; }
-
 .cw-ticker-wrap{
   overflow: hidden;
   border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
   margin: 20px 0 32px; padding: 10px 0;
 }
-.cw-ticker{
-  display: flex; gap: 48px; white-space: nowrap;
-  width: max-content;
-  animation: cwTickerScroll 28s linear infinite;
-}
+.cw-ticker{ display: flex; gap: 48px; white-space: nowrap; width: max-content; animation: cwTickerScroll 28s linear infinite; }
 .cw-ticker span{ font-size: 12px; letter-spacing: .05em; color: var(--teal-deep); font-weight: 600; }
 .cw-ticker span em{ color: var(--pink-deep); font-style: normal; margin-right: 6px; }
 @keyframes cwTickerScroll{ from{ transform: translateX(0); } to{ transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce){ .cw-ticker{ animation: none; } }
+
+/* ---------- 6. NAV — underline sweep on hover ---------- */
+.member-tools{ position: relative; transition: color .25s ease; }
+.member-tools::after{
+  content:''; position:absolute; left:0; right:100%; bottom:-2px; height:2px;
+  background: var(--pink-deep); transition: right .3s cubic-bezier(.16,1,.3,1);
+}
+.member-tools:hover::after{ right:0; }
+.member-tools:hover{ color: var(--pink-deep); }
+
+/* ---------- 7. AUDIO EPISODE ROWS — hover glide ---------- */
+.episode{ transition: background .2s ease, transform .25s ease, box-shadow .25s ease; }
+.episode:hover{ transform: translateX(4px); box-shadow: -3px 0 0 var(--pink-hot); }
+
+/* ---------- 8. HERO STAT ROWS — scroll reveal ---------- */
+.member-stat-row{ opacity: 0; transform: translateY(10px); transition: opacity .5s ease, transform .5s ease; }
+.member-stat-row.cw-in{ opacity: 1; transform: translateY(0); }
+
+/* ---------- 9. STORIES BAR — stagger on load ---------- */
+.story-item{ opacity: 0; transform: translateY(10px); transition: opacity .5s ease, transform .5s ease; }
+.story-item.cw-in{ opacity: 1; transform: translateY(0); }
+
+/* ---------- 10. LIBRARY — cover tilt on hover ---------- */
+.featured-book-cover, .planner-cover{ transition: transform .35s cubic-bezier(.16,1,.3,1), box-shadow .35s ease; }
+.featured-book:hover .featured-book-cover,
+.featured-book:hover .planner-cover{ transform: rotate(-1.5deg) translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,.18); }
+
+/* ---------- 11. CTA BUTTONS — lift + glow ---------- */
+.button-6{ transition: transform .2s ease, box-shadow .25s ease; }
+.button-6:hover{ transform: translateY(-2px); box-shadow: 0 10px 24px rgba(196,25,122,.28); }
+
+/* ---------- 12. FOOTER LINKS — underline sweep ---------- */
+.footer-text{ position: relative; transition: color .2s ease; }
+.footer-text::after{
+  content:''; position:absolute; left:0; right:100%; bottom:-2px; height:1px;
+  background: var(--pink-hot); transition: right .3s ease;
+}
+.footer-text:hover::after{ right:0; }
+.footer-text:hover{ color: var(--pink-hot); }
