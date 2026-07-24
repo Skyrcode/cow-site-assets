@@ -1,39 +1,52 @@
 /* ============================================================
-   CHOICE OF WEALTH — Elevate Pack v3 (JS)
-   Direction: Mercury-style editorial restraint.
+   CHOICE OF WEALTH — Elevate Pack v4 (JS)
+   FIX: scroll animations now REPEAT every time an element enters
+   the screen — not just the first time, ever. That's the main
+   change from v3.
    Load this AFTER your existing site scripts, and AFTER
    cow-elevate.css.
    ============================================================ */
 document.addEventListener('DOMContentLoaded', function(){
 
-  /* ---------- SAFETY NET ---------- */
-  setTimeout(function(){
-    document.querySelectorAll('.cw-reveal:not(.cw-in)').forEach(function(el){ el.classList.add('cw-in'); });
-  }, 2200);
+  /* ---------- AVATAR SAFETY NET (unrelated, still needed) ---------- */
   setTimeout(function(){
     var avatar = document.querySelector('.member-avatar');
     if(avatar && !avatar.textContent.trim()) avatar.textContent = 'M';
   }, 1800);
 
-  /* ---------- REVEAL — restrained target list ---------- */
-  var revealSelectors = ['.toool-card', '.worksheet', '.briefing', '.featured-book', '.lesson'];
+  /* ---------- SCROLL ANIMATION — applies to almost every card/section,
+     and now REPLAYS every time you scroll it into view ---------- */
+  var revealSelectors = [
+    '.toool-card', '.worksheet', '.briefing', '.featured-book', '.lesson',
+    '.story-item', '.episode', '.member-stat-row', '.footer-div',
+    '.section-head', '.lesson-section-head'
+  ];
   var revealEls = document.querySelectorAll(revealSelectors.join(','));
   revealEls.forEach(function(el, i){
     el.classList.add('cw-reveal');
     el.style.transitionDelay = Math.min((i % 6) * 0.05, 0.3) + 's';
   });
+
   if('IntersectionObserver' in window){
     var io = new IntersectionObserver(function(entries){
       entries.forEach(function(entry){
-        if(entry.isIntersecting){ entry.target.classList.add('cw-in'); io.unobserve(entry.target); }
+        // Key change: no longer un-watches after the first fire.
+        // Add the class when it enters the screen, remove it when
+        // it leaves, so it plays again next time you scroll to it.
+        if(entry.isIntersecting){
+          entry.target.classList.add('cw-in');
+        } else {
+          entry.target.classList.remove('cw-in');
+        }
       });
-    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
     revealEls.forEach(function(el){ io.observe(el); });
   } else {
+    // Old browsers without this feature: just show everything, no animation.
     revealEls.forEach(function(el){ el.classList.add('cw-in'); });
   }
 
-  /* ---------- TOOLS HUB — mini bar viz ---------- */
+  /* ---------- TOOLS HUB — small animated bars inside each card ---------- */
   var toolBars = { budget:[50,30,20,45,60], networth:[70,45,85,30,95], compound:[20,35,50,70,100] };
   document.querySelectorAll('.toool-card').forEach(function(card){
     var id = card.getAttribute('id');
@@ -49,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function(){
     card.appendChild(viz);
   });
 
-  /* ---------- WORKSHEETS — icons ---------- */
+  /* ---------- WORKSHEETS — a small icon on each card ---------- */
   var worksheetIcons = [
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.5" fill="currentColor"/></svg>',
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12A9 9 0 1 1 12 3v9z"/></svg>',
@@ -65,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function(){
     card.insertBefore(icon, card.firstChild);
   });
 
-  /* ---------- DISPATCHES — read time + ticker ---------- */
+  /* ---------- DISPATCHES — read time label + scrolling headline strip ---------- */
   document.querySelectorAll('.briefing').forEach(function(card){
     var p = card.querySelector('p');
     var meta = card.querySelector('.text-block-28');
@@ -96,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if(briefingsList) briefingsList.insertAdjacentElement('afterend', wrap);
   }
 
-  /* ---------- HERO STATS — count up (tabular, restored exactly after) ---------- */
+  /* ---------- HERO NUMBERS — count up from 0 the first time they're seen ---------- */
   function animateCount(el){
     var textNode = null;
     for(var i = 0; i < el.childNodes.length; i++){
@@ -136,10 +149,12 @@ document.addEventListener('DOMContentLoaded', function(){
         if(entry.isIntersecting){ animateCount(entry.target); io2.unobserve(entry.target); }
       });
     }, { threshold: 0.4 });
+    // count-up only needs to happen once (it's a number ticking up, not
+    // a fade), so this one keeps the "only fire once" behavior on purpose.
     statNums.forEach(function(el){ io2.observe(el); });
   }
 
-  /* ---------- MAGNETIC BUTTONS ---------- */
+  /* ---------- BUTTONS THAT FOLLOW YOUR CURSOR SLIGHTLY ---------- */
   var magnets = document.querySelectorAll('.button-6, .tool-card-open, .np-play');
   magnets.forEach(function(btn){
     btn.classList.add('cw-magnetic');
@@ -153,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function(){
     btn.addEventListener('mouseleave', function(){ btn.style.transform = 'translate(0,0)'; });
   });
 
-  /* ---------- SUBTLE PARALLAX (hero only, deliberately minimal) ---------- */
+  /* ---------- HERO DRIFTS SLIGHTLY AS YOU SCROLL (depth effect) ---------- */
   var parallaxTargets = [];
   var heroStat = document.querySelector('.hero-stat-member');
   var heroHeading = document.querySelector('.heading-41');
