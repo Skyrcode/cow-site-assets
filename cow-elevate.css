@@ -1,7 +1,10 @@
 /* ============================================================
-   CHOICE OF WEALTH — Elevate Pack v3 (CSS)
-   Direction: Mercury-style editorial restraint.
-   Load this AFTER your existing site CSS/head embeds.
+   CHOICE OF WEALTH — Elevate Pack v5 (CSS)
+   Supersedes v3. Sections 1–12 are unchanged from v3 — nothing
+   removed, nothing renamed, no existing functionality lost.
+   Sections 13–14 are new: text-reveal masks + custom cursor.
+   Load this AFTER your existing site CSS/head embeds, in place
+   of cow-elevate v3.
    ============================================================ */
 
 /* ---------- 1. VISIBILITY SAFETY NET ---------- */
@@ -19,7 +22,6 @@
   display: grid !important;
   place-items: center !important;
 }
-/* eyebrow/sub keep the old fix; heading + stat panel get transform freed up for parallax below */
 .member-eyebrow, .hero-sub{
   animation: none !important;
   opacity: 1 !important;
@@ -145,3 +147,107 @@
 
 /* ---------- 12. PARALLAX LAYERS ---------- */
 .cw-parallax{ will-change: transform; }
+
+
+/* ============================================================
+   13. TEXT REVEAL — mask-in headings, hero down to card titles
+   Pure clip-path on the existing element. No innerHTML splitting,
+   so colored <span class="text-span-XX"> words inside headings,
+   and any CMS-bound text, are completely untouched.
+   Fires once per element the first time it scrolls into view
+   (JS adds .cw-in-text and stops watching it — headings shouldn't
+   re-mask every time you scroll past them).
+   ============================================================ */
+.cw-text-reveal{
+  clip-path: inset(0 0 100% 0);
+  -webkit-clip-path: inset(0 0 100% 0);
+  transform: translateY(14px);
+  transition: clip-path 1s cubic-bezier(.16,1,.3,1),
+              -webkit-clip-path 1s cubic-bezier(.16,1,.3,1),
+              transform 1s cubic-bezier(.16,1,.3,1);
+}
+.cw-text-reveal.cw-in-text{
+  clip-path: inset(0 0 0% 0);
+  -webkit-clip-path: inset(0 0 0% 0);
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce){
+  .cw-text-reveal{
+    clip-path: none; -webkit-clip-path: none; transform: none; transition: none;
+  }
+}
+
+/* ============================================================
+   14. CUSTOM CURSOR — dot (instant) + ring (lerped trail)
+   Only active when JS adds .cw-cursor-active to <body>, which
+   only happens on fine-pointer, non-touch, non-reduced-motion
+   devices — everyone else keeps the native cursor untouched.
+   The overlay is pointer-events:none throughout, so it never
+   interferes with clicks, drags, the audio scrubber, or the
+   story-viewer swipe gestures.
+   ============================================================ */
+body.cw-cursor-active{ cursor: none; }
+body.cw-cursor-active input,
+body.cw-cursor-active textarea,
+body.cw-cursor-active select,
+body.cw-cursor-active [contenteditable]{
+  cursor: auto; /* keep a real caret for typing */
+}
+
+.cw-cursor-dot,
+.cw-cursor-ring{
+  position: fixed;
+  top: 0; left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform;
+}
+.cw-cursor-dot{
+  width: 6px; height: 6px;
+  background: var(--pink-deep);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.cw-cursor-ring{
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(22,79,92,0.35);
+  background: transparent;
+  color: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: translate(-50%, -50%);
+  transition: width .3s cubic-bezier(.16,1,.3,1),
+              height .3s cubic-bezier(.16,1,.3,1),
+              background .3s ease,
+              border-color .3s ease;
+}
+.cw-cursor-ring span{
+  opacity: 0;
+  transition: opacity .2s ease;
+  white-space: nowrap;
+}
+
+/* generic clickable — grows slightly, no label */
+.cw-cursor-ring.cw-cursor-grow{
+  width: 34px; height: 34px;
+  background: rgba(22,79,92,0.12);
+  border-color: transparent;
+}
+
+/* meaningful targets (cards / play / primary CTAs) — bigger, labeled */
+.cw-cursor-ring.cw-cursor-label{
+  width: 84px; height: 84px;
+  background: var(--pink-deep);
+  border-color: transparent;
+}
+.cw-cursor-ring.cw-cursor-label span{ opacity: 1; }
+
+@media (hover: none), (pointer: coarse){
+  .cw-cursor-dot, .cw-cursor-ring{ display: none !important; }
+}
