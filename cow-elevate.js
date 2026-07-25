@@ -1,21 +1,21 @@
 /* ============================================================
-   CHOICE OF WEALTH — Elevate Pack v4 (JS)
-   FIX: scroll animations now REPEAT every time an element enters
-   the screen — not just the first time, ever. That's the main
-   change from v3.
+   CHOICE OF WEALTH — Elevate Pack v5 (JS)
+   Supersedes v4. Blocks 1–8 are unchanged from v4 — nothing
+   removed, nothing renamed, no existing functionality lost.
+   Blocks 9–10 are new: text-reveal masks + custom cursor.
    Load this AFTER your existing site scripts, and AFTER
-   cow-elevate.css.
+   cow-elevate-v5.css, in place of cow-elevate v4.
    ============================================================ */
 document.addEventListener('DOMContentLoaded', function(){
 
-  /* ---------- AVATAR SAFETY NET (unrelated, still needed) ---------- */
+  /* ---------- 1. AVATAR SAFETY NET (unrelated, still needed) ---------- */
   setTimeout(function(){
     var avatar = document.querySelector('.member-avatar');
     if(avatar && !avatar.textContent.trim()) avatar.textContent = 'M';
   }, 1800);
 
-  /* ---------- SCROLL ANIMATION — applies to almost every card/section,
-     and now REPLAYS every time you scroll it into view ---------- */
+  /* ---------- 2. SCROLL ANIMATION — applies to almost every card/section,
+     and REPLAYS every time you scroll it into view ---------- */
   var revealSelectors = [
     '.toool-card', '.worksheet', '.briefing', '.featured-book', '.lesson',
     '.story-item', '.episode', '.member-stat-row', '.footer-div',
@@ -30,9 +30,6 @@ document.addEventListener('DOMContentLoaded', function(){
   if('IntersectionObserver' in window){
     var io = new IntersectionObserver(function(entries){
       entries.forEach(function(entry){
-        // Key change: no longer un-watches after the first fire.
-        // Add the class when it enters the screen, remove it when
-        // it leaves, so it plays again next time you scroll to it.
         if(entry.isIntersecting){
           entry.target.classList.add('cw-in');
         } else {
@@ -42,11 +39,10 @@ document.addEventListener('DOMContentLoaded', function(){
     }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
     revealEls.forEach(function(el){ io.observe(el); });
   } else {
-    // Old browsers without this feature: just show everything, no animation.
     revealEls.forEach(function(el){ el.classList.add('cw-in'); });
   }
 
-  /* ---------- TOOLS HUB — small animated bars inside each card ---------- */
+  /* ---------- 3. TOOLS HUB — small animated bars inside each card ---------- */
   var toolBars = { budget:[50,30,20,45,60], networth:[70,45,85,30,95], compound:[20,35,50,70,100] };
   document.querySelectorAll('.toool-card').forEach(function(card){
     var id = card.getAttribute('id');
@@ -62,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function(){
     card.appendChild(viz);
   });
 
-  /* ---------- WORKSHEETS — a small icon on each card ---------- */
+  /* ---------- 4. WORKSHEETS — a small icon on each card ---------- */
   var worksheetIcons = [
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.5" fill="currentColor"/></svg>',
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12A9 9 0 1 1 12 3v9z"/></svg>',
@@ -78,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function(){
     card.insertBefore(icon, card.firstChild);
   });
 
-  /* ---------- DISPATCHES — read time label + scrolling headline strip ---------- */
+  /* ---------- 5. DISPATCHES — read time label + scrolling headline strip ---------- */
   document.querySelectorAll('.briefing').forEach(function(card){
     var p = card.querySelector('p');
     var meta = card.querySelector('.text-block-28');
@@ -109,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function(){
     if(briefingsList) briefingsList.insertAdjacentElement('afterend', wrap);
   }
 
-  /* ---------- HERO NUMBERS — count up from 0 the first time they're seen ---------- */
+  /* ---------- 6. HERO NUMBERS — count up from 0 the first time they're seen ---------- */
   function animateCount(el){
     var textNode = null;
     for(var i = 0; i < el.childNodes.length; i++){
@@ -149,12 +145,10 @@ document.addEventListener('DOMContentLoaded', function(){
         if(entry.isIntersecting){ animateCount(entry.target); io2.unobserve(entry.target); }
       });
     }, { threshold: 0.4 });
-    // count-up only needs to happen once (it's a number ticking up, not
-    // a fade), so this one keeps the "only fire once" behavior on purpose.
     statNums.forEach(function(el){ io2.observe(el); });
   }
 
-  /* ---------- BUTTONS THAT FOLLOW YOUR CURSOR SLIGHTLY ---------- */
+  /* ---------- 7. BUTTONS THAT FOLLOW YOUR CURSOR SLIGHTLY ---------- */
   var magnets = document.querySelectorAll('.button-6, .tool-card-open, .np-play');
   magnets.forEach(function(btn){
     btn.classList.add('cw-magnetic');
@@ -168,7 +162,7 @@ document.addEventListener('DOMContentLoaded', function(){
     btn.addEventListener('mouseleave', function(){ btn.style.transform = 'translate(0,0)'; });
   });
 
-  /* ---------- HERO DRIFTS SLIGHTLY AS YOU SCROLL (depth effect) ---------- */
+  /* ---------- 8. HERO DRIFTS SLIGHTLY AS YOU SCROLL (depth effect) ---------- */
   var parallaxTargets = [];
   var heroStat = document.querySelector('.hero-stat-member');
   var heroHeading = document.querySelector('.heading-41');
@@ -187,6 +181,105 @@ document.addEventListener('DOMContentLoaded', function(){
     window.addEventListener('scroll', function(){
       if(!ticking){ window.requestAnimationFrame(updateParallax); ticking = true; }
     }, { passive: true });
+  }
+
+  /* ============================================================
+     9. TEXT REVEAL — mask-in every heading, hero down to card
+     titles ("maximal" setting). Pure clip-path on the existing
+     element — no innerHTML rewriting, so colored <span> words
+     and CMS-bound text are left completely alone. Each heading
+     fires once, the first time it's on screen, then stops being
+     watched (unlike the repeating card reveal in block 2 above —
+     headings shouldn't re-mask every time you scroll past them).
+     ============================================================ */
+  var textRevealSelectors = [
+    '.heading-41', '.heading-42', '.heading-43', '.heading-44', '.heading-45',
+    '.heading-46', '.heading-47', '.heading-48', '.heading-49', '.heading-50',
+    '.heading-51', '.ep-title', '.np-title'
+  ];
+  var textRevealEls = document.querySelectorAll(textRevealSelectors.join(','));
+  textRevealEls.forEach(function(el, i){
+    el.classList.add('cw-text-reveal');
+    el.style.transitionDelay = Math.min((i % 5) * 0.06, 0.24) + 's';
+  });
+
+  if('IntersectionObserver' in window){
+    var ioText = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add('cw-in-text');
+          ioText.unobserve(entry.target); // fire once only
+        }
+      });
+    }, { threshold: 0.2 });
+    textRevealEls.forEach(function(el){ ioText.observe(el); });
+  } else {
+    textRevealEls.forEach(function(el){ el.classList.add('cw-in-text'); });
+  }
+
+  /* ============================================================
+     10. CUSTOM CURSOR — dot (instant) + ring (lerped trail)
+     Only turns on for mouse users who haven't asked for reduced
+     motion. Touchscreens and prefers-reduced-motion keep the
+     native cursor, no JS runs for them at all beyond this check.
+     ============================================================ */
+  var wantsCursor = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+                  && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if(wantsCursor){
+    document.body.classList.add('cw-cursor-active');
+
+    var cwDot = document.createElement('div');
+    cwDot.className = 'cw-cursor-dot';
+    var cwRing = document.createElement('div');
+    cwRing.className = 'cw-cursor-ring';
+    var cwLabel = document.createElement('span');
+    cwRing.appendChild(cwLabel);
+    document.body.appendChild(cwDot);
+    document.body.appendChild(cwRing);
+
+    var mx = 0, my = 0, rx = 0, ry = 0;
+
+    document.addEventListener('mousemove', function(e){
+      mx = e.clientX; my = e.clientY;
+      cwDot.style.transform = 'translate(' + mx + 'px,' + my + 'px) translate(-50%,-50%)';
+    });
+
+    (function animateCwRing(){
+      var ease = 0.16;
+      rx += (mx - rx) * ease;
+      ry += (my - ry) * ease;
+      cwRing.style.transform = 'translate(' + rx + 'px,' + ry + 'px) translate(-50%,-50%)';
+      requestAnimationFrame(animateCwRing);
+    })();
+
+    // Labeled targets: cards, play buttons, primary CTAs
+    var labelMap = [
+      { selector: '.toool-card, .worksheet, .lesson, .briefing, .featured-book', label: 'View' },
+      { selector: '.ep-play, .np-play, .np-play-wrap, .story-item', label: 'Play' },
+      { selector: '.button-6, .tool-card-open, .ahref.primary, .btn-pv', label: 'Open' }
+    ];
+    labelMap.forEach(function(group){
+      document.querySelectorAll(group.selector).forEach(function(el){
+        el.setAttribute('data-cw-cursor-wired', 'true');
+        el.addEventListener('mouseenter', function(){
+          cwLabel.textContent = group.label;
+          cwRing.classList.add('cw-cursor-label');
+        });
+        el.addEventListener('mouseleave', function(){
+          cwRing.classList.remove('cw-cursor-label');
+        });
+      });
+    });
+
+    // Everything else clickable: grow slightly, no label
+    var genericTargets = document.querySelectorAll(
+      'a:not([data-cw-cursor-wired]), button:not([data-cw-cursor-wired]), .w-button:not([data-cw-cursor-wired])'
+    );
+    genericTargets.forEach(function(el){
+      el.addEventListener('mouseenter', function(){ cwRing.classList.add('cw-cursor-grow'); });
+      el.addEventListener('mouseleave', function(){ cwRing.classList.remove('cw-cursor-grow'); });
+    });
   }
 
 });
