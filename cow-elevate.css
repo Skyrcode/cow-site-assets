@@ -124,8 +124,8 @@
   content: '\201C';
   position: absolute; top: 0px; left: 18px;
   font-family: 'Cormorant Garamond', serif;
-  font-size: 96px; line-height: 1; color: var(--pink-hot);
-  opacity: .3;
+  font-size: 96px; line-height: 1; color: var(--cream);
+  opacity: .15;
 }
 .tool-card.quote .q{
   font-family: 'Cormorant Garamond', serif;
@@ -135,7 +135,7 @@
 }
 .tool-card.quote .qsig{
   margin-top: 16px; font-size: 10px; letter-spacing: .2em;
-  text-transform: uppercase; color: var(--pink-soft); font-weight: 600;
+  text-transform: uppercase; color: rgba(250,247,244,0.65); font-weight: 600;
 }
 
 /* ---------- 11. MAGNETIC BUTTONS ---------- */
