@@ -253,25 +253,12 @@ document.addEventListener('DOMContentLoaded', function(){
       requestAnimationFrame(animateCwRing);
     })();
 
-    // Labeled targets: cards, play buttons, primary CTAs
-    var labelMap = [
-      { selector: '.toool-card, .worksheet, .lesson, .briefing, .featured-book', label: 'View' },
-      { selector: '.ep-play, .np-play, .np-play-wrap, .story-item', label: 'Play' },
-      { selector: '.button-6, .tool-card-open, .ahref.primary, .btn-pv', label: 'Open' }
-    ];
-    labelMap.forEach(function(group){
-      document.querySelectorAll(group.selector).forEach(function(el){
-        el.setAttribute('data-cw-cursor-wired', 'true');
-        el.addEventListener('mouseenter', function(){
-          cwLabel.textContent = group.label;
-          cwRing.classList.add('cw-cursor-label');
-        });
-        el.addEventListener('mouseleave', function(){
-          cwRing.classList.remove('cw-cursor-label');
-        });
-      });
-    });
-
+     var genericTargets = document.querySelectorAll('a, button, .w-button');
+genericTargets.forEach(function(el){
+  el.addEventListener('mouseenter', function(){ cwRing.classList.add('cw-cursor-grow'); });
+  el.addEventListener('mouseleave', function(){ cwRing.classList.remove('cw-cursor-grow'); });
+});
+     
     // Everything else clickable: grow slightly, no label
     var genericTargets = document.querySelectorAll(
       'a:not([data-cw-cursor-wired]), button:not([data-cw-cursor-wired]), .w-button:not([data-cw-cursor-wired])'
