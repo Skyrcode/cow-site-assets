@@ -140,7 +140,6 @@
 
 /* ---------- 11. MAGNETIC BUTTONS ---------- */
 .cw-magnetic{
-  display: inline-block;
   transition: transform .15s cubic-bezier(.16,1,.3,1);
   will-change: transform;
 }
