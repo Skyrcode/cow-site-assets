@@ -192,10 +192,10 @@ document.addEventListener('DOMContentLoaded', function(){
      watched (unlike the repeating card reveal in block 2 above —
      headings shouldn't re-mask every time you scroll past them).
      ============================================================ */
-  var textRevealSelectors = [
+ var textRevealSelectors = [
     '.heading-41', '.heading-42', '.heading-43', '.heading-44', '.heading-45',
     '.heading-46', '.heading-47', '.heading-48', '.heading-49', '.heading-50',
-    '.heading-51', '.ep-title', '.np-title'
+    '.heading-51', '.np-title'
   ];
   var textRevealEls = document.querySelectorAll(textRevealSelectors.join(','));
   textRevealEls.forEach(function(el, i){
