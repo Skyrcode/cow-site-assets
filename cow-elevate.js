@@ -233,8 +233,6 @@ document.addEventListener('DOMContentLoaded', function(){
     cwDot.className = 'cw-cursor-dot';
     var cwRing = document.createElement('div');
     cwRing.className = 'cw-cursor-ring';
-    var cwLabel = document.createElement('span');
-    cwRing.appendChild(cwLabel);
     document.body.appendChild(cwDot);
     document.body.appendChild(cwRing);
 
@@ -253,16 +251,8 @@ document.addEventListener('DOMContentLoaded', function(){
       requestAnimationFrame(animateCwRing);
     })();
 
-     var genericTargets = document.querySelectorAll('a, button, .w-button');
-genericTargets.forEach(function(el){
-  el.addEventListener('mouseenter', function(){ cwRing.classList.add('cw-cursor-grow'); });
-  el.addEventListener('mouseleave', function(){ cwRing.classList.remove('cw-cursor-grow'); });
-});
-     
-    // Everything else clickable: grow slightly, no label
-    var genericTargets = document.querySelectorAll(
-      'a:not([data-cw-cursor-wired]), button:not([data-cw-cursor-wired]), .w-button:not([data-cw-cursor-wired])'
-    );
+    // Everything clickable: grow slightly, no label
+    var genericTargets = document.querySelectorAll('a, button, .w-button');
     genericTargets.forEach(function(el){
       el.addEventListener('mouseenter', function(){ cwRing.classList.add('cw-cursor-grow'); });
       el.addEventListener('mouseleave', function(){ cwRing.classList.remove('cw-cursor-grow'); });
