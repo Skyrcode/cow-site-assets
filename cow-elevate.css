@@ -31,6 +31,11 @@
   animation: none !important;
   opacity: 1 !important;
 }
+.episode.cw-reveal{
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
 
 /* ---------- 2. REVEAL ENGINE — restrained target list ---------- */
 .cw-reveal{
