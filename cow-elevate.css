@@ -239,14 +239,6 @@ body.cw-cursor-active [contenteditable]{
   border-color: transparent;
 }
 
-/* meaningful targets (cards / play / primary CTAs) — bigger, labeled */
-.cw-cursor-ring.cw-cursor-label{
-  width: 84px; height: 84px;
-  background: var(--pink-deep);
-  border-color: transparent;
-}
-.cw-cursor-ring.cw-cursor-label span{ opacity: 1; }
-
 @media (hover: none), (pointer: coarse){
   .cw-cursor-dot, .cw-cursor-ring{ display: none !important; }
 }
