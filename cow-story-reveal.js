@@ -1,43 +1,95 @@
 /* ============================================================
-   CHOICE OF WEALTH — Story Reveal Pack v1 (JS)
+   CHOICE OF WEALTH — Story Reveal Pack v2 (JS)
    Site-wide scroll animation engine, modeled on the Ana Paula
    "My Story" reference page. Fully namespaced under "csr-".
 
-   Does NOT touch the Members page. Only acts on elements that
-   carry csr- classes/attributes, which you add page by page —
-   so pages you haven't touched yet are completely unaffected,
-   and Members page (which loads cow-elevate instead) never
-   sees this file at all unless you explicitly add it there.
+   Does NOT touch the Members page's own animation system
+   (cow-elevate.css/js) — this file auto-detects a Members page
+   and skips auto-tagging there, so the two systems never fight.
 
-   HOW TO USE (add these to elements in Webflow):
-   - Wrap a section in class="csr-reveal" — this is the trigger
-     zone. When it scrolls into view, it gets "csr-in" added,
-     which fires every csr- child inside it.
-   - class="csr-fade" on any element — fades + rises in.
-   - Headings: wrap each line in
-       <span class="csr-ln"><i>Line of text</i></span>
-     Multiple csr-ln lines inside one heading will each animate
-     independently if you give each an inline style="--csr-d:.2s"
-     (stagger the delay per line, e.g. .05s, .2s, .35s).
-   - class="csr-eyebrow-line" on a small <span> before an eyebrow
-     label — draws a short line in.
-   - class="csr-clip" on an image wrapper — reveals via clip-path.
-   - data-csr-drift="0.08" on an image/decorative element — drifts
-     slowly as you scroll (positive = moves down slower than
-     scroll, negative = moves up). Keep values small: -0.1 to 0.15.
-   - data-csr-count="48" data-csr-suffix="%" on a number element —
-     counts up from 0 the first time it's visible.
-   - Stagger any csr-fade/csr-ln with inline style="--csr-d:.2s"
-     (seconds of delay).
-   - Ticker: wrap looped content in
-       <div class="csr-ticker"><div class="csr-ticker-track">
-         <span>Word</span><span>Word</span>... (duplicate the full
-         list once for a seamless loop)
-       </div></div>
+   v2 adds AUTO-TAGGING: on page load, it automatically applies
+   csr-reveal / csr-fade / csr-clip to normal page structure
+   (direct sections of the page, their headings/paragraphs/images)
+   so you don't have to hand-add classes to every element in the
+   Webflow Designer. You can still hand-place csr-ln / csr-eyebrow-line
+   / data-csr-count / data-csr-drift / .csr-ticker anywhere you want
+   the fancier effects — auto-tagging only handles the basic
+   fade-up + image-clip layer.
+
+   HOW TO OPT OUT of auto-tagging on a specific element:
+   add the attribute data-csr-skip to it (skips it and everything
+   inside it).
+
+   HOW TO OPT OUT of auto-tagging on an entire page:
+   add data-csr-skip to the <body> tag in that page's Webflow
+   page settings custom code, or just don't include this reveal
+   pack in that page's needs (it's sitewide by default via the
+   Head/Footer custom code, so the Members-page guard below is
+   what actually protects that page).
    ============================================================ */
 (function(){
 
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- 0. AUTO-TAG — apply csr- classes to normal page structure ---------- */
+  (function autoTag(){
+
+    // Bail out entirely on the Members page — it already animates via cow-elevate.
+    var isMembersPage = document.querySelector(
+      '.member-eyebrow, .member-avatar, .membertopbar-inner, .member-brandmark, #story-viewer'
+    );
+    if (isMembersPage) return;
+
+    // Elements/regions that should never be auto-tagged.
+    var EXCLUDE = [
+      'nav', '.navbar', '.footer-new',
+      '.w-commerce-commercecartcontainerwrapper', '.cart',
+      '.newsletter-form', 'form',
+      '[data-csr-skip]', '[data-csr-skip] *'
+    ].join(',');
+
+    function isExcluded(el){
+      return !!(el.closest && el.closest(EXCLUDE));
+    }
+
+    // Webflow wraps page content in .page-wrapper, with each major
+    // section as a direct child (hero, about, pillars, testimonials,
+    // footer, etc). That structure is a reliable, low-risk hook —
+    // far safer than guessing class names per page.
+    var wrapper = document.querySelector('.page-wrapper') || document.body;
+    var topSections = wrapper.children;
+
+    Array.prototype.forEach.call(topSections, function(sec){
+      if (isExcluded(sec)) return;
+      if (sec.classList.contains('csr-reveal') || sec.classList.contains('csr-no-auto')) return;
+
+      sec.classList.add('csr-reveal');
+
+      // Tag headings/paragraphs/images one and two levels deep inside
+      // this section with a light stagger. Anything already carrying
+      // a csr- class (hand-placed by you) is left alone.
+      var candidates = sec.querySelectorAll(':scope > *, :scope > * > *');
+      var delay = 0;
+
+      Array.prototype.forEach.call(candidates, function(child){
+        if (isExcluded(child)) return;
+        if (child.matches('.csr-fade, .csr-ln, .csr-clip, .csr-eyebrow-line')) return;
+        if (child.closest('.csr-fade, .csr-ln, .csr-clip')) return; // already inside a tagged node
+
+        var tag = child.tagName.toLowerCase();
+
+        if (tag === 'img') {
+          child.classList.add('csr-clip');
+          return;
+        }
+        if (['h1','h2','h3','h4','p'].indexOf(tag) !== -1) {
+          child.classList.add('csr-fade');
+          child.style.setProperty('--csr-d', delay.toFixed(2) + 's');
+          delay = Math.min(delay + 0.08, 0.4);
+        }
+      });
+    });
+  })();
 
   /* ---------- 1. SECTION REVEALS ---------- */
   var revealBlocks = document.querySelectorAll('.csr-reveal');
