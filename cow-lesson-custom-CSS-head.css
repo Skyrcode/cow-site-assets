@@ -1127,3 +1127,78 @@ body.slide-page > .progress-wrapper {
 @media (min-width: 1000px) {
   .prog-col { width: 14px; }
 }
+/* ═══════════════════════════════════════════════════════════════
+   PATCH — append this whole block to the END of
+   cow-lesson-custom-CSS-head.css on GitHub (after your existing
+   "Progression column: 14px on desktop" rule). CSS cascades, so
+   placing it last means it wins over everything above without you
+   needing to touch a single existing line.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Contrast fixes: text colors that were missed when backgrounds
+   moved from "by slide type" to "by slide position" (.tone-*) ── */
+
+/* concept-card-txt never got a tone-teal override at all */
+.tone-teal .concept-card-txt { color: rgba(250,247,244,.86) !important; }
+
+/* comparison slide's intro text + chart labels were hardcoded */
+.tone-teal.slide-type-comparison .slide-txt { color: rgba(250,247,244,.9) !important; }
+.tone-teal .bar-val   { color: var(--cream) !important; }
+.tone-teal .bar-label { color: rgba(250,247,244,.65) !important; }
+
+/* reflection option text: fixes the literal "color: teal" typo that
+   has been in this file since the very first reference version —
+   it was rendering dark-teal text regardless of background */
+.rc-opt .rc-text { color: var(--ink) !important; }
+.tone-teal .rc-opt .rc-text { color: var(--cream) !important; }
+.tone-teal .rc-opt.selected .rc-text { color: var(--pink-soft) !important; }
+
+/* reflection bubble: the faint white fill assumed an always-dark
+   backdrop; needs a dark-tinted version for the light tones */
+.rc-bubble { background: rgba(27,75,84,.07) !important; border-color: rgba(27,75,84,.18) !important; }
+.tone-teal .rc-bubble { background: rgba(250,247,244,.09) !important; border-color: rgba(250,247,244,.2) !important; }
+
+/* ghost concept numeral: tint light instead of teal-on-teal when a
+   concept slide happens to land on the dark tone slot */
+.tone-teal.slide-type-concept .slide-col::before { color: var(--cream) !important; opacity: .1 !important; }
+
+/* ── Footer: smaller Next, more visible Back ── */
+.slide-footer { gap: 12px !important; }
+.btn-next { flex: 0 1 76% !important; height: 50px !important; }
+.btn-back {
+  flex: 0 1 24% !important;
+  min-width: 70px !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,.55) !important;
+  color: var(--teal) !important;
+  font-size: 11px !important;
+  /* opacity / pointer-events / hide-on-first-slide behavior is left
+     alone — that's still governed by the .btn-back / .btn-back.on
+     rules earlier in the file */
+}
+.tone-teal .btn-back {
+  color: var(--cream) !important;
+  border-color: rgba(250,247,244,.35) !important;
+  background: rgba(255,255,255,.08) !important;
+}
+
+/* ── Concept slide numbering: switches from a CSS counter (which
+   silently breaks on display:none siblings — see JS patch) to a
+   data attribute that JS sets directly. counter-increment on
+   .slide-type-concept .slide-col above is now dead weight but
+   harmless — leave it or delete it, doesn't matter. ── */
+.slide-type-concept .slide-col::before {
+  content: attr(data-num);
+}
+
+/* ── Coin: this is the actual place to change the coin's look now.
+   Designer panel edits can't win against the !important rules
+   above in this same file, so redesign the coin HERE. Current
+   values shown for reference — edit background/width/height/
+   font-size directly: ── */
+/*
+.coin.coin-50  { background: radial-gradient(circle at 38% 32%, #f0b98f, #a9622a) !important; }
+.coin.coin-100 { background: radial-gradient(circle at 38% 32%, #f5e0a0, var(--gold)) !important; }
+.coin.coin-500 { background: radial-gradient(circle at 38% 32%, #f2a4c6, var(--pink-deep)) !important; }
+*/
