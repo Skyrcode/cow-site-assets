@@ -149,7 +149,7 @@ body.slide-page > .progress-wrapper {
    Back button no longer lives here (moved to .slide-footer as
    .btn-back). This row now only carries branding + position. */
 .slide-top {
-  position: absolute !important; top: 0; left: 0; right: 0; height: 48px !important;
+  position: fixed !important; top: 30px; left: 65.02px; right: 9vw; height: 48px !important;
   display: flex !important; align-items: center; justify-content: space-between;
   padding: 0 20px 0 24px; gap: 10px; z-index: 100;
   background: linear-gradient(to bottom, var(--cream) 70%, transparent);
