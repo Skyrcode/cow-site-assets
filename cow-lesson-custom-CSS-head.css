@@ -503,7 +503,6 @@ body.slide-page > .progress-wrapper {
 }
 .score-value.bump { animation: sBump .4s cubic-bezier(.34,1.6,.64,1); }
 @keyframes sBump { 0%{ transform:scale(1); } 50%{ transform:scale(1.38); } 100%{ transform:scale(1); } }
-.completion-msg { font-family: var(--sans); font-size: 12.5px; color: var(--body-gray); }
 
 @media (min-width: 768px) {
   .slide-col { max-width: 640px !important; margin: 0 auto !important; }
@@ -558,10 +557,10 @@ body.slide-page > .progress-wrapper {
   .slide-type-concept .slide-col, .slide-text-title .slide-col, .slide-type-keyinsight .slide-col, .slide-type-quiz .slide-col {
     padding-left: 18px !important; padding-right: 18px !important;
   }
-  .coin.coin-50  { width:68px !important; height:68px !important; font-size:13px !important; }
-  .coin.coin-100 { width:90px !important; height:90px !important; font-size:17px !important; }
-  .coin.coin-500 { width:68px !important; height:68px !important; font-size:13px !important; }
-  .completion-badge { width:90px !important; height:90px !important; font-size:40px !important; }
+.coin.coin-50  { width:76px !important;  height:76px !important;  min-width:76px;  font-size:14px !important; background: radial-gradient(circle at 38% 32%, #f0b98f, #a9622a); }
+.coin.coin-100 { width:114px !important; height:114px !important; min-width:114px; font-size:20px !important; background: radial-gradient(circle at 38% 32%, #f5e0a0, var(--gold)); }
+.coin.coin-500 { width:76px !important;  height:76px !important;  min-width:76px;  font-size:14px !important; background: radial-gradient(circle at 38% 32%, #f2a4c6, var(--pink-deep)); }
+.completion-badge { width:90px !important; height:90px !important; font-size:40px !important; }
 }
 
 .slide-type-concept .concept-card-txt { font-size: clamp(18px, 5vw, 22px) !important; line-height: 1.6 !important; margin-bottom: 0 !important; }
