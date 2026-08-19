@@ -1209,9 +1209,8 @@ body.slide-page > .progress-wrapper {
   width: 34px !important; height: 34px !important;
   min-width: 0 !important;
   padding: 0 !important;
-  border-radius: 50% !important;
+  border-radius: 999px !important;
   background: rgba(250,247,244,.95) !important;
-  border: 1.5px solid var(--border) !important;
   color: var(--teal) !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
   font-size: 0 !important; /* hides the "BACK" text label */
