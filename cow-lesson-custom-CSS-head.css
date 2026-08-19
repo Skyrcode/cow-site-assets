@@ -1191,13 +1191,51 @@ body.slide-page > .progress-wrapper {
   content: attr(data-num);
 }
 
-/* ── Coin: this is the actual place to change the coin's look now.
-   Designer panel edits can't win against the !important rules
-   above in this same file, so redesign the coin HERE. Current
-   values shown for reference — edit background/width/height/
-   font-size directly: ── */
-/*
-.coin.coin-50  { background: radial-gradient(circle at 38% 32%, #f0b98f, #a9622a) !important; }
-.coin.coin-100 { background: radial-gradient(circle at 38% 32%, #f5e0a0, var(--gold)) !important; }
-.coin.coin-500 { background: radial-gradient(circle at 38% 32%, #f2a4c6, var(--pink-deep)) !important; }
-*/
+/* ══════════════════════════════════════════════════════════════
+   REVERT — Back button returns to a top-left circular icon,
+   matching the original position, on every slide (including the
+   cover, which previously had no visible Back at all). Pure CSS —
+   the element itself still lives in .slide-footer in the HTML/JS,
+   this just repositions it. No JS changes needed: .btn-back's
+   click handler and .on/off visibility toggle (idx > 0) are
+   untouched, so Back still correctly hides on slide 1 and works
+   identically everywhere else.
+   ══════════════════════════════════════════════════════════════ */
+.btn-back {
+  position: fixed !important;
+  top: calc(20px + env(safe-area-inset-top)) !important;
+  left: calc(16px + env(safe-area-inset-left)) !important;
+  bottom: auto !important; right: auto !important;
+  width: 34px !important; height: 34px !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: rgba(250,247,244,.95) !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--teal) !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  font-size: 0 !important; /* hides the "BACK" text label */
+  letter-spacing: 0 !important;
+  z-index: 130 !important;
+  box-shadow: 0 1px 6px rgba(44,44,44,.12);
+  transition: transform .2s cubic-bezier(.34,1.4,.64,1), background .2s, border-color .2s, color .2s;
+}
+.btn-back::before {
+  content: "‹";
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+.btn-back:active { transform: scale(.84) !important; }
+
+/* Dark slides: same swap the old .back-btn used to do */
+.tone-teal .btn-back {
+  background: rgba(255,255,255,.14) !important;
+  border-color: rgba(255,255,255,.24) !important;
+  color: #fff !important;
+}
+
+/* Next reclaims the full footer width now that Back is gone from it */
+.slide-footer { gap: 0 !important; }
+.btn-next { flex: 1 1 auto !important; }
