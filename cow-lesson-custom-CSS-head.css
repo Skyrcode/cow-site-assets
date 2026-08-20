@@ -78,7 +78,9 @@ body.slide-page > *:not(.lesson-wrapper):not(script):not(style):not(link) {
 .collection-list, .w-dyn-items {
   position: relative !important; width: 100% !important; height: 100% !important;
   margin: 0 !important; padding: 0 !important; list-style: none !important; overflow: hidden !important;
-  counter-reset: concept;
+  /* counter-reset removed — ghost numeral is now driven by data-num
+     (set in JS from the lesson number), not an auto-incrementing
+     per-slide CSS counter. */
 }
 .w-dyn-item { display: none; background: transparent !important; overflow: hidden !important; }
 
@@ -145,21 +147,42 @@ body.slide-page > .progress-wrapper {
   display: block !important;
 }
 
-/* ══ SLIDE TOP — brandmark + slide count ══
-   Back button no longer lives here (moved to .slide-footer as
-   .btn-back). This row now only carries branding + position. */
+/* ══ SLIDE TOP — three-column header: Back / Brand / Count ══
+   Back lives here now (moved in Designer to be the first child of
+   .slide-top). Grid, not flex-space-between, so all three columns
+   get equal breathing room regardless of how long the brand text
+   or the count text is — Back locked left, brand true-centered,
+   count locked right, none of them cramped into each other. */
 .slide-top {
-  position: fixed !important; top: 30px; left: 65.02px; right: 9vw; height: 48px !important;
-  display: flex !important; align-items: center; justify-content: space-between;
-  padding: 0 20px 0 24px; gap: 10px; z-index: 100;
-  background: linear-gradient(to bottom, var(--cream) 70%, transparent);
+  position: absolute !important; top: 0; left: 0; right: 0; height: 56px !important;
+  display: grid !important; grid-template-columns: 44px 1fr 44px;
+  align-items: center; padding: 0 18px; gap: 10px; z-index: 100;
+  background: linear-gradient(to bottom, var(--cream) 75%, transparent);
   transition: background .3s; pointer-events: none;
 }
   .chart-wrap svg { width: 100%; height: auto; display: block; }
 .slide-top > * { pointer-events: all; }
-.slide-top.on-teal { background: linear-gradient(to bottom, var(--teal) 70%, transparent) !important; }
+.slide-top.on-teal { background: linear-gradient(to bottom, var(--teal) 75%, transparent) !important; }
+
+.btn-back {
+  order: -1; justify-self: start;
+  width: 32px !important; height: 32px !important; min-width: 0 !important; padding: 0 !important;
+  border-radius: 50% !important; border: 1.5px solid var(--border) !important;
+  background: rgba(250,247,244,.95) !important; color: var(--teal) !important;
+  display: flex !important; align-items: center; justify-content: center;
+  font-size: 0 !important; letter-spacing: 0 !important;
+  cursor: pointer; text-decoration: none;
+  box-shadow: 0 1px 6px rgba(44,44,44,.12);
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s ease, transform .2s cubic-bezier(.34,1.4,.64,1), background .2s, border-color .2s, color .2s;
+}
+.btn-back::before { content: "‹"; font-family: var(--sans); font-size: 18px; font-weight: 700; line-height: 1; }
+.btn-back.on { opacity: 1; pointer-events: auto; }
+.btn-back:active { transform: scale(.84) !important; }
+.slide-top.on-teal .btn-back { background: rgba(255,255,255,.14) !important; border-color: rgba(255,255,255,.24) !important; color: #fff !important; }
 
 .brandmark {
+  grid-column: 2; justify-self: center; text-align: center;
   font-family: var(--display); font-weight: 500; font-size: 14px;
   letter-spacing: .22em; text-transform: uppercase; color: var(--teal);
   transition: color .3s; white-space: nowrap;
@@ -167,16 +190,17 @@ body.slide-page > .progress-wrapper {
 .slide-top.on-teal .brandmark { color: var(--pink-soft); }
 
 .slide-count {
-  font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: .2em;
+  grid-column: 3; justify-self: end;
+  font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: .16em;
   color: var(--body-gray); font-variant-numeric: tabular-nums; transition: color .3s;
   white-space: nowrap;
 }
 .slide-top.on-teal .slide-count { color: rgba(250,247,244,.65); }
 
-/* ══ SLIDE FOOTER — Next + Back sit together ══ */
+/* ══ SLIDE FOOTER — Next only now that Back lives up top ══ */
 .slide-footer {
   position: fixed !important; bottom: 0; left: 0; right: 0; padding: 0 22px 26px; z-index: 100;
-  display: flex !important; align-items: center; gap: 14px;
+  display: flex !important; align-items: center;
   background: linear-gradient(to top, var(--cream) 80%, transparent);
   transition: background .3s; pointer-events: none;
 }
@@ -184,7 +208,7 @@ body.slide-page > .progress-wrapper {
 .slide-footer.on-teal { background: linear-gradient(to top, var(--teal) 80%, transparent) !important; }
 
 .btn-next {
-  flex: 1; height: 52px; border: none; border-radius: 15px;
+  flex: 1 1 auto; width: 100%; height: 52px; border: none; border-radius: 15px;
   font-family: var(--sans); font-size: 11.5px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase;
   cursor: pointer; display: flex !important; align-items: center; justify-content: center;
   text-decoration: none; pointer-events: none; opacity: 0; transform: translateY(10px);
@@ -200,25 +224,8 @@ body.slide-page > .progress-wrapper {
   .btn-next.c-te:hover { filter: brightness(1.12); }
   .btn-next.c-lm:hover { filter: brightness(1.06); }
   .btn-next.c-pk:hover { filter: brightness(1.1); }
-}
-
-/* .btn-back — ghost text button beside Next. Fades in via .on,
-   toggled by JS (idx > 0), mirrors the old top-corner back-btn's
-   hide-on-slide-1 behaviour but in its new location. */
-.btn-back {
-  flex: 0 0 auto; height: 52px; padding: 0 6px; border: none; background: none;
-  font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
-  color: var(--body-gray); cursor: pointer; text-decoration: none;
-  display: flex !important; align-items: center; justify-content: center;
-  opacity: 0; pointer-events: none;
-  transition: opacity .3s ease, color .3s ease;
-}
-.btn-back.on { opacity: 1; pointer-events: auto; }
-.btn-back:active { opacity: .6; }
-.slide-footer.on-teal .btn-back { color: rgba(250,247,244,.65); }
-@media (hover: hover) {
-  .btn-back:hover { color: var(--pink-deep); }
-  .slide-footer.on-teal .btn-back:hover { color: var(--gold); }
+  .btn-back:hover { border-color: var(--pink-deep); color: var(--pink-deep); }
+  .slide-top.on-teal .btn-back:hover { border-color: var(--gold); color: var(--gold); }
 }
 
 .wl { display: inline-block; overflow: hidden; vertical-align: bottom; line-height: 1.1; padding-bottom: .06em; }
@@ -306,7 +313,7 @@ body.slide-page > .progress-wrapper {
   font-size: clamp(15px, 4vw, 18px) !important; line-height: 1.6 !important;
   color: var(--body-gray); flex-shrink: 0; text-align: left !important;
 }
-.tone-teal .slide-txt { color: rgba(250,247,244,.78); }
+.tone-teal .slide-txt, .tone-teal .concept-card-txt { color: rgba(250,247,244,.78); }
 
 .text-pill {
   font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
@@ -331,14 +338,18 @@ body.slide-page > .progress-wrapper {
 .slide-type-concept .slide-col {
   padding: 56px 26px 100px !important; justify-content: center !important; gap: 18px !important;
   height: 100dvh !important; overflow: hidden !important; position: relative !important;
-  counter-increment: concept;
 }
+/* Ghost numeral now shows the LESSON number (constant for every
+   concept slide within one lesson), not a per-slide counter. JS
+   sets data-num on each .slide-type-concept .slide-col from
+   document.body's data-lesson-number attribute. */
 .slide-type-concept .slide-col::before {
-  content: counter(concept, decimal-leading-zero);
+  content: attr(data-num);
   position: absolute; bottom: 12%; right: 4%;
   font-family: var(--display); font-style: italic; font-weight: 500;
   font-size: clamp(110px, 34vw, 190px); line-height: 1; color: var(--teal); opacity: .07; pointer-events: none;
 }
+.tone-teal.slide-type-concept .slide-col::before { color: var(--cream); }
 .slide-type-concept .concept-card-txt { padding-left: 0 !important; margin-left: 0 !important; margin-bottom: 0 !important; margin-top: 0 !important; position: relative; }
 .slide-type-concept .slide-h1 { padding-left: 0 !important; margin-left: 0 !important; margin-top: 0 !important; position: relative; }
 
@@ -361,23 +372,27 @@ body.slide-page > .progress-wrapper {
 .sparkle {
   order: -1; flex-basis: 100% !important; width: 100%;
   text-align: center; font-family: var(--sans); font-size: 10.5px; font-weight: 700;
-  letter-spacing: .2em; text-transform: uppercase; color: rgba(250,247,244,.55);
+  letter-spacing: .2em; text-transform: uppercase; color: var(--body-gray);
   margin-bottom: 22px; pointer-events: none;
 }
+.tone-teal .sparkle { color: rgba(250,247,244,.55); }
 .coin {
   position: static !important; flex: 0 0 auto !important; margin: 0 !important; padding: 0 !important;
   border-radius: 50% !important; display: flex !important; align-items: center !important; justify-content: center !important;
   font-family: var(--display) !important; font-weight: 700 !important; font-style: normal !important;
-  color: #fff !important; cursor: pointer; text-decoration: none !important;
-  border: 1.5px solid rgba(255,255,255,.35) !important; box-shadow: 0 10px 26px rgba(0,0,0,.24);
+  color: #fff; cursor: pointer; text-decoration: none !important;
+  border: 1.5px solid rgba(255,255,255,.35); box-shadow: 0 10px 26px rgba(0,0,0,.24);
   transition: box-shadow .22s, transform .22s; -webkit-tap-highlight-color: transparent;
   line-height: 1 !important;
 }
 .coin:hover { transform: translateY(-3px); }
 .coin.chosen { box-shadow: 0 0 0 4px var(--gold), 0 10px 26px rgba(0,0,0,.22) !important; }
-.coin.coin-50  { width:76px !important;  height:76px !important;  min-width:76px;  font-size:14px !important; background: radial-gradient(circle at 38% 32%, #f0b98f, #a9622a) !important; }
-.coin.coin-100 { width:114px !important; height:114px !important; min-width:114px; font-size:20px !important; background: radial-gradient(circle at 38% 32%, #f5e0a0, var(--gold)) !important; }
-.coin.coin-500 { width:76px !important;  height:76px !important;  min-width:76px;  font-size:14px !important; background: radial-gradient(circle at 38% 32%, #f2a4c6, var(--pink-deep)) !important; }
+/* Sizing stays !important (grid math depends on it); color/background
+   don't, so anything set in Designer on .coin-50/.coin-100/.coin-500
+   actually takes effect instead of being silently overridden. */
+.coin.coin-50  { width:76px !important;  height:76px !important;  min-width:76px;  font-size:14px !important; background: radial-gradient(circle at 38% 32%, #f0b98f, #a9622a); }
+.coin.coin-100 { width:114px !important; height:114px !important; min-width:114px; font-size:20px !important; background: radial-gradient(circle at 38% 32%, #f5e0a0, var(--gold)); }
+.coin.coin-500 { width:76px !important;  height:76px !important;  min-width:76px;  font-size:14px !important; background: radial-gradient(circle at 38% 32%, #f2a4c6, var(--pink-deep)); }
 .coin.coin-100.chosen { transform: scale(1.06) !important; }
 .coin.coin-50.chosen, .coin.coin-500.chosen { transform: scale(1.06) translateY(-3px) !important; }
 
@@ -389,6 +404,7 @@ body.slide-page > .progress-wrapper {
 .chart-wrap { height: 180px !important; min-height: 180px !important; display: flex !important; align-items: flex-end; padding-bottom: 2px; }
 .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 0; }
 .bar-val { font-family: var(--display); font-size: 13px; font-weight: 600; color: var(--teal); text-align: center; opacity: 0; transition: opacity .35s ease .2s; flex-shrink: 0; }
+.tone-teal .bar-val { color: var(--gold); }
 .bar-val.show { opacity: 1; }
 .bar-track { width: 100%; height: 140px; min-height: 140px; max-height: 140px; background: rgba(44,44,44,.05); border-radius: 8px 8px 0 0; display: flex; align-items: flex-end; overflow: hidden; }
 .bar { width: 100%; height: 0%; border-radius: 8px 8px 0 0; transition: none; }
@@ -396,6 +412,7 @@ body.slide-page > .progress-wrapper {
 .bar-bf2 { background: linear-gradient(180deg,#e6c481,var(--gold)); }
 .bar-bf3 { background: linear-gradient(180deg,#f2a4c6,var(--pink-deep)); }
 .bar-label { font-size: 8px; font-weight: 700; color: var(--body-gray); text-align: center; text-transform: uppercase; letter-spacing: .04em; line-height: 1.3; flex-shrink: 0; }
+.tone-teal .bar-label { color: rgba(250,247,244,.6); }
 
 .slide-type-quiz .slide-body { height: auto !important; overflow: visible !important; flex: none !important; }
 .slide-type-quiz .slide-col { padding: 64px 22px 140px !important; gap: 8px !important; height: auto !important; min-height: 100dvh !important; overflow: visible !important; justify-content: center !important; }
@@ -440,24 +457,28 @@ body.slide-page > .progress-wrapper {
 .rc-opt { display: flex !important; align-items: center; gap: 16px; cursor: pointer; padding: 4px 0; -webkit-tap-highlight-color: transparent; }
 .rc-bubble {
   width:56px; height:56px; border-radius:50%; flex-shrink:0; display:flex !important; align-items:center; justify-content:center;
-  background: rgba(250,247,244,.09); border: 1.5px solid rgba(250,247,244,.2); font-size:22px; line-height: 1;
+  background: rgba(27,75,84,.07); border: 1.5px solid rgba(27,75,84,.16); font-size:22px; line-height: 1;
   transition: background .22s, border-color .22s, transform .22s cubic-bezier(.34,1.4,.64,1);
   animation: rcP 3s ease-in-out infinite;
 }
+.tone-teal .rc-bubble { background: rgba(250,247,244,.09); border-color: rgba(250,247,244,.2); }
 .reflect-opts .rc-opt:nth-child(1) .rc-bubble { animation-delay: 0s; }
 .reflect-opts .rc-opt:nth-child(2) .rc-bubble { animation-delay: .7s; }
 .reflect-opts .rc-opt:nth-child(3) .rc-bubble { animation-delay: 1.4s; }
 @keyframes rcP { 0%,100%{ box-shadow:0 0 0 0 rgba(201,151,74,.32); transform:scale(1); } 50%{ box-shadow:0 0 0 10px rgba(201,151,74,0); transform:scale(1.05); } }
 .rc-opt.selected .rc-bubble { background: var(--pink-deep) !important; border-color: var(--pink-deep) !important; animation: none !important; transform: scale(1.1) !important; }
 @media (hover: hover) {
-  .rc-opt:not(.selected):hover .rc-bubble { border-color: rgba(250,247,244,.5); transform: scale(1.06); }
+  .rc-opt:not(.selected):hover .rc-bubble { border-color: rgba(27,75,84,.3); transform: scale(1.06); }
+  .tone-teal .rc-opt:not(.selected):hover .rc-bubble { border-color: rgba(250,247,244,.5); }
 }
 .rc-opt .rc-text {
-  color: teal !important; line-height: 1.4; font-family: var(--sans) !important; font-weight: 500 !important;
+  color: var(--ink) !important; line-height: 1.4; font-family: var(--sans) !important; font-weight: 500 !important;
   font-size: 16px !important; text-decoration: none !important; background: none !important; border: none !important;
   padding: 0 !important; margin: 0 !important; cursor: pointer;
 }
-.rc-opt.selected .rc-text { color: var(--pink-soft) !important; }
+.tone-teal .rc-opt .rc-text { color: var(--cream) !important; }
+.rc-opt.selected .rc-text { color: var(--pink-deep) !important; }
+.tone-teal .rc-opt.selected .rc-text { color: var(--pink-soft) !important; }
 
 .slide-type-completion .slide-col {
   align-items: center !important; justify-content: center !important; gap: 14px !important; padding: 0 26px 100px !important;
@@ -503,6 +524,21 @@ body.slide-page > .progress-wrapper {
 }
 .score-value.bump { animation: sBump .4s cubic-bezier(.34,1.6,.64,1); }
 @keyframes sBump { 0%{ transform:scale(1); } 50%{ transform:scale(1.38); } 100%{ transform:scale(1); } }
+.completion-msg { font-family: var(--sans); font-size: 12.5px; color: var(--body-gray); }
+.tone-teal .completion-msg { color: rgba(250,247,244,.55); }
+
+/* Contain the Lottie badge/icon so it can never render larger than
+   its circle and spill visually (looked like a duplicate). */
+.completion-badge, .intro-icon { overflow: hidden !important; }
+.completion-badge .badge,
+.intro-icon > div[data-animation-type="lottie"] {
+  width: 100% !important; height: 100% !important;
+  display: flex !important; align-items: center; justify-content: center;
+}
+.completion-badge .badge svg,
+.intro-icon > div[data-animation-type="lottie"] svg {
+  width: 100% !important; height: 100% !important;
+}
 
 @media (min-width: 768px) {
   .slide-col { max-width: 640px !important; margin: 0 auto !important; }
@@ -557,10 +593,10 @@ body.slide-page > .progress-wrapper {
   .slide-type-concept .slide-col, .slide-text-title .slide-col, .slide-type-keyinsight .slide-col, .slide-type-quiz .slide-col {
     padding-left: 18px !important; padding-right: 18px !important;
   }
-.coin.coin-50  { width:76px !important;  height:76px !important;  min-width:76px;  font-size:14px !important; background: radial-gradient(circle at 38% 32%, #f0b98f, #a9622a); }
-.coin.coin-100 { width:114px !important; height:114px !important; min-width:114px; font-size:20px !important; background: radial-gradient(circle at 38% 32%, #f5e0a0, var(--gold)); }
-.coin.coin-500 { width:76px !important;  height:76px !important;  min-width:76px;  font-size:14px !important; background: radial-gradient(circle at 38% 32%, #f2a4c6, var(--pink-deep)); }
-.completion-badge { width:90px !important; height:90px !important; font-size:40px !important; }
+  .coin.coin-50  { width:68px !important; height:68px !important; font-size:13px !important; }
+  .coin.coin-100 { width:90px !important; height:90px !important; font-size:17px !important; }
+  .coin.coin-500 { width:68px !important; height:68px !important; font-size:13px !important; }
+  .completion-badge { width:90px !important; height:90px !important; font-size:40px !important; }
 }
 
 .slide-type-concept .concept-card-txt { font-size: clamp(18px, 5vw, 22px) !important; line-height: 1.6 !important; margin-bottom: 0 !important; }
@@ -1125,156 +1161,4 @@ body.slide-page > .progress-wrapper {
    value at the min-width:1000px breakpoint. */
 @media (min-width: 1000px) {
   .prog-col { width: 14px; }
-}
-/* ═══════════════════════════════════════════════════════════════
-   PATCH — append this whole block to the END of
-   cow-lesson-custom-CSS-head.css on GitHub (after your existing
-   "Progression column: 14px on desktop" rule). CSS cascades, so
-   placing it last means it wins over everything above without you
-   needing to touch a single existing line.
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ── Contrast fixes: text colors that were missed when backgrounds
-   moved from "by slide type" to "by slide position" (.tone-*) ── */
-
-/* concept-card-txt never got a tone-teal override at all */
-.tone-teal .concept-card-txt { color: rgba(250,247,244,.86) !important; }
-
-/* comparison slide's intro text + chart labels were hardcoded */
-.tone-teal.slide-type-comparison .slide-txt { color: rgba(250,247,244,.9) !important; }
-.tone-teal .bar-val   { color: var(--cream) !important; }
-.tone-teal .bar-label { color: rgba(250,247,244,.65) !important; }
-
-/* reflection option text: fixes the literal "color: teal" typo that
-   has been in this file since the very first reference version —
-   it was rendering dark-teal text regardless of background */
-.rc-opt .rc-text { color: var(--ink) !important; }
-.tone-teal .rc-opt .rc-text { color: var(--cream) !important; }
-.tone-teal .rc-opt.selected .rc-text { color: var(--pink-soft) !important; }
-
-/* reflection bubble: the faint white fill assumed an always-dark
-   backdrop; needs a dark-tinted version for the light tones */
-.rc-bubble { background: rgba(27,75,84,.07) !important; border-color: rgba(27,75,84,.18) !important; }
-.tone-teal .rc-bubble { background: rgba(250,247,244,.09) !important; border-color: rgba(250,247,244,.2) !important; }
-
-/* ghost concept numeral: tint light instead of teal-on-teal when a
-   concept slide happens to land on the dark tone slot */
-.tone-teal.slide-type-concept .slide-col::before { color: var(--cream) !important; opacity: .1 !important; }
-
-/* ── Footer: smaller Next, more visible Back ── */
-.slide-footer { gap: 12px !important; }
-.btn-next { flex: 0 1 76% !important; height: 50px !important; }
-.btn-back {
-  flex: 0 1 24% !important;
-  min-width: 70px !important;
-  border: 1.5px solid var(--border) !important;
-  border-radius: 12px !important;
-  background: rgba(255,255,255,.55) !important;
-  color: var(--teal) !important;
-  font-size: 11px !important;
-  /* opacity / pointer-events / hide-on-first-slide behavior is left
-     alone — that's still governed by the .btn-back / .btn-back.on
-     rules earlier in the file */
-}
-.tone-teal .btn-back {
-  color: var(--cream) !important;
-  border-color: rgba(250,247,244,.35) !important;
-  background: rgba(255,255,255,.08) !important;
-}
-
-/* ── Concept slide numbering: switches from a CSS counter (which
-   silently breaks on display:none siblings — see JS patch) to a
-   data attribute that JS sets directly. counter-increment on
-   .slide-type-concept .slide-col above is now dead weight but
-   harmless — leave it or delete it, doesn't matter. ── */
-.slide-type-concept .slide-col::before {
-  content: attr(data-num);
-}
-
-/* ══════════════════════════════════════════════════════════════
-   REVERT — Back button returns to a top-left circular icon,
-   matching the original position, on every slide (including the
-   cover, which previously had no visible Back at all). Pure CSS —
-   the element itself still lives in .slide-footer in the HTML/JS,
-   this just repositions it. No JS changes needed: .btn-back's
-   click handler and .on/off visibility toggle (idx > 0) are
-   untouched, so Back still correctly hides on slide 1 and works
-   identically everywhere else.
-   ══════════════════════════════════════════════════════════════ */
-.btn-back {
-  position: fixed !important;
-  top: calc(20px + env(safe-area-inset-top)) !important;
-  left: calc(16px + env(safe-area-inset-left)) !important;
-  bottom: auto !important; right: auto !important;
-  width: 34px !important; height: 34px !important;
-  min-width: 0 !important;
-  padding: 0 !important;
-  border-radius: 999px !important;
-  background: rgba(250,247,244,.95) !important;
-  color: var(--teal) !important;
-  display: flex !important; align-items: center !important; justify-content: center !important;
-  font-size: 0 !important; /* hides the "BACK" text label */
-  letter-spacing: 0 !important;
-  z-index: 130 !important;
-  box-shadow: 0 1px 6px rgba(44,44,44,.12);
-  transition: transform .2s cubic-bezier(.34,1.4,.64,1), background .2s, border-color .2s, color .2s;
-}
-.btn-back::before {
-  content: "‹";
-  font-family: var(--sans);
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-}
-.btn-back:active { transform: scale(.84) !important; }
-
-/* Dark slides: same swap the old .back-btn used to do */
-.tone-teal .btn-back {
-  background: rgba(255,255,255,.14) !important;
-  border-color: rgba(255,255,255,.24) !important;
-  color: #fff !important;
-}
-
-/* Next reclaims the full footer width now that Back is gone from it */
-.slide-footer { gap: 0 !important; }
-.btn-next { flex: 1 1 auto !important; }
-
-/* ══════════════════════════════════════════════════════════════
-   Back button restyle — now that it's back in .slide-top (moved
-   there in Designer), just style it as a compact circular icon
-   sitting naturally in that flex row, instead of the wide
-   text-pill "BACK" link. No position:fixed, no guessed
-   coordinates — it just sits where the HTML places it.
-   ══════════════════════════════════════════════════════════════ */
-.btn-back {
-  order: -1;
-  position: static !important;
-  top: auto !important; left: auto !important; right: auto !important; bottom: auto !important;
-  flex: 0 0 auto !important;
-  width: 30px !important; height: 30px !important;
-  min-width: 0 !important;
-  padding: 0 !important;
-  border-radius: 50% !important;
-  background: rgba(250,247,244,.95) !important;
-  border: 1.5px solid var(--border) !important;
-  color: var(--teal) !important;
-  display: flex !important; align-items: center !important; justify-content: center !important;
-  font-size: 0 !important; /* hides the "BACK" text */
-  letter-spacing: 0 !important;
-  box-shadow: 0 1px 6px rgba(44,44,44,.12);
-  transition: transform .2s cubic-bezier(.34,1.4,.64,1), background .2s, border-color .2s, color .2s;
-}
-.btn-back::before {
-  content: "‹";
-  font-family: var(--sans);
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-}
-.btn-back:active { transform: scale(.84) !important; }
-
-.tone-teal .btn-back {
-  background: rgba(255,255,255,.14) !important;
-  border-color: rgba(255,255,255,.24) !important;
-  color: #fff !important;
 }
