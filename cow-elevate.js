@@ -216,6 +216,16 @@ document.addEventListener('DOMContentLoaded', function(){
   } else {
     textRevealEls.forEach(function(el){ el.classList.add('cw-in-text'); });
   }
+   // SAFETY NET — force-reveal anything still masked after 2s,
+  // regardless of why the observer missed it (late CMS render,
+  // load-order timing, etc). Prevents permanent invisible text.
+  setTimeout(function(){
+    textRevealEls.forEach(function(el){
+      if(!el.classList.contains('cw-in-text')){
+        el.classList.add('cw-in-text');
+      }
+    });
+  }, 2000);
 
   /* ============================================================
      10. CUSTOM CURSOR — dot (instant) + ring (lerped trail)
