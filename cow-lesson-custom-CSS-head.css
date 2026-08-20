@@ -1238,3 +1238,43 @@ body.slide-page > .progress-wrapper {
 /* Next reclaims the full footer width now that Back is gone from it */
 .slide-footer { gap: 0 !important; }
 .btn-next { flex: 1 1 auto !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   Back button restyle — now that it's back in .slide-top (moved
+   there in Designer), just style it as a compact circular icon
+   sitting naturally in that flex row, instead of the wide
+   text-pill "BACK" link. No position:fixed, no guessed
+   coordinates — it just sits where the HTML places it.
+   ══════════════════════════════════════════════════════════════ */
+.btn-back {
+  order: -1;
+  position: static !important;
+  top: auto !important; left: auto !important; right: auto !important; bottom: auto !important;
+  flex: 0 0 auto !important;
+  width: 30px !important; height: 30px !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  background: rgba(250,247,244,.95) !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--teal) !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  font-size: 0 !important; /* hides the "BACK" text */
+  letter-spacing: 0 !important;
+  box-shadow: 0 1px 6px rgba(44,44,44,.12);
+  transition: transform .2s cubic-bezier(.34,1.4,.64,1), background .2s, border-color .2s, color .2s;
+}
+.btn-back::before {
+  content: "‹";
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+.btn-back:active { transform: scale(.84) !important; }
+
+.tone-teal .btn-back {
+  background: rgba(255,255,255,.14) !important;
+  border-color: rgba(255,255,255,.24) !important;
+  color: #fff !important;
+}
