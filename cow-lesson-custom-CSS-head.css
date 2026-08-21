@@ -2,8 +2,25 @@
 
 /* ══════════════════════════════════════════════════════════════
    COW LESSON DECK — "Teal Light" design system
-   Consolidated single-source stylesheet. Every selector below
-   appears exactly once — no stacked "final pass" overrides.
+   Consolidated single-source stylesheet. Every selector appears
+   exactly once — no stacked "final pass" overrides.
+
+   This pass fixes:
+   1) text-title / key-insight slides top-loading with dead space
+      before the footer (justify-content was flex-start; now
+      centered, same treatment concept slides already used).
+   2) heading/paragraph scale on those two slide types brought up
+      to match concept slide's proportions.
+   3) top bar / content column / footer now share one edge-padding
+      formula (clamp(18px,4vw,36px)) and one max-width (--deck-max)
+      at desktop, so nothing reads "caged" — edges line up straight
+      down the whole slide instead of the header being narrower
+      than the content below it.
+   4) interactive slide coins are flat rectangular buttons (matches
+      client reference), built with flex — no more fixed-px coins
+      inside shrinking grid tracks overlapping each other.
+   5) removed a stray extra closing brace that had crept into the
+      coin block.
    ══════════════════════════════════════════════════════════════ */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,6 +43,11 @@
   --sage-deep:  #5F7A3A;
   --display: 'Cormorant Garamond', Georgia, serif;
   --sans:    'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Shared layout constants — one source of truth so the top bar,
+     content column and footer always share the same edges. */
+  --deck-max:  720px;
+  --deck-pad:  clamp(18px, 4vw, 36px);
 }
 
 * { scrollbar-width: none !important; }
@@ -64,14 +86,11 @@ body.slide-page {
 body.slide-page > *:not(.lesson-wrapper):not(script):not(style):not(link) {
   display: none !important;
 }
-/* .prog-col and .progress-wrapper are siblings of .lesson-wrapper under
-   <body> — this keeps them visible against the rule above. */
 body.slide-page > .prog-col,
 body.slide-page > .progress-wrapper {
   display: block !important;
 }
 
-/* Legacy cover-slide lottie icon container (still used on the intro slide) */
 .intro-icon div { width: 130px !important; height: 130px !important; }
 
 /* ─── Top hairline progress bar ─── */
@@ -114,11 +133,7 @@ body.slide-page > .progress-wrapper {
   display: flex !important;
 }
 
-/* ─── Background tone — driven by slide POSITION, not type ───
-   JS assigns .tone-* per slide (see PAGES cycle in the page script):
-   tealight, white, tealight, cream, tealight, blush, tealight,
-   white, teal, tealight. .tone-teal is the only dark stop, so text/
-   pill colors key off it rather than a fixed list of slide types. */
+/* ─── Background tone — driven by slide POSITION, not type ─── */
 .tone-tealight { background: var(--teal-light) !important; color: var(--ink); }
 .tone-white    { background: var(--white)      !important; color: var(--ink); }
 .tone-cream    { background: var(--cream)      !important; color: var(--ink); }
@@ -149,8 +164,8 @@ body.slide-page > .progress-wrapper {
 
 /* ══════════════════════════════════════════════════════════════
    SLIDE TOP — back (far left) / brand (true center) / counter (far right)
-   Each element is independently edge-anchored so none of them can
-   push or crowd the others, regardless of label length.
+   Shares --deck-pad edge inset and --deck-max width with the
+   content column and footer below it, so nothing reads "caged."
    ══════════════════════════════════════════════════════════════ */
 .slide-top {
   position: absolute !important;
@@ -160,7 +175,7 @@ body.slide-page > .progress-wrapper {
   display: grid !important;
   grid-template-columns: 1fr auto 1fr !important;
   align-items: center;
-  padding: 0 max(18px, env(safe-area-inset-right)) 0 max(18px, env(safe-area-inset-left)) !important;
+  padding: 0 max(var(--deck-pad), env(safe-area-inset-right)) 0 max(var(--deck-pad), env(safe-area-inset-left)) !important;
   background: linear-gradient(to bottom, var(--cream) 75%, transparent);
   transition: background .3s ease;
   pointer-events: none;
@@ -208,7 +223,9 @@ body.slide-page > .progress-wrapper {
 
 /* ─── Slide footer / Next button ─── */
 .slide-footer {
-  position: fixed !important; bottom: 0; left: 0; right: 0; padding: 0 22px 26px; z-index: 100;
+  position: fixed !important; bottom: 0; left: 0; right: 0;
+  padding: 0 max(var(--deck-pad), env(safe-area-inset-right)) 26px max(var(--deck-pad), env(safe-area-inset-left));
+  z-index: 100;
   display: flex !important; align-items: center;
   background: linear-gradient(to top, var(--cream) 80%, transparent);
   transition: background .3s;
@@ -234,8 +251,6 @@ body.slide-page > .progress-wrapper {
   .btn-next.c-te:hover { filter: brightness(1.12); }
   .btn-next.c-lm:hover { filter: brightness(1.06); }
   .btn-next.c-pk:hover { filter: brightness(1.1); }
-  .btn-back:hover { border-color: var(--pink-deep); color: var(--pink-deep); }
-  .slide-top.on-teal .btn-back:hover { border-color: var(--gold); color: var(--gold); }
 }
 
 /* ─── Text reveal utilities ─── */
@@ -260,11 +275,10 @@ body.slide-page > .progress-wrapper {
 .txt-anim { opacity: 0; transform: translateY(22px); animation: txtIn 0s forwards; }
 @keyframes txtIn { to { opacity: 1; transform: none; } }
 
-/* Failsafe: if a reveal animation is somehow skipped, force visible after 7s */
 .w, .txt-anim, .fx-l, .fx-r, .fx-u, .fx-p { animation: forceShow 0s 7s forwards; }
 @keyframes forceShow { to { opacity: 1 !important; transform: none !important; } }
 
-/* Generic headline / body text sizing (overridden per slide-type below where needed) */
+/* Base headline/body sizing (per-type overrides below) */
 .slide-h1 {
   font-family: var(--display) !important; font-weight: 500 !important;
   font-size: clamp(1.85rem, 7vw, 2.7rem) !important; line-height: 1.12 !important;
@@ -286,9 +300,10 @@ body.slide-page > .progress-wrapper {
 .insight-pill, .Insight-pill, .slide-tag {
   font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
   color: var(--gold); margin-bottom: 8px; display: block; flex-shrink: 0; opacity: 1 !important; transform: none !important;
+  background: none; border: none; padding: 0; width: auto;
 }
 
-/* Editorial headline scale for the "hero" slide types (matches doc 3) */
+/* Editorial headline scale for "hero" slide types */
 .slide-lesson-title .slide-h1,
 .slide-type-comparison .slide-h1,
 .slide-type-reflection .slide-h1,
@@ -303,7 +318,7 @@ body.slide-page > .progress-wrapper {
    ══════════════════════════════════════════════════════════════ */
 .slide-lesson-title .slide-col {
   position: relative !important; justify-content: flex-end !important; overflow: hidden !important;
-  padding-bottom: 116px !important; /* clearance above the shared fixed footer */
+  padding-bottom: 116px !important;
 }
 .cover-top-row {
   position: absolute !important; top: 12px !important; left: 0 !important; right: 0 !important;
@@ -332,10 +347,6 @@ body.slide-page > .progress-wrapper {
 .intro-icon img, .intro-icon iframe, .intro-icon dotlottie-player { width: 130px !important; height: 130px !important; }
 .lesson-intro-text { padding: 0 26px 12px; display: flex; flex-direction: column; flex-shrink: 0; }
 
-/* The cover now advances via the same fixed .slide-footer Next/Back
-   pair as every other slide (label reads "Get Started" — see
-   setNextLabel() in the page script). The old standalone cover
-   button is hidden, not deleted, so no Designer change is required. */
 .cover-footer { display: none !important; }
 
 .slide-rule {
@@ -346,19 +357,21 @@ body.slide-page > .progress-wrapper {
 
 /* ══════════════════════════════════════════════════════════════
    TEXT-TITLE + KEY-INSIGHT SLIDES
+   Content block (pill/heading/paragraph/visual) is treated as one
+   unit and CENTERED as a whole in the viewport — same approach the
+   concept slide already used successfully. This is what fixes the
+   "everything crammed at the top, dead space before the footer"
+   look, and stops the lottie reading as "pushed up."
    ══════════════════════════════════════════════════════════════ */
 .slide-text-title .slide-col,
 .slide-type-keyinsight .slide-col {
   width: 100% !important;
-  max-width: 720px !important;
+  max-width: var(--deck-max) !important;
   margin: 0 auto !important;
-  padding:
-    clamp(56px, 7dvh, 78px)
-    clamp(18px, 4vw, 36px)
-    clamp(96px, 13dvh, 126px) !important;
-  justify-content: flex-start !important;
+  padding: clamp(64px, 9dvh, 90px) var(--deck-pad) clamp(100px, 14dvh, 128px) !important;
+  justify-content: center !important;
   align-items: stretch !important;
-  gap: clamp(10px, 1.6dvh, 18px) !important;
+  gap: clamp(14px, 2.2dvh, 24px) !important;
   min-height: 100dvh !important;
   height: auto !important;
   overflow-y: auto !important;
@@ -371,53 +384,54 @@ body.slide-page > .progress-wrapper {
 .slide-text-title .content-wrap,
 .slide-type-keyinsight .content-wrap {
   width: 100% !important;
-  max-width: 660px !important;
+  max-width: 640px !important;
   margin: 0 auto !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
-  gap: clamp(10px, 1.6dvh, 18px) !important;
+  gap: clamp(14px, 2.2dvh, 24px) !important;
 }
 
+/* Heading/paragraph now match concept slide's scale exactly, so
+   every slide type reads at the same visual confidence. */
 .slide-text-title .slide-h1,
 .slide-type-keyinsight .slide-h1 {
-  width: 100% !important;
-  max-width: 660px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  font-size: clamp(2.1rem, 8.5vw, 3.1rem) !important;
-  line-height: 1.08 !important;
-  letter-spacing: -.025em !important;
-}
-.slide-type-keyinsight .slide-h1 {
-  font-size: clamp(2.4rem, 5.6vw, 4.1rem) !important;
-}
-
-.slide-text-title .slide-txt,
-.slide-type-keyinsight .slide-txt {
   width: 100% !important;
   max-width: 640px !important;
   margin: 0 !important;
   padding: 0 !important;
-  font-size: clamp(16.5px, 4.6vw, 19px) !important;
-  line-height: 1.65 !important;
+  font-size: clamp(2.4rem, 9.6vw, 3.6rem) !important;
+  line-height: 1.06 !important;
+  letter-spacing: -.02em !important;
+}
+.slide-text-title .slide-txt,
+.slide-type-keyinsight .slide-txt {
+  width: 100% !important;
+  max-width: 620px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: clamp(18px, 5vw, 22px) !important;
+  line-height: 1.6 !important;
 }
 .tone-teal.slide-type-keyinsight .slide-txt { color: rgba(250,247,244,.86) !important; }
 
-/* Lottie visual box — fixed aspect ratio, centered, capped width */
+/* Lottie visual box — fixed aspect ratio, centered, capped width.
+   Because the whole content block now centers together, this no
+   longer gets stranded near the top with empty space below it. */
 .slide-text-title .slide-visual,
 .slide-type-keyinsight .slide-visual {
   width: 100%;
   height: auto;
   aspect-ratio: 10 / 7;
-  max-width: 480px;
-  margin: clamp(4px, 1dvh, 12px) auto 0;
+  max-width: 460px;
+  margin: clamp(6px, 1.2dvh, 14px) auto 0;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: visible;
   border-radius: 20px;
+  flex-shrink: 0;
 }
 .slide-text-title .slide-visual { background: radial-gradient(circle at 50% 40%, var(--blush) 0%, transparent 70%); }
 .slide-type-keyinsight .slide-visual { background: radial-gradient(circle at 50% 40%, rgba(201,151,74,.22) 0%, transparent 70%); }
@@ -427,19 +441,16 @@ body.slide-page > .progress-wrapper {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   CONCEPT SLIDE
+   CONCEPT SLIDE — reference layout the other types now match
    ══════════════════════════════════════════════════════════════ */
 .slide-type-concept .slide-col {
-  padding: 48px 26px 92px !important;
+  padding: 48px var(--deck-pad) 92px !important;
   justify-content: center !important;
   align-items: center !important;
   height: 100dvh !important;
   overflow: hidden !important;
   position: relative !important;
 }
-/* Ghost numeral shows the LESSON number (constant across every
-   concept slide within one lesson) — driven by data-num, set in JS
-   from <body data-lesson-number="…">. */
 .slide-type-concept .slide-col::before {
   content: attr(data-num);
   position: absolute; bottom: 12%; right: 4%;
@@ -484,126 +495,119 @@ body.slide-page > .progress-wrapper {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   INTERACTIVE (COIN PICKER) SLIDE
+   INTERACTIVE (AMOUNT PICKER) SLIDE — flat rectangular buttons
    ══════════════════════════════════════════════════════════════ */
 .slide-type-interactive .slide-col {
-  padding:
-    clamp(52px, 7dvh, 70px)
-    clamp(18px, 4vw, 36px)
-    clamp(96px, 13dvh, 120px) !important;
+  padding: clamp(52px, 7dvh, 70px) var(--deck-pad) clamp(96px, 13dvh, 120px) !important;
   min-height: 100dvh !important;
   height: 100dvh !important;
   overflow: hidden !important;
+  justify-content: center !important;
 }
 .slide-type-interactive .content-wrap {
   width: 100% !important;
-  max-width: 660px !important;
+  max-width: 640px !important;
   margin: 0 auto !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
 }
 .slide-type-interactive .slide-h1 {
-  font-size: clamp(2.3rem, 5.3vw, 3.9rem) !important;
-  line-height: 1.05 !important;
-  margin: 0 0 clamp(8px, 1.5dvh, 14px) !important;
+  font-size: clamp(2.4rem, 9.6vw, 3.6rem) !important;
+  line-height: 1.06 !important;
+  margin: 0 0 clamp(10px, 1.8dvh, 16px) !important;
 }
 .slide-type-interactive .slide-txt {
-  font-size: clamp(16px, 1.55vw, 20px) !important;
-  line-height: 1.5 !important;
+  font-size: clamp(18px, 5vw, 22px) !important;
+  line-height: 1.6 !important;
   margin: 0 !important;
 }
 
 .slide-type-interactive .coin-grid {
   width: 100%;
-  flex: 1 1 auto;
-  min-height: 0;
-  margin-top: clamp(18px, 4dvh, 38px);
-  display: grid;
-  grid-template-columns:
-    clamp(58px, 18vw, 88px)
-    clamp(78px, 26vw, 124px)
-    clamp(58px, 18vw, 88px);
-  grid-template-rows: auto 1fr;
-  column-gap: clamp(10px, 3vw, 28px);
-  row-gap: clamp(12px, 2dvh, 22px);
-  align-content: center;
-  align-items: end;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
   justify-content: center;
-  position: relative;
-  overflow: visible;
+  gap: 14px;
+  margin-top: clamp(24px, 4.5dvh, 44px);
 }
 
 .slide-type-interactive .sparkle {
-  grid-column: 1 / -1;
-  grid-row: 1;
+  flex-basis: 100%;
   width: 100%;
-  margin: 0;
   text-align: center;
-  align-self: center;
-  font-size: clamp(10px, 1.1vw, 12px);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--body-gray);
+  margin-bottom: 4px;
 }
+.tone-teal .sparkle { color: rgba(250,247,244,.55); }
 
 .slide-type-interactive .coin {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  min-width: 0;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  justify-self: center;
-  align-self: end;
-  box-sizing: border-box;
-  z-index: 1;
-  border: none !important;
-  box-shadow:
-    inset 0 2px 4px rgba(255,255,255,.5),
-    inset 0 -3px 6px rgba(0,0,0,.28),
-    0 10px 26px rgba(0,0,0,.24) !important;
+  flex: 1 1 0;
+  min-width: 92px;
+  max-width: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 26px 12px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  color: var(--teal);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(19px, 4.4vw, 26px);
+  letter-spacing: -.01em;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 1px 0 rgba(44,44,44,.03), 0 8px 20px -14px rgba(27,75,84,.2);
+  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
-.slide-type-interactive .coin.coin-100 { z-index: 2; }
-
-.slide-type-interactive .coin.coin-50,
-.slide-type-interactive .coin.coin-500 {
-  width: 100% !important; height: 100% !important;
-  min-width: 0 !important; min-height: 0 !important;
-  font-size: clamp(11px, 3.2vw, 14px) !important;
+.tone-teal .coin {
+  background: rgba(250,247,244,.06);
+  border-color: rgba(250,247,244,.22);
+  color: var(--cream);
 }
-.slide-type-interactive .coin.coin-100 {
-  width: 100% !important; height: 100% !important;
-  min-width: 0 !important; min-height: 0 !important;
-  font-size: clamp(15px, 4.4vw, 20px) !important;
-}
-
-.slide-type-interactive .coin.coin-50 {
-  background: radial-gradient(circle at 35% 30%, #ffe0c2 0%, #e8a56b 35%, #b06a34 70%, #7a4620 100%) !important;
-}
-.slide-type-interactive .coin.coin-100 {
-  background: radial-gradient(circle at 35% 30%, #fff3d1 0%, #f0cf7e 35%, var(--gold) 70%, var(--gold-deep) 100%) !important;
-}
-.slide-type-interactive .coin.coin-500 {
-  background: radial-gradient(circle at 35% 30%, #ffe3f1 0%, #f6a8d1 35%, var(--pink-deep) 70%, #8f1058 100%) !important;
+.slide-type-interactive .coin:active { transform: scale(.97); }
+@media (hover: hover) {
+  .slide-type-interactive .coin:not(.chosen):hover { border-color: var(--teal); }
+  .tone-teal .slide-type-interactive .coin:not(.chosen):hover { border-color: var(--gold); }
 }
 
 .slide-type-interactive .coin.chosen {
-  transform: none;
-  box-shadow:
-    0 0 0 4px var(--gold),
-    inset 0 2px 4px rgba(255,255,255,.5),
-    inset 0 -3px 6px rgba(0,0,0,.28),
-    0 10px 26px rgba(0,0,0,.22) !important;
+  background: var(--teal);
+  border-color: var(--teal);
+  color: var(--cream);
+  box-shadow: 0 10px 24px -10px rgba(27,75,84,.45);
 }
+.tone-teal .coin.chosen {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--teal);
 }
-.slide-type-interactive .coin.coin-100.chosen { transform: scale(1.045); }
-.slide-type-interactive .coin.coin-50.chosen,
-.slide-type-interactive .coin.coin-500.chosen { transform: scale(1.055) translateY(-3px); }
+
+/* All three amounts are equal-weight flat buttons — no per-variant sizing */
+.slide-type-interactive .coin.coin-50,
+.slide-type-interactive .coin.coin-100,
+.slide-type-interactive .coin.coin-500 {
+  width: auto;
+  height: auto;
+  min-width: 92px;
+  aspect-ratio: auto;
+}
 
 /* ══════════════════════════════════════════════════════════════
    COMPARISON SLIDE
    ══════════════════════════════════════════════════════════════ */
 .slide-type-comparison .slide-col {
-  padding: 56px 22px 100px !important; gap: 6px; height: 100dvh !important; overflow: hidden !important; justify-content: center !important;
+  padding: 56px var(--deck-pad) 100px !important; gap: 6px; height: 100dvh !important; overflow: hidden !important; justify-content: center !important;
 }
 .slide-type-comparison .slide-h1 { margin-bottom: 4px !important; flex-shrink: 0; }
 .slide-type-comparison .slide-txt {
@@ -632,7 +636,7 @@ body.slide-page > .progress-wrapper {
    ══════════════════════════════════════════════════════════════ */
 .slide-type-quiz .slide-body { height: auto !important; overflow: visible !important; flex: none !important; }
 .slide-type-quiz .slide-col {
-  padding: 64px 22px 140px !important; gap: 8px !important; height: auto !important; min-height: 100dvh !important;
+  padding: 64px var(--deck-pad) 140px !important; gap: 8px !important; height: auto !important; min-height: 100dvh !important;
   overflow: visible !important; justify-content: center !important;
 }
 .slide-type-quiz .slide-h1 { margin-bottom: 4px !important; }
@@ -678,7 +682,7 @@ body.slide-page > .progress-wrapper {
 /* ══════════════════════════════════════════════════════════════
    REFLECTION SLIDE
    ══════════════════════════════════════════════════════════════ */
-.slide-type-reflection .slide-col { padding: 56px 26px 100px !important; gap: 4px; height: 100dvh !important; overflow: hidden !important; }
+.slide-type-reflection .slide-col { padding: 56px var(--deck-pad) 100px !important; gap: 4px; height: 100dvh !important; overflow: hidden !important; }
 .reflect-opts { display: flex; flex-direction: column; gap: 14px; flex: 1; justify-content: center; }
 .rc-opt { display: flex !important; align-items: center; gap: 16px; cursor: pointer; padding: 4px 0; -webkit-tap-highlight-color: transparent; }
 .rc-bubble {
@@ -710,7 +714,8 @@ body.slide-page > .progress-wrapper {
    COMPLETION SLIDE
    ══════════════════════════════════════════════════════════════ */
 .slide-type-completion .slide-col {
-  align-items: center !important; justify-content: center !important; gap: 14px !important; padding: 0 26px 100px !important;
+  align-items: center !important; justify-content: center !important; gap: 14px !important;
+  padding: 0 var(--deck-pad) 100px !important;
   text-align: center !important; height: auto !important; min-height: 100dvh !important; overflow: visible !important;
 }
 .completion-badge {
@@ -723,7 +728,6 @@ body.slide-page > .progress-wrapper {
 .completion-badge .badge { width: 100% !important; height: 100% !important; display: flex !important; align-items: center; justify-content: center; }
 .completion-badge .badge svg { width: 100% !important; height: 100% !important; }
 
-/* Holds one or more .scorerow lines: score, badge earned, etc. */
 .score-display {
   background: var(--white); border: 1.5px solid var(--border); border-radius: 18px;
   padding: 6px 24px; width: 100%; max-width: 320px; text-align: left;
@@ -749,10 +753,15 @@ body.slide-page > .progress-wrapper {
    RESPONSIVE BREAKPOINTS
    ══════════════════════════════════════════════════════════════ */
 
-/* ─── ≥768px: desktop/tablet frame width cap ─── */
+/* ─── ≥768px: desktop/tablet frame width cap ───
+   .slide-col, .slide-top and .slide-footer all cap at the SAME
+   --deck-max width here, which is the actual fix for the "caged"
+   feeling — the header/footer used to be narrower than the content
+   column, so the header read as boxed-in relative to everything
+   below it. */
 @media (min-width: 768px) {
-  .slide-col { max-width: 640px !important; margin: 0 auto !important; }
-  .slide-top, .slide-footer { max-width: 640px !important; left: 50% !important; transform: translateX(-50%) !important; right: unset !important; width: 100% !important; }
+  .slide-col { max-width: var(--deck-max) !important; margin: 0 auto !important; }
+  .slide-top, .slide-footer { max-width: var(--deck-max) !important; left: 50% !important; transform: translateX(-50%) !important; right: unset !important; width: 100% !important; }
   .cover-top-row { position: absolute !important; top: 12px !important; left: 0 !important; right: 0 !important; transform: none !important; max-width: 100% !important; width: 100% !important; }
 
   .slide-h1 { font-size: clamp(2rem, 3.2vw, 2.7rem) !important; }
@@ -760,23 +769,20 @@ body.slide-page > .progress-wrapper {
   .slide-type-comparison .slide-h1, .slide-type-reflection .slide-h1, .slide-type-completion .slide-h1 {
     font-size: clamp(3.2rem, 4.6vw, 5rem) !important;
   }
-  .slide-type-interactive .slide-txt, .slide-type-comparison .slide-txt,
+  .slide-type-comparison .slide-txt,
   .slide-type-reflection .slide-txt, .slide-type-completion .slide-txt {
     font-size: clamp(16px, 2.1vw, 18px) !important; line-height: 1.6 !important;
   }
 
-  .prog-col { width: 14px; } /* applies at ≥1000px too — see below */
-}
-@media (min-width: 1000px) {
   .prog-col { width: 14px; }
 }
 
 /* ─── ≥768px with limited height (short laptop viewports) ─── */
 @media (min-width: 768px) and (max-height: 800px) {
-  .slide-text-title .slide-h1, .slide-type-keyinsight .slide-h1 { font-size: 1.9rem !important; }
-  .slide-text-title .slide-txt, .slide-type-keyinsight .slide-txt { font-size: 13px !important; line-height: 1.45 !important; }
-  .slide-text-title .slide-col, .slide-type-keyinsight .slide-col { padding-top: 52px !important; padding-bottom: 110px !important; }
-  .slide-text-title .slide-visual, .slide-type-keyinsight .slide-visual { max-width: 340px; }
+  .slide-text-title .slide-h1, .slide-type-keyinsight .slide-h1 { font-size: clamp(2rem, 4.4vw, 2.9rem) !important; }
+  .slide-text-title .slide-txt, .slide-type-keyinsight .slide-txt { font-size: 15px !important; line-height: 1.5 !important; }
+  .slide-text-title .slide-col, .slide-type-keyinsight .slide-col { padding-top: 44px !important; padding-bottom: 104px !important; }
+  .slide-text-title .slide-visual, .slide-type-keyinsight .slide-visual { max-width: 300px; }
 
   .slide-type-quiz .slide-h1 { font-size: 1.9rem !important; }
   .slide-type-quiz .slide-col { padding-top: 52px !important; padding-bottom: 140px !important; }
@@ -791,29 +797,21 @@ body.slide-page > .progress-wrapper {
   .completion-badge { width: 80px !important; height: 80px !important; font-size: 36px !important; }
   .score-value { font-size: 26px !important; }
 
-  .slide-footer { padding: 0 22px 14px !important; }
+  .slide-footer { padding-bottom: 14px !important; }
   .btn-next { height: 46px !important; }
 }
 
 /* ─── ≤480px ─── */
 @media (max-width: 480px) {
-  .slide-text-title .slide-col, .slide-type-keyinsight .slide-col {
-    padding-left: 18px !important; padding-right: 18px !important; padding-bottom: 100px !important;
-  }
-  .slide-text-title .slide-h1, .slide-type-keyinsight .slide-h1 { font-size: clamp(2.2rem, 10.5vw, 3rem) !important; line-height: 1.04 !important; }
-  .slide-text-title .slide-txt, .slide-type-keyinsight .slide-txt { font-size: clamp(15px, 4.2vw, 17px) !important; line-height: 1.5 !important; }
+  .slide-text-title .slide-col, .slide-type-keyinsight .slide-col { padding-bottom: 108px !important; }
+  .slide-text-title .slide-h1, .slide-type-keyinsight .slide-h1 { font-size: clamp(2.2rem, 10.5vw, 3rem) !important; line-height: 1.06 !important; }
+  .slide-text-title .slide-txt, .slide-type-keyinsight .slide-txt { font-size: clamp(16px, 4.6vw, 18px) !important; line-height: 1.55 !important; }
   .slide-text-title .slide-visual, .slide-type-keyinsight .slide-visual { max-width: 300px; }
 
-  .slide-type-interactive .slide-col { padding-left: 18px !important; padding-right: 18px !important; }
   .slide-type-interactive .slide-h1 { font-size: clamp(2.05rem, 10vw, 2.8rem) !important; }
-  .slide-type-interactive .slide-txt { font-size: 15px !important; }
-  .slide-type-interactive .coin-grid {
-    grid-template-columns: 68px 94px 68px !important;
-    column-gap: clamp(14px, 4vw, 20px) !important;
-    padding-inline: 4px !important;
-  }
-  .slide-type-interactive .coin.coin-50, .slide-type-interactive .coin.coin-500 { width: 68px !important; height: 68px !important; min-width: 68px !important; min-height: 68px !important; }
-  .slide-type-interactive .coin.coin-100 { width: 94px !important; height: 94px !important; min-width: 94px !important; min-height: 94px !important; }
+  .slide-type-interactive .slide-txt { font-size: 16px !important; }
+  .slide-type-interactive .coin-grid { gap: 10px; margin-top: 20px; }
+  .slide-type-interactive .coin { padding: 20px 8px; min-width: 84px; font-size: clamp(17px, 5vw, 22px); }
 }
 
 /* ─── ≤380px ─── */
@@ -823,9 +821,6 @@ body.slide-page > .progress-wrapper {
   .slide-type-concept .slide-col, .slide-text-title .slide-col, .slide-type-keyinsight .slide-col, .slide-type-quiz .slide-col {
     padding-left: 18px !important; padding-right: 18px !important;
   }
-  .coin.coin-50  { width: 68px !important; height: 68px !important; font-size: 13px !important; }
-  .coin.coin-100 { width: 90px !important; height: 90px !important; font-size: 17px !important; }
-  .coin.coin-500 { width: 68px !important; height: 68px !important; font-size: 13px !important; }
   .completion-badge { width: 90px !important; height: 90px !important; font-size: 40px !important; }
 
   .slide-text-title .slide-visual, .slide-type-keyinsight .slide-visual { max-width: 260px; }
@@ -834,11 +829,4 @@ body.slide-page > .progress-wrapper {
 
   .slide-lesson-title .slide-h1, .slide-type-comparison .slide-h1,
   .slide-type-reflection .slide-h1, .slide-type-completion .slide-h1 { font-size: 2.15rem !important; }
-}
-
-/* ─── ≤340px ─── */
-@media (max-width: 340px) {
-  .slide-type-interactive .coin-grid { grid-template-columns: 62px 86px 62px !important; column-gap: 12px !important; }
-  .slide-type-interactive .coin.coin-50, .slide-type-interactive .coin.coin-500 { width: 62px !important; height: 62px !important; min-width: 62px !important; min-height: 62px !important; }
-  .slide-type-interactive .coin.coin-100 { width: 86px !important; height: 86px !important; min-width: 86px !important; min-height: 86px !important; }
 }
