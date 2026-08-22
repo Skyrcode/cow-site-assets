@@ -218,8 +218,39 @@ body.slide-page > .progress-wrapper {
   font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: .16em;
   color: var(--body-gray); font-variant-numeric: tabular-nums; transition: color .3s;
   white-space: nowrap;
+  margin-right: 40px !important; /* clears the absolutely-positioned exit button */
 }
 .slide-top.on-teal .slide-count { color: rgba(250,247,244,.65); }
+
+/* Exit button — pulled out of the grid flow so it can sit flush at the
+   far right edge without disturbing the back/brand/counter centering math. */
+.exit-div {
+  position: absolute !important;
+  top: 50% !important;
+  right: max(var(--chrome-pad), env(safe-area-inset-right)) !important;
+  transform: translateY(-50%) !important;
+  width: 28px !important; height: 28px !important;
+  z-index: 101;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  pointer-events: all !important;
+  text-decoration: none !important;
+}
+.code-embed-7, .exit-btn {
+  width: 100% !important; height: 100% !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+}
+.exit-btn {
+  border-radius: 50% !important; border: 1.5px solid var(--border) !important;
+  background: rgba(250,247,244,.95) !important; color: var(--teal) !important;
+  transition: background .2s, border-color .2s, color .2s, transform .2s;
+}
+.exit-btn svg { width: 14px !important; height: 14px !important; display: block; }
+.exit-btn:active { transform: scale(.86); }
+.slide-top.on-teal .exit-btn { background: rgba(255,255,255,.14) !important; border-color: rgba(255,255,255,.24) !important; color: #fff !important; }
+@media (hover: hover) {
+  .exit-btn:hover { border-color: var(--pink-deep); color: var(--pink-deep); }
+  .slide-top.on-teal .exit-btn:hover { border-color: var(--gold); color: var(--gold); }
+}
 
 /* ─── Slide footer / Next button — same edge inset as the top bar ─── */
 .slide-footer {
@@ -369,7 +400,7 @@ body.slide-page > .progress-wrapper {
 .slide-type-keyinsight .slide-col {
   width: 100% !important;
   padding: clamp(48px, 7dvh, 72px) var(--deck-pad) clamp(84px, 11dvh, 104px) !important;
-  justify-content: flex-start !important;
+  justify-content: center !important;
   align-items: stretch !important;
   gap: 0 !important;
   min-height: 100dvh !important;
@@ -379,9 +410,7 @@ body.slide-page > .progress-wrapper {
 .slide-text-title .slide-body,
 .slide-type-keyinsight .slide-body {
   width: 100% !important;
-  flex: 1 1 auto !important;
-  display: flex !important;
-  flex-direction: column !important;
+  flex: 0 0 auto !important;
 }
 .slide-text-title .content-wrap,
 .slide-type-keyinsight .content-wrap {
@@ -391,8 +420,7 @@ body.slide-page > .progress-wrapper {
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
-  flex: 1 1 auto !important;
-  gap: clamp(14px, 2dvh, 22px) !important;
+  gap: clamp(20px, 3.2dvh, 34px) !important;
 }
 
 .slide-text-title .slide-h1,
@@ -422,7 +450,7 @@ body.slide-page > .progress-wrapper {
   height: auto;
   aspect-ratio: 10 / 7;
   max-width: clamp(260px, 36vh, 420px);
-  margin: auto !important;
+  margin: 0 auto;
   padding: 0;
   display: flex;
   align-items: center;
@@ -740,13 +768,13 @@ body.slide-page > .progress-wrapper {
   margin: 0 auto !important;
 }
 .slide-type-completion .slide-col {
-  align-items: center !important; justify-content: center !important; gap: clamp(10px, 1.8dvh, 16px) !important;
-  padding: clamp(72px, 10dvh, 96px) var(--deck-pad) clamp(84px, 11dvh, 100px) !important;
+  align-items: center !important; justify-content: center !important; gap: clamp(12px, 2dvh, 20px) !important;
+  padding: clamp(56px, 8dvh, 84px) var(--deck-pad) clamp(80px, 10dvh, 96px) !important;
   text-align: center !important; height: auto !important; min-height: 100dvh !important; overflow: visible !important;
 }
 .completion-badge {
-  width: clamp(88px, 14vh, 120px); height: clamp(88px, 14vh, 120px); border-radius: 50%; background: var(--pink-deep); border: 2px solid rgba(248,187,217,.4);
-  display: flex !important; align-items: center; justify-content: center; font-size: clamp(38px, 6vh, 52px); flex-shrink: 0;
+  width: clamp(120px, 20vh, 190px); height: clamp(120px, 20vh, 190px); border-radius: 50%; background: var(--pink-deep); border: 2px solid rgba(248,187,217,.4);
+  display: flex !important; align-items: center; justify-content: center; font-size: clamp(48px, 8vh, 72px); flex-shrink: 0;
   animation: rP 2.2s ease-in-out infinite;
   overflow: hidden !important;
 }
@@ -774,6 +802,42 @@ body.slide-page > .progress-wrapper {
 @keyframes sBump { 0%{ transform:scale(1); } 50%{ transform:scale(1.38); } 100%{ transform:scale(1); } }
 .completion-msg { font-family: var(--sans); font-size: 12.5px; color: var(--body-gray); }
 .tone-teal .completion-msg { color: rgba(250,247,244,.55); }
+
+/* "Next up: <lesson>" — the JS snippet splits this into three parts so
+   the next-lesson name can sit on its own line with real weight,
+   instead of being buried mid-sentence. */
+.slide-type-completion .slide-txt {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  gap: 2px;
+}
+.finished-line {
+  font-family: var(--sans);
+  font-size: inherit;
+  color: var(--body-gray);
+}
+.tone-teal .finished-line { color: rgba(250,247,244,.78); }
+.next-lesson-label {
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--body-gray);
+  margin-top: 12px;
+}
+.tone-teal .next-lesson-label { color: rgba(250,247,244,.55); }
+.next-lesson-name {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 600;
+  color: var(--teal);
+  font-size: clamp(1.5rem, 6.5vw, 2.15rem);
+  line-height: 1.15;
+}
+.tone-teal .next-lesson-name { color: var(--gold); }
 
 /* ══════════════════════════════════════════════════════════════
    RESPONSIVE BREAKPOINTS
@@ -813,8 +877,8 @@ body.slide-page > .progress-wrapper {
   .chart-wrap { height: 150px !important; min-height: 150px !important; }
   .bar-track  { height: 110px !important; min-height: 110px !important; max-height: 110px !important; }
 
-  .slide-type-completion .slide-col { padding-top: 60px !important; padding-bottom: 76px !important; gap: 8px !important; }
-  .completion-badge { width: 72px !important; height: 72px !important; font-size: 32px !important; }
+  .slide-type-completion .slide-col { padding-top: 48px !important; padding-bottom: 72px !important; gap: 10px !important; }
+  .completion-badge { width: 100px !important; height: 100px !important; font-size: 42px !important; }
   .score-value { font-size: 24px !important; }
 
   .slide-footer { padding-bottom: 14px !important; }
@@ -832,7 +896,7 @@ body.slide-page > .progress-wrapper {
   .slide-type-interactive .coin-grid { gap: 10px; margin-top: 14px; }
   .slide-type-interactive .coin { padding: 20px 8px; min-width: 84px; font-size: clamp(17px, 5vw, 22px); }
 
-  .brandmark { max-width: 46vw; font-size: 13px; }
+  .brandmark { max-width: 40vw; font-size: 13px; }
 }
 
 @media (max-width: 380px) {
@@ -850,5 +914,5 @@ body.slide-page > .progress-wrapper {
   .slide-lesson-title .slide-h1, .slide-type-comparison .slide-h1,
   .slide-type-reflection .slide-h1, .slide-type-completion .slide-h1 { font-size: 2.15rem !important; }
 
-  .brandmark { font-size: 12px; max-width: 40vw; }
+  .brandmark { font-size: 12px; max-width: 34vw; }
 }
