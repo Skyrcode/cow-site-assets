@@ -6,12 +6,16 @@
    one of the reveal classes in the HTML — you place those by
    hand, once, on exactly the elements you want to move.
 
-   Includes a built-in safety net: if an element is still
-   unrevealed 2s after this script runs, it force-reveals.
-   This is not a bug workaround bolted on later — it's a
-   permanent guarantee that no scroll-reveal element can ever
-   get stuck invisible, regardless of load-order quirks, CMS
-   re-renders, or anything else.
+   REPLAY MODE: elements reveal every time they scroll into
+   view, and re-mask every time they scroll out — either
+   direction. Scrolling back up past a section replays its
+   entrance animation again, same as scrolling down to it.
+
+   Includes a built-in safety net: on first load, if an
+   element that's already on screen hasn't revealed within 2s
+   (e.g. the very first section, before any scrolling happens),
+   it force-reveals. This only runs once, on load — after that,
+   the observer alone drives all reveal/re-mask behavior.
 
    Load this AFTER cow-motion.css, and AFTER any CMS content
    has had a chance to render (place near the end of body,
@@ -28,7 +32,8 @@ document.addEventListener('DOMContentLoaded', function(){
       entries.forEach(function(entry){
         if(entry.isIntersecting){
           entry.target.classList.add('cw-m-in');
-          io.unobserve(entry.target); // fire once, never re-mask
+        } else {
+          entry.target.classList.remove('cw-m-in'); // re-mask on exit, replays next time it's in view
         }
       });
     }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
@@ -38,10 +43,14 @@ document.addEventListener('DOMContentLoaded', function(){
     revealEls.forEach(function(el){ el.classList.add('cw-m-in'); });
   }
 
-  // Safety net — guarantees nothing stays invisible.
+  // Safety net — only for the initial load moment, so whatever's
+  // already on screen when the page opens doesn't sit invisible
+  // waiting for a scroll event that may never come.
   setTimeout(function(){
     revealEls.forEach(function(el){
-      if(!el.classList.contains('cw-m-in')) el.classList.add('cw-m-in');
+      var rect = el.getBoundingClientRect();
+      var inViewport = rect.top < window.innerHeight && rect.bottom > 0;
+      if(inViewport && !el.classList.contains('cw-m-in')) el.classList.add('cw-m-in');
     });
   }, 2000);
 
