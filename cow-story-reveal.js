@@ -24,34 +24,48 @@
 document.addEventListener('DOMContentLoaded', function(){
 
   var revealSelectors = '.cw-m-fade, .cw-m-clip, .cw-m-text';
-  var revealEls = document.querySelectorAll(revealSelectors);
+  var revealEls = Array.prototype.slice.call(document.querySelectorAll(revealSelectors));
   if(!revealEls.length) return;
 
-  if('IntersectionObserver' in window){
-    var io = new IntersectionObserver(function(entries){
-      entries.forEach(function(entry){
-        if(entry.isIntersecting){
-          entry.target.classList.add('cw-m-in');
-        } else {
-          entry.target.classList.remove('cw-m-in'); // re-mask on exit, replays next time it's in view
-        }
-      });
-    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+  // Direct geometry check on scroll, instead of IntersectionObserver.
+  // An element counts as "in view" once 15% of its height has
+  // crossed into the viewport, with a small bottom margin so it
+  // reveals slightly before hitting the very edge of the screen —
+  // same visual timing as before, just computed directly instead
+  // of relying on the browser's IO callback, which has been an
+  // unpredictable source of bugs on this project (stuck masks,
+  // false negatives on elements confirmed to be on-screen).
+  var BOTTOM_MARGIN = 40;
 
-    revealEls.forEach(function(el){ io.observe(el); });
-  } else {
-    revealEls.forEach(function(el){ el.classList.add('cw-m-in'); });
+  function isRevealed(el){
+    var rect = el.getBoundingClientRect();
+    var vh = window.innerHeight;
+    if(rect.height <= 0) return false;
+    var visibleTop = Math.max(rect.top, 0);
+    var visibleBottom = Math.min(rect.bottom, vh - BOTTOM_MARGIN);
+    var visibleHeight = visibleBottom - visibleTop;
+    var ratio = visibleHeight / rect.height;
+    return ratio >= 0.15;
   }
 
-  // Safety net — only for the initial load moment, so whatever's
-  // already on screen when the page opens doesn't sit invisible
-  // waiting for a scroll event that may never come.
-  setTimeout(function(){
+  var ticking = false;
+  function update(){
     revealEls.forEach(function(el){
-      var rect = el.getBoundingClientRect();
-      var inViewport = rect.top < window.innerHeight && rect.bottom > 0;
-      if(inViewport && !el.classList.contains('cw-m-in')) el.classList.add('cw-m-in');
+      var should = isRevealed(el);
+      var has = el.classList.contains('cw-m-in');
+      if(should && !has) el.classList.add('cw-m-in');
+      if(!should && has) el.classList.remove('cw-m-in'); // re-mask on exit, replays next time it's in view
     });
-  }, 2000);
+    ticking = false;
+  }
+
+  function onScroll(){
+    if(!ticking){ window.requestAnimationFrame(update); ticking = true; }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+
+  update(); // run once immediately for whatever's on screen at load
 
 });
