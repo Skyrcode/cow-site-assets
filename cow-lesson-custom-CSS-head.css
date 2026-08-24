@@ -916,3 +916,279 @@ body.slide-page > .progress-wrapper {
 
   .brandmark { font-size: 12px; max-width: 34vw; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   FINAL FIX — TOP CHROME + LOTTIE SLIDE LAYOUT
+   Only the requested areas are overridden below.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ─── Top chrome: Back / centered Brand / Counter / Exit ─── */
+.slide-top {
+  grid-template-columns: 1fr auto 1fr !important;
+}
+
+.slide-count {
+  margin-right: 28px !important;
+}
+
+.exit-div {
+  width: 20px !important;
+  height: 20px !important;
+  right: max(var(--chrome-pad), env(safe-area-inset-right)) !important;
+}
+
+.exit-btn {
+  width: 20px !important;
+  height: 20px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  color: var(--teal) !important;
+}
+
+.exit-btn svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+
+.slide-top.on-teal .exit-btn {
+  border: 0 !important;
+  background: transparent !important;
+  color: #fff !important;
+}
+
+@media (hover: hover) {
+  .exit-btn:hover {
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--pink-deep) !important;
+  }
+
+  .slide-top.on-teal .exit-btn:hover {
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--gold) !important;
+  }
+}
+
+/* ─── Lottie title + key-insight slides:
+      use the concept slide as the visual/layout reference ─── */
+.slide-lesson-title .cover-top-row,
+.slide-text-title .slide-col,
+.slide-type-keyinsight .slide-col {
+  box-sizing: border-box !important;
+}
+
+.slide-text-title .slide-col,
+.slide-type-keyinsight .slide-col {
+  padding: 48px var(--deck-pad) 92px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.slide-text-title .slide-body,
+.slide-type-keyinsight .slide-body {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.slide-text-title .content-wrap,
+.slide-type-keyinsight .content-wrap {
+  width: 100% !important;
+  max-width: 600px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 22px !important;
+  margin: 0 auto !important;
+  text-align: center !important;
+}
+
+.slide-text-title .slide-h1,
+.slide-type-keyinsight .slide-h1 {
+  width: 100% !important;
+  max-width: 600px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center !important;
+  font-size: clamp(2.4rem, 9.6vw, 3.6rem) !important;
+  line-height: 1.06 !important;
+  letter-spacing: -.02em !important;
+}
+
+.slide-text-title .slide-txt,
+.slide-type-keyinsight .slide-txt {
+  width: 100% !important;
+  max-width: 600px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center !important;
+  font-size: clamp(18px, 5vw, 22px) !important;
+  line-height: 1.6 !important;
+}
+
+.slide-text-title .slide-visual,
+.slide-type-keyinsight .slide-visual {
+  width: 168px !important;
+  height: 168px !important;
+  max-width: 168px !important;
+  max-height: 168px !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  border-radius: 50% !important;
+  flex: 0 0 168px !important;
+}
+
+.slide-text-title .slide-visual > div,
+.slide-text-title .slide-visual iframe,
+.slide-text-title .slide-visual dotlottie-player,
+.slide-type-keyinsight .slide-visual > div,
+.slide-type-keyinsight .slide-visual iframe,
+.slide-type-keyinsight .slide-visual dotlottie-player {
+  width: 130px !important;
+  height: 130px !important;
+  max-width: 130px !important;
+  max-height: 130px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+@media (min-width: 768px) {
+  .slide-text-title .slide-h1,
+  .slide-type-keyinsight .slide-h1 {
+    font-size: clamp(2.4rem, 4.2vw, 3.6rem) !important;
+  }
+
+  .slide-text-title .slide-txt,
+  .slide-type-keyinsight .slide-txt {
+    font-size: clamp(18px, 2.4vw, 22px) !important;
+  }
+}
+
+@media (min-width: 768px) and (max-height: 800px) {
+  .slide-text-title .slide-col,
+  .slide-type-keyinsight .slide-col {
+    padding: 40px var(--deck-pad) 84px !important;
+  }
+
+  .slide-text-title .slide-h1,
+  .slide-type-keyinsight .slide-h1 {
+    font-size: clamp(2.2rem, 4vw, 3rem) !important;
+  }
+
+  .slide-text-title .slide-txt,
+  .slide-type-keyinsight .slide-txt {
+    font-size: clamp(17px, 2.2vw, 20px) !important;
+    line-height: 1.5 !important;
+  }
+
+  .slide-text-title .slide-visual,
+  .slide-type-keyinsight .slide-visual {
+    width: 150px !important;
+    height: 150px !important;
+    max-width: 150px !important;
+    max-height: 150px !important;
+    flex-basis: 150px !important;
+  }
+
+  .slide-text-title .slide-visual > div,
+  .slide-text-title .slide-visual iframe,
+  .slide-text-title .slide-visual dotlottie-player,
+  .slide-type-keyinsight .slide-visual > div,
+  .slide-type-keyinsight .slide-visual iframe,
+  .slide-type-keyinsight .slide-visual dotlottie-player {
+    width: 116px !important;
+    height: 116px !important;
+    max-width: 116px !important;
+    max-height: 116px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .slide-text-title .slide-col,
+  .slide-type-keyinsight .slide-col {
+    padding: 44px var(--deck-pad) 92px !important;
+  }
+
+  .slide-text-title .slide-h1,
+  .slide-type-keyinsight .slide-h1 {
+    font-size: clamp(2.2rem, 10vw, 3rem) !important;
+    line-height: 1.06 !important;
+  }
+
+  .slide-text-title .slide-txt,
+  .slide-type-keyinsight .slide-txt {
+    font-size: clamp(16px, 4.8vw, 19px) !important;
+    line-height: 1.55 !important;
+  }
+
+  .slide-text-title .slide-visual,
+  .slide-type-keyinsight .slide-visual {
+    width: 150px !important;
+    height: 150px !important;
+    max-width: 150px !important;
+    max-height: 150px !important;
+    flex-basis: 150px !important;
+  }
+
+  .slide-text-title .slide-visual > div,
+  .slide-text-title .slide-visual iframe,
+  .slide-text-title .slide-visual dotlottie-player,
+  .slide-type-keyinsight .slide-visual > div,
+  .slide-type-keyinsight .slide-visual iframe,
+  .slide-type-keyinsight .slide-visual dotlottie-player {
+    width: 116px !important;
+    height: 116px !important;
+    max-width: 116px !important;
+    max-height: 116px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .slide-text-title .slide-h1,
+  .slide-type-keyinsight .slide-h1 {
+    font-size: 2.15rem !important;
+  }
+
+  .slide-text-title .slide-txt,
+  .slide-type-keyinsight .slide-txt {
+    font-size: 15px !important;
+  }
+
+  .slide-text-title .slide-visual,
+  .slide-type-keyinsight .slide-visual {
+    width: 140px !important;
+    height: 140px !important;
+    max-width: 140px !important;
+    max-height: 140px !important;
+    flex-basis: 140px !important;
+  }
+
+  .slide-text-title .slide-visual > div,
+  .slide-text-title .slide-visual iframe,
+  .slide-text-title .slide-visual dotlottie-player,
+  .slide-type-keyinsight .slide-visual > div,
+  .slide-type-keyinsight .slide-visual iframe,
+  .slide-type-keyinsight .slide-visual dotlottie-player {
+    width: 108px !important;
+    height: 108px !important;
+    max-width: 108px !important;
+    max-height: 108px !important;
+  }
+}
