@@ -338,7 +338,6 @@ body.slide-page > .progress-wrapper {
 .slide-type-comparison .slide-h1,
 .slide-type-reflection .slide-h1,
 .slide-type-completion .slide-h1 {
-  font-size: clamp(2.5rem, 9vw, 4.2rem) !important;
   line-height: 1.05 !important;
   letter-spacing: -.02em !important;
 }
@@ -459,9 +458,9 @@ body.slide-page > .progress-wrapper {
 
 .slide-text-title .slide-visual,
 .slide-type-keyinsight .slide-visual {
-  width: 168px !important;
-  height: 168px !important;
-  max-width: 168px !important;
+  width: 600px !important;
+  height: 600px !important;
+  max-width: 600px !important;
   max-height: 168px !important;
   aspect-ratio: 1 / 1 !important;
   margin: 0 auto !important;
@@ -479,10 +478,10 @@ body.slide-page > .progress-wrapper {
 .slide-type-keyinsight .slide-visual > div,
 .slide-type-keyinsight .slide-visual iframe,
 .slide-type-keyinsight .slide-visual dotlottie-player {
-  width: 130px !important;
-  height: 130px !important;
-  max-width: 130px !important;
-  max-height: 130px !important;
+  width: 600px !important;
+  height: 600px !important;
+  max-width: 600px!important;
+  max-height: 600px !important;
   object-fit: contain !important;
   display: block !important;
 }
