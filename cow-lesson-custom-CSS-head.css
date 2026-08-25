@@ -1,917 +1,1036 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&display=swap');
+
 /* ══════════════════════════════════════════════════════════════
-   COW Lesson Deck — engine
-   Load order unchanged: this script still expects the lottie.min.js
-   <script> tag to load before it, exactly as in the original page.
+   COW LESSON DECK — "Teal Light" design system
+   Single source of truth. Every selector appears exactly once.
    ══════════════════════════════════════════════════════════════ */
 
-if (document.querySelector('.lesson-wrapper')) {
-  document.body.classList.add('slide-page');
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --teal:       #1B4B54;
+  --beige:      #F0EAE3;
+  --cream:      #FAF7F4;
+  --white:      #FFFFFF;
+  --blush:      #FDE8F4;
+  --teal-light: #EAF4F7;
+  --gold:       #C9974A;
+  --gold-deep:  #A97D36;
+  --pink-deep:  #C4197A;
+  --pink-soft:  #F8BBD9;
+  --ink:        #2C2C2C;
+  --body-gray:  #85796B;
+  --border:     #E8DFD2;
+  --sage:       #9CB86B;
+  --sage-deep:  #5F7A3A;
+  --display: 'Cormorant Garamond', Georgia, serif;
+  --sans:    'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --deck-max:   720px;
+  --deck-pad:   clamp(18px, 4vw, 36px);   /* inset for body copy / content-wrap */
+  --chrome-pad: clamp(14px, 3.5vw, 22px); /* inset for top bar + footer button — sits tighter to the true edge */
 }
 
-// Strip Webflow's native lottie trigger from the cover icon and
-// completion badge — these two are the only elements still carrying
-// data-w-id, which lets Webflow's own lazy lottie loader fire
-// independently of initLottie() below the moment the slide becomes
-// visible, rendering a second copy into the same container. Runs
-// immediately, before Webflow's own lazy loader (which only fires
-// once the element is scrolled/displayed into view) ever gets a
-// chance to see the attribute it looks for.
-document.querySelectorAll('[data-w-id][data-animation-type="lottie"]').forEach(function(el) {
-  el.removeAttribute('data-w-id');
-});
+* { scrollbar-width: none !important; }
+*::-webkit-scrollbar { display: none !important; }
 
-async function msLoad() {
-  try {
-    var m = await window.$memberstackDom.getCurrentMember();
-    if (!m || !m.data) return;
-    var j = m.data.json || {};
-    if (j.progress) {
-      Object.keys(j.progress).forEach(function(s) {
-        var d = j.progress[s];
-        if (d.pct   !== undefined) localStorage.setItem('progress-' + s, d.pct);
-        if (d.slide !== undefined) localStorage.setItem('slide-' + s, d.slide);
-        if (d.done)                localStorage.setItem('completed-' + s, 'true');
-        // Module-scoped score restore: each saved lesson record now also
-        // carries which module it belongs to (written by msSave below), so
-        // we can seed that module's running score cache on this device
-        // without needing any new CMS field. Older saved records without
-        // a `module` field are simply skipped here — non-breaking.
-        if (d.module && d.score !== undefined) {
-          localStorage.setItem('module-score-' + d.module, d.score);
-        }
-      });
-    }
-  } catch(e) { console.warn('[COW] ms load', e); }
-}
-var _sync = null;
-async function msSave(slug, pct, idx, done) {
-  try {
-    var m = await window.$memberstackDom.getCurrentMember();
-    if (!m || !m.data) return;
-    var j = m.data.json || {};
-    if (!j.progress) j.progress = {};
-    var modId = document.body.getAttribute('data-module') || 'default-module';
-    j.progress[slug] = {
-      pct: pct, slide: idx, done: !!done,
-      module: modId,
-      score: parseInt(localStorage.getItem('module-score-' + modId)) || 0
-    };
-    await window.$memberstackDom.updateMemberJSON({ json: j });
-  } catch(e) { console.warn('[COW] ms save', e); }
-}
-function msSchedule(slug, pct, idx) {
-  clearTimeout(_sync);
-  _sync = setTimeout(function() { msSave(slug, pct, idx, false); }, 3000);
+/* ─── Shared layout primitives ─── */
+.slide-body      { display: flex; flex-direction: column; width: 100%; }
+.content-wrap    { display: flex; flex-direction: column; width: 100%; gap: 4px; }
+.completion-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+.completion-div-text { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+.arrow  { font-size: 16px; line-height: 1; }
+.badge  { font-size: inherit; line-height: 1; }
+.w-inline-block { max-width: 100%; display: inline-block; }
+.w-dyn-item { display: block; }
+
+/* ─── Page shell ─── */
+html, body {
+  height: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  -webkit-overflow-scrolling: auto !important;
 }
 
-var SLIDE_SEL = [
-  '.slide-lesson-title', '.slide-text-title', '.slide-type-concept', '.slide-type-keyinsight',
-  '.slide-type-interactive', '.slide-type-comparison', '.slide-type-quiz',
-  '.slide-type-reflection', '.slide-type-completion'
-].join(',');
-
-var _lottieInstances = new WeakMap();
-
-// One slide → one Lottie container → one Lottie instance.
-// Previously this spawned an instance immediately, then destroyed and
-// re-spawned a second one after either a transitionend event or a fixed
-// 1800ms fallback — meant to pick up a container size that "settled"
-// after the slide's own reveal transition, but the visible side effect
-// was exactly the double-render glitch: users would briefly see the
-// first Lottie, then it would flash/reset into a second instance.
-//
-// initLottie() only ever runs from inside runAnim(), which itself only
-// fires after the slide is already display:flex + .active (see
-// showSlide()'s double-rAF below), so the container already has its
-// real, final layout size by the time this runs — there's nothing to
-// "settle" into later, and the respawn is unnecessary. Spawn exactly
-// once and leave it running.
-function initLottie(slide) {
-  var els = slide.querySelectorAll('.lottie-div, [data-animation-type="lottie"]');
-  els.forEach(function(el) {
-    var src = (el.getAttribute('data-src') || '').trim();
-    var existing = _lottieInstances.get(el);
-    if (existing) {
-      // Same animation already live in this container (e.g. the user
-      // navigated back to a previously-visited slide) — leave it alone
-      // rather than tearing it down and rebuilding it.
-      if (existing._src === src) return;
-      existing.destroy();
-      _lottieInstances.delete(el);
-    }
-    el.innerHTML = ''; // clear any native Webflow-rendered lottie content too
-    if (!src) return;
-
-    var anim = lottie.loadAnimation({
-      container: el,
-      renderer: 'svg',
-      loop: true,
-      autoplay: true,
-      path: src
-    });
-    anim._src = src;
-    _lottieInstances.set(el, anim);
-  });
+body.slide-page {
+  position: fixed !important;
+  width: 100% !important;
+  height: 100dvh !important;
+  background: var(--beige);
+  font-family: var(--sans);
+  color: var(--ink);
+  touch-action: pan-y;
+}
+body.slide-page > *:not(.lesson-wrapper):not(script):not(style):not(link) {
+  display: none !important;
+}
+body.slide-page > .prog-col,
+body.slide-page > .progress-wrapper {
+  display: block !important;
 }
 
-var DURS = {
-  'slide-lesson-title':     8000,
-  'slide-text-title':       8000,
-  'slide-type-concept':     6000,
-  'slide-type-keyinsight':  7000,
-  'slide-type-interactive': 0,
-  'slide-type-comparison':  10000,
-  'slide-type-quiz':        0,
-  'slide-type-reflection':  0,
-  'slide-type-completion':  0
-};
-/* Background follows slide POSITION, not slide type. Every slide gets a
-   .tone-* class assigned once in initLesson() (see the tone-assignment
-   pass), cycling through this sequence regardless of what type of slide
-   it is. */
-var PAGES = ["tealight","white","tealight","cream","tealight","blush","tealight","white","teal","tealight"];
-var LOCKED = ['slide-type-interactive','slide-type-quiz','slide-type-reflection'];
-var NO_DOTS = ['slide-lesson-title','slide-type-completion'];
-var SCROLLABLE = ['slide-text-title','slide-type-keyinsight','slide-type-quiz','slide-type-completion'];
+.intro-icon div { width: 130px !important; height: 130px !important; }
 
-var _raf = null;
-var _coinRaf = null;
-var _ct  = [];
-var _tx  = 0, _ty = 0;
+/* ─── Top hairline progress bar ─── */
+.progress-wrapper { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 1; background: transparent; }
+.progress-track    { position: absolute; inset: 0; background: var(--border); }
+.progress-fill      { position: absolute; inset: 0 auto 0 0; width: 0%; background: var(--gold); transition: width .5s ease; }
 
-function sType(s) {
-  var k = Object.keys(DURS);
-  for (var i = 0; i < k.length; i++) if (s.classList.contains(k[i])) return k[i];
-  return '';
+/* ─── Lesson wrapper / slide stack ─── */
+.lesson-wrapper {
+  position: fixed !important; inset: 0 !important;
+  width: 100vw !important; height: 100dvh !important;
+  z-index: 9999 !important; overflow: hidden !important;
+  background: var(--beige);
+  overscroll-behavior: none !important;
 }
-function isDark(s)       { return s.classList.contains('tone-teal'); }
-function isLocked(s)     { return LOCKED.indexOf(sType(s)) !== -1; }
-function isScrollable(s) { return SCROLLABLE.indexOf(sType(s)) !== -1; }
-function noDots(s)       { return NO_DOTS.indexOf(sType(s)) !== -1; }
-function getDur(s)       { return DURS[sType(s)] || 0; }
-function stopRaf()       { if (_raf) { cancelAnimationFrame(_raf); _raf = null; } }
-function clearCT()       { _ct.forEach(clearTimeout); _ct = []; }
+.slides-wrapper, .w-dyn-list {
+  position: absolute !important; inset: 0 !important;
+  width: 100% !important; height: 100% !important; overflow: hidden !important;
+}
+.collection-list, .w-dyn-items {
+  position: relative !important; width: 100% !important; height: 100% !important;
+  margin: 0 !important; padding: 0 !important; list-style: none !important; overflow: hidden !important;
+}
+.w-dyn-item { display: none; background: transparent !important; overflow: hidden !important; }
 
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+.slide-lesson-title, .slide-text-title, .slide-type-concept, .slide-type-keyinsight,
+.slide-type-interactive, .slide-type-comparison, .slide-type-quiz,
+.slide-type-reflection, .slide-type-completion {
+  position: absolute !important; top: 0 !important; left: 0 !important;
+  width: 100vw !important; height: 100dvh !important;
+  display: none; flex-direction: column !important; overflow: hidden !important;
+  margin: 0 !important; padding: 0 !important; box-sizing: border-box !important;
+}
+.slide-text-title, .slide-type-keyinsight, .slide-type-quiz, .slide-type-completion {
+  overflow-y: auto !important; overflow-x: hidden !important;
+}
+.slide-lesson-title.active, .slide-text-title.active, .slide-type-concept.active,
+.slide-type-keyinsight.active, .slide-type-interactive.active, .slide-type-comparison.active,
+.slide-type-quiz.active, .slide-type-reflection.active, .slide-type-completion.active {
+  display: flex !important;
 }
 
-function showEl(el, delay, duration, fromY, fromX) {
-  if (!el) return;
-  duration = duration || 500;
-  fromY = (fromY !== undefined) ? fromY : 28;
-  fromX = fromX || 0;
-  el.style.opacity = '0';
-  el.style.transform = 'translateY(' + fromY + 'px)' + (fromX ? ' translateX(' + fromX + 'px)' : '');
-  el.style.transition = 'none';
-  var t = setTimeout(function() {
-    el.style.transition =
-      'opacity ' + (duration/1000) + 's cubic-bezier(.16,.84,.44,1), ' +
-      'transform ' + (duration/1000) + 's cubic-bezier(.16,.84,.44,1)';
-    el.style.opacity = '1';
-    el.style.transform = 'none';
-  }, delay || 0);
-  _ct.push(t);
-  var safe = setTimeout(function() {
-    el.style.opacity = '1';
-    el.style.transform = 'none';
-    el.style.transition = 'none';
-  }, (delay || 0) + 6000);
-  _ct.push(safe);
+/* ─── Background tone — driven by slide POSITION, not type ─── */
+.tone-tealight { background: var(--teal-light) !important; color: var(--ink); }
+.tone-white    { background: var(--white)      !important; color: var(--ink); }
+.tone-cream    { background: var(--cream)      !important; color: var(--ink); }
+.tone-blush    { background: var(--blush)      !important; color: var(--ink); }
+.tone-teal     { background: var(--teal)       !important; color: var(--cream); }
+
+.slide-col {
+  display: flex !important; flex-direction: column !important;
+  width: 100% !important; min-height: 100dvh !important;
+  overflow: visible !important; background: inherit !important; overscroll-behavior: none !important;
+}
+.slide-lesson-title .slide-col, .slide-type-concept .slide-col, .slide-type-interactive .slide-col,
+.slide-type-comparison .slide-col, .slide-type-reflection .slide-col { height: 100dvh !important; overflow: hidden !important; }
+.slide-text-title .slide-col, .slide-type-keyinsight .slide-col,
+.slide-type-quiz .slide-col, .slide-type-completion .slide-col {
+  height: auto !important; min-height: 100dvh !important; overflow: visible !important;
 }
 
-function showElPop(el, delay) {
-  if (!el) return;
-  el.style.opacity = '0';
-  el.style.transform = 'scale(0.5)';
-  el.style.transition = 'none';
-  var t = setTimeout(function() {
-    el.style.transition = 'opacity .45s cubic-bezier(.34,1.5,.64,1), transform .45s cubic-bezier(.34,1.5,.64,1)';
-    el.style.opacity = '1';
-    el.style.transform = 'scale(1)';
-  }, delay || 0);
-  _ct.push(t);
+/* ─── Left progression rail ─── */
+.prog-col {
+  position: fixed !important; z-index: 120; left: 0; top: 0; bottom: 0;
+  width: 10px; background: rgba(27,75,84,.1); pointer-events: none;
+}
+.progfill {
+  position: absolute; inset: 0 0 auto 0; height: 0%;
+  background: var(--gold); transition: height .6s cubic-bezier(.22,1,.36,1);
 }
 
-function showElNow(el) {
-  if (!el) return;
-  el.style.opacity = '1';
-  el.style.transform = 'none';
-  el.style.transition = 'none';
+/* ══════════════════════════════════════════════════════════════
+   SLIDE TOP — Back (far left) / Brand (true center) / Counter + Exit (far right, grouped)
+   Uses --chrome-pad, NOT --deck-pad, so it sits tight to the real
+   corner instead of inheriting the wider body-copy margin.
+
+   Structural note: in the Webflow markup, Back / Brand / the
+   counter+exit group are the THREE direct children of .slide-top —
+   the counter (.slide-count) and the exit link (.exit-div) both live
+   nested one level down, inside a shared wrapper (.div-block-20).
+   That wrapper — not the counter itself — is the real grid item in
+   the third track, so it (not .slide-count) carries the
+   grid-column/justify-self placement. .slide-count and .exit-div are
+   laid out relative to each other with a plain flex row inside it.
+   ══════════════════════════════════════════════════════════════ */
+.slide-top {
+  position: absolute !important;
+  top: 0 !important; left: 0 !important; right: 0 !important;
+  height: 56px !important;
+  z-index: 100;
+  display: grid !important;
+  grid-template-columns: 1fr auto 1fr !important;
+  align-items: center;
+  column-gap: 8px;
+  padding: 0 max(var(--chrome-pad), env(safe-area-inset-right)) 0 max(var(--chrome-pad), env(safe-area-inset-left)) !important;
+  background: linear-gradient(to bottom, var(--cream) 75%, transparent);
+  transition: background .3s ease;
+  pointer-events: none;
+}
+.slide-top > * { pointer-events: all; min-width: 0; }
+.slide-top.on-teal { background: linear-gradient(to bottom, var(--teal) 75%, transparent) !important; }
+
+.btn-back {
+  grid-column: 1 !important;
+  justify-self: start !important;
+  width: 32px !important; height: 32px !important; min-width: 0 !important; padding: 0 !important;
+  border-radius: 50% !important; border: 1.5px solid var(--border) !important;
+  background: rgba(250,247,244,.95) !important; color: var(--teal) !important;
+  display: flex !important; align-items: center; justify-content: center;
+  font-size: 0 !important; letter-spacing: 0 !important;
+  cursor: pointer; text-decoration: none;
+  box-shadow: 0 1px 6px rgba(44,44,44,.12);
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s ease, transform .2s cubic-bezier(.34,1.4,.64,1), background .2s, border-color .2s, color .2s;
+}
+.btn-back::before { content: "‹"; font-family: var(--sans); font-size: 18px; font-weight: 700; line-height: 1; }
+.btn-back.on { opacity: 1; pointer-events: auto; }
+.btn-back:active { transform: scale(.84) !important; }
+.slide-top.on-teal .btn-back { background: rgba(255,255,255,.14) !important; border-color: rgba(255,255,255,.24) !important; color: #fff !important; }
+@media (hover: hover) {
+  .btn-back:hover { border-color: var(--pink-deep); color: var(--pink-deep); }
+  .slide-top.on-teal .btn-back:hover { border-color: var(--gold); color: var(--gold); }
 }
 
-function hideEl(el) {
-  if (!el) return;
-  el.style.opacity = '';
-  el.style.transform = '';
-  el.style.transition = '';
+.brandmark {
+  grid-column: 2 !important; justify-self: center !important; text-align: center;
+  font-family: var(--display); font-weight: 500; font-size: 14px;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--teal);
+  transition: color .3s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 42vw;
+}
+.slide-top.on-teal .brandmark { color: var(--pink-soft); }
+
+/* Right-hand group: counter immediately left of Exit, both pinned to
+   the far right edge as a single unit. */
+.div-block-20 {
+  grid-column: 3 !important;
+  justify-self: end !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  min-width: 0;
 }
 
-function animateOut(slide, onDone) {
-  var els = slide.querySelectorAll('.slide-h1, .slide-txt, .concept-card-txt, .slide-visual');
-  var duration = 280;
-  els.forEach(function(el) {
-    el.style.transition = 'opacity ' + (duration/1000) + 's ease, transform ' + (duration/1000) + 's ease';
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(-18px)';
-  });
-  setTimeout(onDone, duration);
+.slide-count {
+  font-family: var(--sans); font-size: 10px; font-weight: 700; letter-spacing: .16em;
+  color: var(--body-gray); font-variant-numeric: tabular-nums; transition: color .3s;
+  white-space: nowrap; background: none; flex-shrink: 0;
+}
+.slide-top.on-teal .slide-count { color: rgba(250,247,244,.65); }
+
+/* Exit — icon only, no button chrome, sized to just its glyph, sitting
+   flush against the far right edge with the counter immediately to its left. */
+.exit-div {
+  position: static !important;
+  width: 18px !important; height: 18px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  pointer-events: all !important;
+  text-decoration: none !important;
+  flex-shrink: 0;
+}
+.code-embed-7, .exit-btn {
+  width: 100% !important; height: 100% !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+}
+.exit-btn {
+  border: 0 !important; border-radius: 0 !important;
+  background: transparent !important; box-shadow: none !important; padding: 0 !important;
+  color: var(--teal) !important;
+  transition: color .2s, transform .2s;
+}
+.exit-btn svg { width: 15px !important; height: 15px !important; display: block; }
+.exit-btn:active { transform: scale(.86); }
+.slide-top.on-teal .exit-btn { color: #fff !important; }
+@media (hover: hover) {
+  .exit-btn:hover { color: var(--pink-deep) !important; }
+  .slide-top.on-teal .exit-btn:hover { color: var(--gold) !important; }
 }
 
-function animHeading(el, startDelay, wordGap) {
-  if (!el) return startDelay;
-  el.classList.remove('fx-l','fx-r','fx-u','fx-p');
-  var text = (el.innerText || el.textContent || '').trim();
-  if (!text) { showElNow(el); return startDelay; }
-  el.innerHTML = text;
-  var words = text.split(/\s+/).filter(Boolean);
-  if (words.length === 0) { showElNow(el); return startDelay; }
-  el.style.opacity = '0';
-  el.style.transition = 'none';
-  el.setAttribute('data-split', '1');
-  var html = words.map(function(word, i) {
-    var delayS = ((startDelay + i * wordGap) / 1000).toFixed(3);
-    return '<span style="display:inline-block;overflow:hidden;vertical-align:bottom;padding-bottom:0.06em;line-height:inherit"><span style="display:inline-block;opacity:0;animation:wordRise .52s cubic-bezier(.16,.84,.44,1) ' + delayS + 's forwards">' + word + '</span></span>';
-  }).join(' ');
-  el.innerHTML = html;
-  var t = setTimeout(function() { el.style.opacity = '1'; }, Math.max(0, startDelay - 20));
-  _ct.push(t);
-  return startDelay + (words.length - 1) * wordGap + 520;
+/* ─── Slide footer / Next button — same edge inset as the top bar ─── */
+.slide-footer {
+  position: fixed !important; bottom: 0; left: 0; right: 0;
+  padding: 0 max(var(--chrome-pad), env(safe-area-inset-right)) 26px max(var(--chrome-pad), env(safe-area-inset-left));
+  z-index: 100;
+  display: flex !important; align-items: center;
+  background: linear-gradient(to top, var(--cream) 80%, transparent);
+  transition: background .3s;
+  pointer-events: none;
+}
+.slide-footer > * { pointer-events: all; }
+.slide-footer.on-teal { background: linear-gradient(to top, var(--teal) 80%, transparent) !important; }
+
+.btn-next {
+  flex: 1 1 auto; width: 100%; height: 52px; border: none; border-radius: 15px;
+  font-family: var(--sans); font-size: 11.5px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase;
+  cursor: pointer; display: flex !important; align-items: center; justify-content: center;
+  text-decoration: none; pointer-events: none; opacity: 0; transform: translateY(10px);
+  transition: opacity .38s cubic-bezier(.34,1.2,.64,1), transform .38s cubic-bezier(.34,1.2,.64,1), background .2s, filter .2s;
+}
+.btn-next.show { opacity: 1 !important; transform: none !important; pointer-events: all !important; }
+.btn-next:active { transform: scale(.97) !important; }
+.btn-next.c-te { background: var(--teal); color: var(--cream); }
+.btn-next.c-lm { background: var(--gold); color: var(--teal); }
+.btn-next.c-lm:active { background: var(--gold-deep); }
+.btn-next.c-pk { background: var(--pink-deep); color: var(--cream); }
+@media (hover: hover) {
+  .btn-next.c-te:hover { filter: brightness(1.12); }
+  .btn-next.c-lm:hover { filter: brightness(1.06); }
+  .btn-next.c-pk:hover { filter: brightness(1.1); }
 }
 
-function resetHeading(el) {
-  if (!el || !el.getAttribute('data-split')) return;
-  var spans = el.querySelectorAll('span > span');
-  if (spans.length) { el.textContent = Array.from(spans).map(function(s) { return s.textContent; }).join(' '); }
-  el.removeAttribute('data-split');
-  el.style.opacity = '';
+/* ─── Text reveal utilities ─── */
+.wl { display: inline-block; overflow: hidden; vertical-align: bottom; line-height: 1.1; padding-bottom: .06em; }
+.w  { display: inline-block; transform: translateY(110%); opacity: 0; animation: wordRise 0s forwards; }
+@keyframes wordRise { to { transform: translateY(0); opacity: 1; } }
+
+.fx-l, .fx-r, .fx-u, .fx-p { opacity: 0; will-change: opacity, transform; }
+.fx-l { transform: translateX(-42px); }
+.fx-r { transform: translateX(42px); }
+.fx-u { transform: translateY(38px); }
+.fx-p { transform: scale(.5); }
+.fx-l.in { animation: fxLin .55s cubic-bezier(.16,.84,.44,1) forwards; }
+.fx-r.in { animation: fxRin .55s cubic-bezier(.16,.84,.44,1) forwards; }
+.fx-u.in { animation: fxUin .55s cubic-bezier(.16,.84,.44,1) forwards; }
+.fx-p.in { animation: fxPin .45s cubic-bezier(.34,1.5,.64,1) forwards; }
+@keyframes fxLin { to { opacity: 1; transform: none; } }
+@keyframes fxRin { to { opacity: 1; transform: none; } }
+@keyframes fxUin { to { opacity: 1; transform: none; } }
+@keyframes fxPin { to { opacity: 1; transform: scale(1); } }
+
+.txt-anim { opacity: 0; transform: translateY(22px); animation: txtIn 0s forwards; }
+@keyframes txtIn { to { opacity: 1; transform: none; } }
+
+.w, .txt-anim, .fx-l, .fx-r, .fx-u, .fx-p { animation: forceShow 0s 7s forwards; }
+@keyframes forceShow { to { opacity: 1 !important; transform: none !important; } }
+
+/* Base headline/body sizing (per-type overrides below) */
+.slide-h1 {
+  font-family: var(--display) !important; font-weight: 500 !important;
+  font-size: clamp(1.85rem, 7vw, 2.7rem) !important; line-height: 1.12 !important;
+  letter-spacing: -.01em !important; color: var(--ink); flex-shrink: 0; padding-bottom: 4px !important;
+}
+.tone-teal .slide-h1 { color: var(--cream); }
+
+.slide-txt, .concept-card-txt {
+  font-family: var(--sans) !important; font-weight: 400 !important;
+  font-size: clamp(15px, 4vw, 18px) !important; line-height: 1.6 !important;
+  color: var(--body-gray); flex-shrink: 0; text-align: left !important;
+}
+.tone-teal .slide-txt, .tone-teal .concept-card-txt { color: rgba(250,247,244,.78); }
+
+.text-pill {
+  font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--pink-deep); display: block; margin-bottom: 6px; flex-shrink: 0; opacity: 1 !important; transform: none !important;
+}
+.insight-pill, .Insight-pill, .slide-tag {
+  font-family: var(--sans); font-size: 10.5px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 8px; display: block; flex-shrink: 0; opacity: 1 !important; transform: none !important;
+  background: none; border: none; padding: 0; width: auto;
 }
 
-function resetSlide(slide) {
-  slide.querySelectorAll('[data-split]').forEach(resetHeading);
-  slide.querySelectorAll(
-    '.slide-h1, .slide-txt, .concept-card-txt, .slide-visual, ' +
-    '.coin-grid, .completion-badge, .score-display, ' +
-    '.time-pill, .text-pill, .insight-pill, .Insight-pill, .slide-tag, ' +
-    '.answer, .rc-opt, .quiz-option, .reflect-opts'
-  ).forEach(hideEl);
-  slide.querySelectorAll('.fx-l,.fx-r,.fx-u,.fx-p').forEach(function(e) { e.classList.remove('in','out'); hideEl(e); });
-  slide.querySelectorAll('.bar-bf1, .bar-bf2, .bar-bf3').forEach(function(b) { b.style.transition = 'none'; b.style.height = '0px'; });
-  slide.querySelectorAll('.bar-val').forEach(function(v) { v.style.opacity = '0'; });
-  if (slide.classList.contains('slide-type-comparison')) {
-    var story = slide.querySelector('.slide-txt');
-    if (story) { story.style.opacity = '0'; story.innerHTML = '&nbsp;'; }
+/* Editorial headline scale for "hero" slide types */
+.slide-lesson-title .slide-h1,
+.slide-type-comparison .slide-h1,
+.slide-type-reflection .slide-h1,
+.slide-type-completion .slide-h1 {
+  font-size: clamp(2.5rem, 9vw, 4.2rem) !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.02em !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COVER / LESSON-TITLE SLIDE
+   ══════════════════════════════════════════════════════════════ */
+.slide-lesson-title .slide-col {
+  position: relative !important; justify-content: flex-end !important; overflow: hidden !important;
+  padding-top: 56px !important;
+  padding-bottom: 116px !important;
+}
+.cover-top-row {
+  position: relative !important;
+  top: auto !important; left: auto !important; right: auto !important; bottom: auto !important;
+  flex: 1 1 auto !important;
+  display: flex !important; flex-direction: column !important; align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  padding: 0 20px !important; z-index: 10 !important;
+  pointer-events: none !important; transform: none !important; max-width: 100% !important; height: auto !important;
+}
+.cover-top-row > * { pointer-events: all !important; }
+.home-btn {
+  position: absolute !important;
+  top: 12px !important; left: 0 !important;
+  font-family: var(--sans) !important; font-size: 13px !important; font-weight: 700 !important; color: var(--teal) !important;
+  background: rgba(250,247,244,.95) !important; border: 1.5px solid var(--border) !important; border-radius: 99px !important;
+  padding: 6px 14px !important; text-decoration: none !important; display: flex !important; align-items: center !important;
+  gap: 5px !important; white-space: nowrap !important; transition: background .2s, color .2s, border-color .2s !important;
+}
+.home-btn:hover { background: var(--teal) !important; color: #fff !important; border-color: var(--teal) !important; }
+.home-btn:active { transform: scale(.96) !important; }
+
+.intro-illustration {
+  position: relative !important; width: 168px !important; height: 168px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  pointer-events: none !important; z-index: 2 !important; flex-shrink: 0 !important;
+}
+.intro-glow { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(201,151,74,.35), transparent 70%); animation: glowP 2.8s ease-in-out infinite; }
+@keyframes glowP { 0%,100%{ transform:scale(1); opacity:.5; } 50%{ transform:scale(1.35); opacity:1; } }
+.intro-icon { position: relative; z-index: 1; width: 130px; height: 130px; display: flex; align-items: center; justify-content: center; }
+.intro-icon img, .intro-icon iframe, .intro-icon dotlottie-player { width: 130px !important; height: 130px !important; }
+.lesson-intro-text { padding: 0 26px 12px; display: flex; flex-direction: column; flex-shrink: 0; max-width: 640px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+
+.cover-footer { display: none !important; }
+
+.slide-rule {
+  width: 0; max-width: 210px; height: 1px; background: var(--gold); opacity: .7;
+  margin: 2px 0 4px; transition: width 1s cubic-bezier(.22,1,.36,1) .4s;
+}
+.slide-lesson-title.active .slide-rule { width: 100%; }
+
+/* ══════════════════════════════════════════════════════════════
+   TEXT-TITLE + KEY-INSIGHT SLIDES
+   Deliberately mirrors the Concept slide's layout numbers (padding,
+   content-wrap width, vertical rhythm, heading/body scale) so title
+   and key-insight slides read as part of the same visual family
+   instead of feeling separately tuned. The Lottie gets its own fixed
+   circular frame (concept leaves its Lottie unstyled/intrinsic —
+   these two slide types instead show a portrait Lottie meant for a
+   consistent frame, so it is deliberately size-locked here).
+   ══════════════════════════════════════════════════════════════ */
+.slide-text-title .slide-col,
+.slide-type-keyinsight .slide-col {
+  padding: 48px var(--deck-pad) 92px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  overflow: hidden !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+.slide-text-title .slide-body,
+.slide-type-keyinsight .slide-body {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.slide-text-title .content-wrap,
+.slide-type-keyinsight .content-wrap {
+  width: 100% !important;
+  max-width: 600px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 22px !important;
+  margin: 0 auto !important;
+  text-align: center !important;
+}
+.slide-text-title .slide-h1,
+.slide-type-keyinsight .slide-h1 {
+  width: 100% !important;
+  max-width: 600px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center !important;
+  font-size: clamp(2.4rem, 9.6vw, 3.6rem) !important;
+  line-height: 1.06 !important;
+  letter-spacing: -.02em !important;
+}
+.slide-text-title .slide-txt,
+.slide-type-keyinsight .slide-txt {
+  width: 100% !important;
+  max-width: 600px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center !important;
+  font-size: clamp(18px, 5vw, 22px) !important;
+  line-height: 1.6 !important;
+}
+.tone-teal.slide-type-keyinsight .slide-txt { color: rgba(250,247,244,.86) !important; }
+
+.slide-text-title .slide-visual,
+.slide-type-keyinsight .slide-visual {
+  width: 168px !important;
+  height: 168px !important;
+  max-width: 168px !important;
+  max-height: 168px !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: visible !important;
+  border-radius: 50% !important;
+  flex: 0 0 168px !important;
+}
+.slide-text-title .slide-visual > div,
+.slide-text-title .slide-visual iframe,
+.slide-text-title .slide-visual dotlottie-player,
+.slide-type-keyinsight .slide-visual > div,
+.slide-type-keyinsight .slide-visual iframe,
+.slide-type-keyinsight .slide-visual dotlottie-player {
+  width: 130px !important;
+  height: 130px !important;
+  max-width: 130px !important;
+  max-height: 130px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+@media (min-width: 768px) {
+  .slide-text-title .slide-h1,
+  .slide-type-keyinsight .slide-h1 {
+    font-size: clamp(2.4rem, 4.2vw, 3.6rem) !important;
   }
-  if (isScrollable(slide)) { slide.scrollTop = 0; }
+  .slide-text-title .slide-txt,
+  .slide-type-keyinsight .slide-txt {
+    font-size: clamp(18px, 2.4vw, 22px) !important;
+  }
 }
 
-function runBars(slide, dur) {
-  clearCT();
-  slide.querySelectorAll('.bar').forEach(function(b) { b.style.transition = 'none'; b.style.height = '0px'; });
-  slide.querySelectorAll('.bar-val').forEach(function(v) { v.style.opacity = '0'; });
-  var story   = slide.querySelector('.slide-txt');
-  var stories = [
-    'Kept under the mattress. <span class="amt">£14,650 after 25 years.</span> Inflation ate the rest.',
-    'In a savings account at 1%. <span class="amt">£22,400.</span> Barely ahead of doing nothing.',
-    'Invested at 7% average return. <span class="amt">£37,000+.</span> Same money — working for you.'
-  ];
-  var ratios = [0.47, 0.65, 1.0];
-  var cols   = slide.querySelectorAll('.bar-col');
-  if (story) { story.style.opacity = '0'; story.innerHTML = '&nbsp;'; }
-  [0.10, 0.42, 0.74].forEach(function(pct, i) {
-    var t = setTimeout(function() {
-      var col   = cols[i];
-      if (!col) return;
-      var bar   = col.querySelector('.bar-bf1') || col.querySelector('.bar-bf2') || col.querySelector('.bar-bf3');
-      var val   = col.querySelector('.bar-val');
-      var track = col.querySelector('.bar-track');
-      var trackH = 140;
-      if (track) trackH = track.getBoundingClientRect().height;
-      if (!trackH || trackH < 20) trackH = 140;
-      var targetPx = Math.round(trackH * ratios[i]);
-      if (bar) {
-        setTimeout(function() {
-          requestAnimationFrame(function() {
-            bar.style.transition = 'height .9s cubic-bezier(.34,1.05,.64,1)';
-            bar.style.height = targetPx + 'px';
-          });
-        }, 100);
-      }
-      _ct.push(setTimeout(function() { if (val) { val.style.transition = 'opacity .35s ease'; val.style.opacity = '1'; } }, 800));
-      if (story) {
-        story.style.transition = 'opacity .2s ease';
-        story.style.opacity = '0';
-        _ct.push(setTimeout(function() { story.innerHTML = stories[i]; story.style.opacity = '1'; }, 230));
-      }
-    }, dur * pct);
-    _ct.push(t);
-  });
+@media (min-width: 768px) and (max-height: 800px) {
+  .slide-text-title .slide-col,
+  .slide-type-keyinsight .slide-col {
+    padding: 40px var(--deck-pad) 84px !important;
+  }
+  .slide-text-title .slide-h1,
+  .slide-type-keyinsight .slide-h1 {
+    font-size: clamp(2.2rem, 4vw, 3rem) !important;
+  }
+  .slide-text-title .slide-txt,
+  .slide-type-keyinsight .slide-txt {
+    font-size: clamp(17px, 2.2vw, 20px) !important;
+    line-height: 1.5 !important;
+  }
+  .slide-text-title .slide-visual,
+  .slide-type-keyinsight .slide-visual {
+    width: 150px !important; height: 150px !important;
+    max-width: 150px !important; max-height: 150px !important;
+    flex-basis: 150px !important;
+  }
+  .slide-text-title .slide-visual > div,
+  .slide-text-title .slide-visual iframe,
+  .slide-text-title .slide-visual dotlottie-player,
+  .slide-type-keyinsight .slide-visual > div,
+  .slide-type-keyinsight .slide-visual iframe,
+  .slide-type-keyinsight .slide-visual dotlottie-player {
+    width: 116px !important; height: 116px !important;
+    max-width: 116px !important; max-height: 116px !important;
+  }
 }
-function runCoinStack(slide, dur) {
-  clearCT();
-  var chartWrap = slide.querySelector('.chart-wrap');
-  var story = slide.querySelector('.slide-txt');
-  if (!chartWrap) return;
-  chartWrap.innerHTML = '';
-  if (_coinRaf) { cancelAnimationFrame(_coinRaf); _coinRaf = null; }
-  if (story) { story.style.opacity = '0'; story.innerHTML = '&nbsp;'; }
 
-  var stories = [
-    'Kept under the mattress. <span class="amt">£14,650 after 25 years.</span> Inflation ate the rest.',
-    'In a savings account at 1%. <span class="amt">£22,400.</span> Barely ahead of doing nothing.',
-    'Invested at 7% average return. <span class="amt">£37,000+.</span> Same money — working for you.'
-  ];
-  var checkpoints = [0.10, 0.42, 0.74].map(function(p) { return dur * p; });
+@media (max-width: 480px) {
+  .slide-text-title .slide-col,
+  .slide-type-keyinsight .slide-col {
+    padding: 44px var(--deck-pad) 92px !important;
+  }
+  .slide-text-title .slide-h1,
+  .slide-type-keyinsight .slide-h1 {
+    font-size: clamp(2.2rem, 10vw, 3rem) !important;
+    line-height: 1.06 !important;
+  }
+  .slide-text-title .slide-txt,
+  .slide-type-keyinsight .slide-txt {
+    font-size: clamp(16px, 4.8vw, 19px) !important;
+    line-height: 1.55 !important;
+  }
+  .slide-text-title .slide-visual,
+  .slide-type-keyinsight .slide-visual {
+    width: 150px !important; height: 150px !important;
+    max-width: 150px !important; max-height: 150px !important;
+    flex-basis: 150px !important;
+  }
+  .slide-text-title .slide-visual > div,
+  .slide-text-title .slide-visual iframe,
+  .slide-text-title .slide-visual dotlottie-player,
+  .slide-type-keyinsight .slide-visual > div,
+  .slide-type-keyinsight .slide-visual iframe,
+  .slide-type-keyinsight .slide-visual dotlottie-player {
+    width: 116px !important; height: 116px !important;
+    max-width: 116px !important; max-height: 116px !important;
+  }
+}
 
-  var NS = 'http://www.w3.org/2000/svg';
-  var svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 1000 800');
-  svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', 'Three columns of stacked coins reaching £14,650 saved, £22,400 at a low return and over £37,000 invested');
-  var bg = document.createElementNS(NS, 'rect');
-  bg.setAttribute('width', '1000'); bg.setAttribute('height', '800'); bg.setAttribute('fill', '#FAF7F4');
-  svg.appendChild(bg);
-  var ell = document.createElementNS(NS, 'ellipse');
-  ell.setAttribute('cx','500'); ell.setAttribute('cy','430'); ell.setAttribute('rx','350'); ell.setAttribute('ry','260');
-  ell.setAttribute('fill','#FDE8F4'); ell.setAttribute('opacity','0.55');
-  svg.appendChild(ell);
-  var floor = document.createElementNS(NS, 'rect');
-  floor.setAttribute('x','90'); floor.setAttribute('y','683'); floor.setAttribute('width','820'); floor.setAttribute('height','3');
-  floor.setAttribute('fill','#1B4B54'); floor.setAttribute('opacity','0.25');
-  svg.appendChild(floor);
-  var scene = document.createElementNS(NS, 'g');
-  svg.appendChild(scene);
-  chartWrap.appendChild(svg);
+@media (max-width: 380px) {
+  .slide-text-title .slide-h1,
+  .slide-type-keyinsight .slide-h1 {
+    font-size: 2.15rem !important;
+  }
+  .slide-text-title .slide-txt,
+  .slide-type-keyinsight .slide-txt {
+    font-size: 15px !important;
+  }
+  .slide-text-title .slide-visual,
+  .slide-type-keyinsight .slide-visual {
+    width: 140px !important; height: 140px !important;
+    max-width: 140px !important; max-height: 140px !important;
+    flex-basis: 140px !important;
+  }
+  .slide-text-title .slide-visual > div,
+  .slide-text-title .slide-visual iframe,
+  .slide-text-title .slide-visual dotlottie-player,
+  .slide-type-keyinsight .slide-visual > div,
+  .slide-type-keyinsight .slide-visual iframe,
+  .slide-type-keyinsight .slide-visual dotlottie-player {
+    width: 108px !important; height: 108px !important;
+    max-width: 108px !important; max-height: 108px !important;
+  }
+}
 
-  var GAP_MS = 167, FALL_MS = 400, BASE = 650, CW = 178, STEP = 26;
-  var COLS = [
-    { x: 250, n: 5,  value: 14650, label: 'SAVED',       start: checkpoints[0], top: '#DFCFB4', face: '#C7B497', edge: '#A88C5C' },
-    { x: 500, n: 8,  value: 22400, label: 'LOW\nRETURN', start: checkpoints[1], top: '#F4DCA6', face: '#E0B75F', edge: '#B9862F' },
-    { x: 750, n: 13, value: 37000, label: 'INVESTED',    start: checkpoints[2], top: '#F5A9D4', face: '#E91E8C', edge: '#A8186F', plus: true }
-  ];
+/* ══════════════════════════════════════════════════════════════
+   CONCEPT SLIDE — reference layout the other types match
+   (UNCHANGED — this is the visual reference and must not move)
+   ══════════════════════════════════════════════════════════════ */
+.slide-type-concept .slide-col {
+  padding: 48px var(--deck-pad) 92px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+.slide-type-concept .slide-col::before {
+  content: attr(data-num);
+  position: absolute; bottom: 12%; right: 4%;
+  font-family: var(--display); font-style: italic; font-weight: 500;
+  font-size: clamp(110px, 34vw, 190px); line-height: 1; color: var(--teal); opacity: .07; pointer-events: none;
+}
+.tone-teal.slide-type-concept .slide-col::before { color: var(--cream); }
 
-  var el = function(n, a) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); return e; };
-  var easeIn = function(p) { return p * p; };
-  var easeOut = function(p) { return 1 - Math.pow(1 - p, 3); };
-  var clamp01 = function(v) { return Math.max(0, Math.min(1, v)); };
-  var money = function(v, plus) { return '\u00A3' + Math.round(v).toLocaleString('en-GB') + (plus ? '+' : ''); };
+.slide-type-concept .slide-body {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.slide-type-concept .content-wrap {
+  width: 100% !important;
+  max-width: 600px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 22px !important;
+  text-align: center !important;
+}
+.slide-type-concept .slide-h1,
+.slide-type-concept .concept-card-txt {
+  width: 100% !important;
+  max-width: 600px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center !important;
+}
+.slide-type-concept .slide-h1 {
+  font-size: clamp(2.4rem, 9.6vw, 3.6rem) !important;
+  line-height: 1.06 !important;
+}
+.slide-type-concept .concept-card-txt {
+  font-size: clamp(18px, 5vw, 22px) !important;
+  line-height: 1.6 !important;
+}
 
-  var parts = [];
-  COLS.forEach(function(c) {
-    var shadow = el('ellipse', { cx: c.x, cy: BASE + 22, rx: (CW + 44) / 2, ry: 15, fill: '#E6DED9', opacity: '0' });
-    scene.appendChild(shadow);
-    var coins = [];
-    for (var k = 0; k < c.n; k++) {
-      var g = el('g', { opacity: '0' });
-      g.appendChild(el('ellipse', { cx: 0, cy: 10, rx: CW / 2, ry: 15, fill: c.edge }));
-      g.appendChild(el('rect', { x: -CW / 2, y: -10, width: CW, height: 20, fill: c.face }));
-      g.appendChild(el('ellipse', { cx: 0, cy: -10, rx: CW / 2, ry: 15, fill: c.top }));
-      scene.appendChild(g);
-      coins.push({ g: g, k: k, t0: c.start + k * GAP_MS, y: BASE - k * STEP });
-    }
-    var topY = BASE - (c.n - 1) * STEP;
-    var value = el('text', { x: c.x, y: topY - 62, 'text-anchor': 'middle', 'font-family': "'Cormorant Garamond', Georgia, serif", 'font-size': '48', fill: '#1B4B54', opacity: '0' });
-    scene.appendChild(value);
-    var label = el('text', { x: c.x, y: c.label.indexOf('\n') > -1 ? 700 : 712, 'text-anchor': 'middle', 'font-family': "'DM Sans', Helvetica, sans-serif", 'font-size': '26', 'font-weight': '500', fill: '#8A8A8A', 'letter-spacing': '2.8', opacity: '0' });
-    c.label.split('\n').forEach(function(line, i) {
-      var ts = el('tspan', { x: c.x, dy: i === 0 ? 0 : 34 });
-      ts.textContent = line;
-      label.appendChild(ts);
-    });
-    scene.appendChild(label);
-    parts.push({ c: c, coins: coins, value: value, label: label, shadow: shadow });
-  });
+/* ══════════════════════════════════════════════════════════════
+   INTERACTIVE (AMOUNT PICKER) SLIDE — flat rectangular buttons
+   ══════════════════════════════════════════════════════════════ */
+.slide-type-interactive .slide-col {
+  padding: clamp(40px, 5.5dvh, 58px) var(--deck-pad) clamp(80px, 10dvh, 100px) !important;
+  min-height: 100dvh !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+  justify-content: center !important;
+}
+.slide-type-interactive .content-wrap {
+  width: 100% !important;
+  max-width: 640px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+.slide-type-interactive .slide-h1 {
+  font-size: clamp(2.1rem, 7.6vw, 3.2rem) !important;
+  line-height: 1.1 !important;
+  margin: 0 0 clamp(8px, 1.4dvh, 14px) !important;
+}
+.slide-type-interactive .slide-txt {
+  font-size: clamp(17px, 4.4vw, 21px) !important;
+  line-height: 1.55 !important;
+  margin: 0 !important;
+}
 
-  var lastCol = COLS[2];
-  var lastLand = lastCol.start + (lastCol.n - 1) * GAP_MS + FALL_MS;
-  var sparks = [[0,-54,24],[-72,-18,18],[74,10,20],[26,-84,15]].map(function(s, i) {
-    var g = el('g', { opacity: '0' });
-    var cx = 750 + s[0], cy = BASE - lastCol.n * STEP + s[1], r = s[2];
-    var d = '';
-    for (var j = 0; j < 8; j++) {
-      var rad = j % 2 === 0 ? r : r * 0.38, a = (Math.PI / 4) * j - Math.PI / 2;
-      d += (j === 0 ? 'M' : 'L') + (cx + rad * Math.cos(a)).toFixed(1) + ',' + (cy + rad * Math.sin(a)).toFixed(1);
-    }
-    g.appendChild(el('path', { d: d + 'Z', fill: ['#C9974A','#E91E8C','#E8C88A','#F8BBD9'][i] }));
-    scene.appendChild(g);
-    return { g: g, cx: cx, cy: cy, t0: lastLand + 67 + i * 167 };
-  });
+.slide-type-interactive .coin-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: 14px;
+  margin-top: clamp(16px, 3dvh, 28px);
+}
 
-  var lastStoryIdx = -1;
-  function render(t) {
-    checkpoints.forEach(function(cp, i) {
-      if (t >= cp && lastStoryIdx < i) {
-        lastStoryIdx = i;
-        if (story) {
-          story.style.transition = 'opacity .2s ease';
-          story.style.opacity = '0';
-          setTimeout(function() { story.innerHTML = stories[i]; story.style.opacity = '1'; }, 230);
-        }
-      }
-    });
-    parts.forEach(function(p) {
-      var c = p.c, landed = 0;
-      p.coins.forEach(function(co) {
-        var drop = clamp01((t - co.t0) / FALL_MS);
-        if (t < co.t0) { co.g.setAttribute('opacity', '0'); return; }
-        var y = (co.y - 420) + 420 * easeIn(drop);
-        var since = t - (co.t0 + FALL_MS);
-        var sx = 1, sy = 1;
-        if (since >= 0 && since < 230) {
-          var q = since / 230;
-          sx = 1 + 0.12 * Math.cos(q * Math.PI * 2) * (1 - q);
-          sy = 1 - 0.16 * Math.cos(q * Math.PI * 2) * (1 - q);
-        }
-        co.g.setAttribute('opacity', Math.min(1, (t - co.t0) / 60).toFixed(2));
-        co.g.setAttribute('transform', 'translate(' + c.x + ',' + y.toFixed(1) + ') scale(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ')');
-        if (drop >= 1) landed++;
-      });
-      p.shadow.setAttribute('opacity', (0.7 * clamp01((t - c.start) / 130)).toFixed(2));
-      var shown = landed === 0 ? money(0) : money(c.value * landed / c.n, c.plus && landed === c.n);
-      p.value.textContent = t >= c.start ? shown : '';
-      p.value.setAttribute('opacity', clamp01((t - c.start) / 160).toFixed(2));
-      p.value.setAttribute('y', (BASE - (c.n - 1) * STEP - 62 + 16 * (1 - clamp01((t - c.start) / 180))).toFixed(1));
-      p.label.setAttribute('opacity', clamp01((t - 50) / 200).toFixed(2));
-    });
-    sparks.forEach(function(s) {
-      var dt = t - s.t0, span = 730;
-      if (dt < 0 || dt > span) { s.g.setAttribute('opacity', '0'); return; }
-      var q = dt / span;
-      var sc = q < 0.4 ? easeOut(q / 0.4) * 1.25 : 1.25 * (1 - (q - 0.4) / 0.6);
-      s.g.setAttribute('opacity', (q < 0.25 ? q / 0.25 : 1 - q).toFixed(2));
-      s.g.setAttribute('transform', 'translate(' + s.cx + ',' + s.cy + ') scale(' + sc.toFixed(2) + ') rotate(' + (q * 100).toFixed(0) + ') translate(' + (-s.cx) + ',' + (-s.cy) + ')');
-    });
+.slide-type-interactive .sparkle {
+  flex-basis: 100%;
+  width: 100%;
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--body-gray);
+  margin-bottom: 4px;
+}
+.tone-teal .sparkle { color: rgba(250,247,244,.55); }
+
+.slide-type-interactive .coin {
+  flex: 1 1 0;
+  min-width: 92px;
+  max-width: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 26px 12px;
+  border-radius: 14px;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  color: var(--teal);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(19px, 4.4vw, 26px);
+  letter-spacing: -.01em;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 1px 0 rgba(44,44,44,.03), 0 8px 20px -14px rgba(27,75,84,.2);
+  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.tone-teal .coin {
+  background: rgba(250,247,244,.06);
+  border-color: rgba(250,247,244,.22);
+  color: var(--cream);
+}
+.slide-type-interactive .coin:active { transform: scale(.97); }
+@media (hover: hover) {
+  .slide-type-interactive .coin:not(.chosen):hover { border-color: var(--teal); }
+  .tone-teal .slide-type-interactive .coin:not(.chosen):hover { border-color: var(--gold); }
+}
+
+.slide-type-interactive .coin.chosen {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: var(--cream);
+  box-shadow: 0 10px 24px -10px rgba(27,75,84,.45);
+}
+.tone-teal .coin.chosen {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--teal);
+}
+
+.slide-type-interactive .coin.coin-50,
+.slide-type-interactive .coin.coin-100,
+.slide-type-interactive .coin.coin-500 {
+  width: auto;
+  height: auto;
+  min-width: 92px;
+  aspect-ratio: auto;
+}
+
+.slide-type-interactive .coin.bob,
+.slide-type-interactive .coin.bob100 {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important; left: auto !important; right: auto !important; bottom: auto !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   COMPARISON SLIDE
+   ══════════════════════════════════════════════════════════════ */
+.slide-type-comparison .content-wrap {
+  max-width: 640px !important;
+  margin: 0 auto !important;
+}
+.slide-type-comparison .slide-col {
+  padding: 56px var(--deck-pad) 100px !important; gap: 6px; height: 100dvh !important; overflow: hidden !important; justify-content: center !important;
+}
+.slide-type-comparison .slide-h1 { margin-bottom: 4px !important; flex-shrink: 0; }
+.slide-type-comparison .slide-txt {
+  min-height: 48px !important; margin-bottom: 6px !important; flex-shrink: 0;
+  transition: opacity .22s ease; line-height: 1.25 !important; color: var(--ink);
+}
+.slide-type-comparison .slide-txt.fade { opacity: 0; }
+.slide-type-comparison .slide-txt .amt { color: var(--pink-deep); font-weight: 700; }
+
+.chart-wrap { height: 180px !important; min-height: 180px !important; display: flex !important; align-items: flex-end; padding-bottom: 2px; }
+.chart-wrap svg { width: 100%; height: auto; display: block; }
+.bar-col   { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 0; }
+.bar-val   { font-family: var(--display); font-size: 13px; font-weight: 600; color: var(--teal); text-align: center; opacity: 0; transition: opacity .35s ease .2s; flex-shrink: 0; }
+.tone-teal .bar-val { color: var(--gold); }
+.bar-val.show { opacity: 1; }
+.bar-track { width: 100%; height: 140px; min-height: 140px; max-height: 140px; background: rgba(44,44,44,.05); border-radius: 8px 8px 0 0; display: flex; align-items: flex-end; overflow: hidden; }
+.bar       { width: 100%; height: 0%; border-radius: 8px 8px 0 0; transition: none; }
+.bar-bf1   { background: linear-gradient(180deg,#d9c8ab,#a98a5c); }
+.bar-bf2   { background: linear-gradient(180deg,#e6c481,var(--gold)); }
+.bar-bf3   { background: linear-gradient(180deg,#f2a4c6,var(--pink-deep)); }
+.bar-label { font-size: 8px; font-weight: 700; color: var(--body-gray); text-align: center; text-transform: uppercase; letter-spacing: .04em; line-height: 1.3; flex-shrink: 0; }
+.tone-teal .bar-label { color: rgba(250,247,244,.6); }
+
+/* ══════════════════════════════════════════════════════════════
+   QUIZ SLIDE
+   ══════════════════════════════════════════════════════════════ */
+.slide-type-quiz .content-wrap {
+  max-width: 640px !important;
+  margin: 0 auto !important;
+}
+.slide-type-quiz .slide-body { height: auto !important; overflow: visible !important; flex: none !important; }
+.slide-type-quiz .slide-col {
+  padding: 64px var(--deck-pad) 140px !important; gap: 8px !important; height: auto !important; min-height: 100dvh !important;
+  overflow: visible !important; justify-content: center !important;
+}
+.slide-type-quiz .slide-h1 { margin-bottom: 4px !important; }
+.slide-type-quiz .slide-txt, .slide-type-quiz .quiz-q {
+  padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1.5px solid var(--border);
+  flex-shrink: 0; line-height: 1.5 !important; font-size: 13px !important;
+}
+.quiz-option { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+.answer {
+  padding: 13px 15px; background: var(--white); border: 1.5px solid var(--border); border-radius: 13px;
+  display: flex !important; align-items: center; gap: 10px; cursor: pointer; text-decoration: none; flex-shrink: 0;
+  font-family: var(--sans); font-size: 13.5px !important; color: var(--ink);
+  transition: border-color .18s, background .18s, transform .15s;
+  -webkit-tap-highlight-color: transparent; box-sizing: border-box;
+}
+.answer:active { transform: scale(.98); }
+@media (hover: hover) {
+  .answer:not(.correct):not(.wrong):hover { border-color: var(--pink-deep); }
+}
+.answer.correct { border-color: var(--sage); background: rgba(156,184,107,.12); }
+.answer.correct .opt-letter { background: var(--sage); color: #fff; }
+.answer.wrong { border-color: var(--pink-deep); background: rgba(196,25,122,.08); }
+.answer.wrong .opt-letter { background: var(--pink-deep); color: #fff; }
+.opt-letter {
+  width: 26px; height: 26px; border-radius: 50%; background: rgba(44,44,44,.06); color: var(--teal);
+  display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; min-width: 26px;
+  transition: background .18s, color .18s;
+}
+.feedback-text {
+  margin-top: 10px; padding: 12px 14px; border-radius: 12px; display: none; width: 100%; flex-shrink: 0;
+  font-family: var(--sans); font-size: 13px; line-height: 1.5; box-sizing: border-box;
+}
+.feedback-text.show { display: block !important; }
+.feedback-text.ok { background: rgba(156,184,107,.16); color: var(--sage-deep); border: 1px solid rgba(156,184,107,.45); }
+.feedback-text.no { background: rgba(196,25,122,.1); color: var(--pink-deep); border: 1px solid rgba(196,25,122,.3); }
+.explanation {
+  margin-top: 8px; padding: 12px 14px; border-radius: 12px; background: rgba(44,44,44,.03);
+  border: 1px solid var(--border); color: var(--body-gray); display: none; width: 100%; flex-shrink: 0;
+  font-family: var(--sans); font-size: 13px; line-height: 1.5; box-sizing: border-box;
+}
+.explanation[style*="block"] { display: block !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   REFLECTION SLIDE
+   ══════════════════════════════════════════════════════════════ */
+.slide-type-reflection .content-wrap {
+  max-width: 560px !important;
+  margin: 0 auto !important;
+}
+.slide-type-reflection .slide-col { padding: 56px var(--deck-pad) 100px !important; gap: 4px; height: 100dvh !important; overflow: hidden !important; }
+.reflect-opts { display: flex; flex-direction: column; gap: 14px; flex: 1; justify-content: center; }
+.rc-opt { display: flex !important; align-items: center; gap: 16px; cursor: pointer; padding: 4px 0; -webkit-tap-highlight-color: transparent; }
+.rc-bubble {
+  width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0; display: flex !important; align-items: center; justify-content: center;
+  background: rgba(27,75,84,.07); border: 1.5px solid rgba(27,75,84,.16); font-size: 22px; line-height: 1;
+  transition: background .22s, border-color .22s, transform .22s cubic-bezier(.34,1.4,.64,1);
+  animation: rcP 3s ease-in-out infinite;
+}
+.tone-teal .rc-bubble { background: rgba(250,247,244,.09); border-color: rgba(250,247,244,.2); }
+.reflect-opts .rc-opt:nth-child(1) .rc-bubble { animation-delay: 0s; }
+.reflect-opts .rc-opt:nth-child(2) .rc-bubble { animation-delay: .7s; }
+.reflect-opts .rc-opt:nth-child(3) .rc-bubble { animation-delay: 1.4s; }
+@keyframes rcP { 0%,100%{ box-shadow:0 0 0 0 rgba(201,151,74,.32); transform:scale(1); } 50%{ box-shadow:0 0 0 10px rgba(201,151,74,0); transform:scale(1.05); } }
+.rc-opt.selected .rc-bubble { background: var(--pink-deep) !important; border-color: var(--pink-deep) !important; animation: none !important; transform: scale(1.1) !important; }
+@media (hover: hover) {
+  .rc-opt:not(.selected):hover .rc-bubble { border-color: rgba(27,75,84,.3); transform: scale(1.06); }
+  .tone-teal .rc-opt:not(.selected):hover .rc-bubble { border-color: rgba(250,247,244,.5); }
+}
+.rc-opt .rc-text {
+  color: var(--ink) !important; line-height: 1.4; font-family: var(--sans) !important; font-weight: 500 !important;
+  font-size: 16px !important; text-decoration: none !important; background: none !important; border: none !important;
+  padding: 0 !important; margin: 0 !important; cursor: pointer;
+}
+.tone-teal .rc-opt .rc-text { color: var(--cream) !important; }
+.rc-opt.selected .rc-text { color: var(--pink-deep) !important; }
+.tone-teal .rc-opt.selected .rc-text { color: var(--pink-soft) !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   COMPLETION SLIDE
+   ══════════════════════════════════════════════════════════════ */
+.slide-type-completion .completion-wrap {
+  max-width: 420px !important;
+  margin: 0 auto !important;
+}
+.slide-type-completion .slide-col {
+  align-items: center !important; justify-content: center !important; gap: clamp(12px, 2dvh, 20px) !important;
+  padding: clamp(56px, 8dvh, 84px) var(--deck-pad) clamp(80px, 10dvh, 96px) !important;
+  text-align: center !important; height: auto !important; min-height: 100dvh !important; overflow: visible !important;
+}
+.completion-badge {
+  width: clamp(120px, 20vh, 190px); height: clamp(120px, 20vh, 190px); border-radius: 50%; background: var(--pink-deep); border: 2px solid rgba(248,187,217,.4);
+  display: flex !important; align-items: center; justify-content: center; font-size: clamp(48px, 8vh, 72px); flex-shrink: 0;
+  animation: rP 2.2s ease-in-out infinite;
+  overflow: hidden !important;
+}
+@keyframes rP { 0%{ box-shadow:0 0 0 0 rgba(248,187,217,.5); } 70%{ box-shadow:0 0 0 20px rgba(248,187,217,0); } 100%{ box-shadow:0 0 0 0 rgba(248,187,217,0); } }
+.completion-badge .badge { width: 100% !important; height: 100% !important; display: flex !important; align-items: center; justify-content: center; }
+.completion-badge .badge svg { width: 100% !important; height: 100% !important; }
+
+.score-display {
+  background: var(--white); border: 1.5px solid var(--border); border-radius: 18px;
+  padding: 4px 22px; width: 100%; max-width: 320px; text-align: left;
+  font-family: var(--sans); font-size: 13px; color: var(--body-gray);
+  display: flex; flex-direction: column;
+}
+.scorerow { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 11px 0; position: relative; }
+.scorerow + .scorerow { border-top: 1px solid var(--border); }
+.scorerow-before {
+  position: absolute; top: 0; left: 0; height: 1px; width: 0; background: var(--gold);
+  opacity: .6; transition: width .8s cubic-bezier(.22,1,.36,1) .3s;
+}
+.slide.active .scorerow-before { width: 100%; }
+.sr-span { font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--body-gray); flex-shrink: 0; }
+.score-value { font-family: var(--display); font-size: 26px; font-weight: 500; color: var(--teal); font-variant-numeric: tabular-nums; text-align: right; }
+.score-value.b { font-family: var(--sans); font-size: 13px; font-weight: 700; letter-spacing: .04em; color: var(--pink-deep); text-transform: none; }
+.score-value.bump { animation: sBump .4s cubic-bezier(.34,1.6,.64,1); }
+@keyframes sBump { 0%{ transform:scale(1); } 50%{ transform:scale(1.38); } 100%{ transform:scale(1); } }
+.completion-msg { font-family: var(--sans); font-size: 12.5px; color: var(--body-gray); }
+.tone-teal .completion-msg { color: rgba(250,247,244,.55); }
+
+/* "You've finished / <current lesson>" — current-lesson-name is a
+   dedicated span so it can carry its own accent color, independent of
+   the ordinary heading color, and survives slide re-renders because
+   the completion heading is animated as a whole block (see JS) rather
+   than being torn down into per-word spans. */
+.slide-type-completion .slide-h1 .current-lesson-name {
+  display: block;
+  margin-top: 8px;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--pink-deep);
+}
+.tone-teal.slide-type-completion .slide-h1 .current-lesson-name { color: var(--pink-soft); }
+
+/* "Next up: <lesson>" — the JS snippet splits this into three parts so
+   the next-lesson name can sit on its own line with real weight,
+   instead of being buried mid-sentence. */
+.slide-type-completion .slide-txt {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  gap: 2px;
+}
+.finished-line {
+  font-family: var(--sans);
+  font-size: inherit;
+  color: var(--body-gray);
+}
+.tone-teal .finished-line { color: rgba(250,247,244,.78); }
+.next-lesson-label {
+  font-family: var(--sans);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--body-gray);
+  margin-top: 12px;
+}
+.tone-teal .next-lesson-label { color: rgba(250,247,244,.55); }
+.next-lesson-name {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 600;
+  color: var(--teal);
+  font-size: clamp(1.5rem, 6.5vw, 2.15rem);
+  line-height: 1.15;
+}
+.tone-teal .next-lesson-name { color: var(--gold); }
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   ══════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .cover-top-row { width: 100% !important; max-width: 100% !important; }
+
+  .slide-h1 { font-size: clamp(2rem, 3.2vw, 2.7rem) !important; }
+  .slide-lesson-title .slide-h1, .slide-type-interactive .slide-h1,
+  .slide-type-comparison .slide-h1, .slide-type-reflection .slide-h1, .slide-type-completion .slide-h1 {
+    font-size: clamp(3.2rem, 4.6vw, 5rem) !important;
+  }
+  .slide-type-comparison .slide-txt,
+  .slide-type-reflection .slide-txt, .slide-type-completion .slide-txt {
+    font-size: clamp(16px, 2.1vw, 18px) !important; line-height: 1.6 !important;
   }
 
-  var t0 = performance.now();
-  function tick(now) {
-    var elapsed = now - t0;
-    render(Math.min(elapsed, dur));
-   if (elapsed < dur) { _coinRaf = requestAnimationFrame(tick); }
+  .prog-col { width: 14px; }
+}
+
+@media (min-width: 768px) and (max-height: 800px) {
+  .slide-type-quiz .slide-h1 { font-size: 1.9rem !important; }
+  .slide-type-quiz .slide-col { padding-top: 52px !important; padding-bottom: 140px !important; }
+  .slide-type-quiz .quiz-option { gap: 6px !important; }
+  .slide-type-quiz .answer { padding: 10px 12px !important; font-size: 13px !important; }
+  .slide-type-quiz .feedback-text, .slide-type-quiz .explanation { font-size: 12px !important; }
+
+  .chart-wrap { height: 150px !important; min-height: 150px !important; }
+  .bar-track  { height: 110px !important; min-height: 110px !important; max-height: 110px !important; }
+
+  .slide-type-completion .slide-col { padding-top: 48px !important; padding-bottom: 72px !important; gap: 10px !important; }
+  .completion-badge { width: 100px !important; height: 100px !important; font-size: 42px !important; }
+  .score-value { font-size: 24px !important; }
+
+  .slide-footer { padding-bottom: 14px !important; }
+  .btn-next { height: 46px !important; }
+
+  .slide-type-interactive .slide-h1 { font-size: clamp(1.9rem, 6vw, 2.6rem) !important; }
+  .slide-type-interactive .slide-col { padding-top: 36px !important; padding-bottom: 84px !important; }
+  .slide-type-interactive .coin-grid { margin-top: 14px !important; }
+}
+
+@media (max-width: 480px) {
+  .slide-type-interactive .slide-h1 { font-size: clamp(1.9rem, 8.6vw, 2.5rem) !important; }
+  .slide-type-interactive .slide-txt { font-size: 16px !important; }
+  .slide-type-interactive .coin-grid { gap: 10px; margin-top: 14px; }
+  .slide-type-interactive .coin { padding: 20px 8px; min-width: 84px; font-size: clamp(17px, 5vw, 22px); }
+
+  .brandmark { max-width: 40vw; font-size: 13px; }
+}
+
+@media (max-width: 380px) {
+  .slide-h1 { font-size: 1.7rem !important; }
+  .slide-txt, .concept-card-txt { font-size: 13px !important; }
+  .slide-type-concept .slide-col, .slide-type-quiz .slide-col {
+    padding-left: 18px !important; padding-right: 18px !important;
   }
-  render(0);
-  _coinRaf = requestAnimationFrame(tick);
+  .completion-badge { width: 90px !important; height: 90px !important; font-size: 40px !important; }
+
+  .slide-lesson-title .slide-h1, .slide-type-comparison .slide-h1,
+  .slide-type-reflection .slide-h1, .slide-type-completion .slide-h1 { font-size: 2.15rem !important; }
+
+  .brandmark { font-size: 12px; max-width: 34vw; }
 }
-
-function updateProgCol(idx, total) {
-  var pct = ((idx + 1) / total) * 100;
-  document.querySelectorAll('.progfill').forEach(function(f) { f.style.height = pct + '%'; });
-  document.querySelectorAll('.slide-count').forEach(function(el) {
-    el.textContent = String(idx + 1).padStart(2, '0') + ' / ' + String(total).padStart(2, '0');
-  });
-}
-
-function setTheme(slide) {
-  var dark = isDark(slide);
-  var type = sType(slide);
-  document.querySelectorAll('.slide-top').forEach(function(el) { el.classList.toggle('on-teal', dark); });
-  document.querySelectorAll('.slide-footer').forEach(function(el) { el.classList.toggle('on-teal', dark); });
-  var col = type === 'slide-type-completion' ? 'c-pk' : dark ? 'c-lm' : 'c-te';
-  document.querySelectorAll('.btn-next').forEach(function(btn) { btn.classList.remove('c-te','c-lm','c-pk'); btn.classList.add(col); });
-}
-
-function setNextLabel(slide) {
-  var t = sType(slide);
-  var label = 'Next';
-  if (t === 'slide-lesson-title')    label = 'Get Started';
-  if (t === 'slide-type-completion') label = 'Next Lesson';
-  document.querySelectorAll('.btn-next').forEach(function(btn) {
-    if (!btn.closest(SLIDE_SEL)) btn.textContent = label;
-  });
-}
-
-function btnShow() { document.querySelectorAll('.btn-next').forEach(function(b) { b.classList.add('show'); }); }
-function btnHide() { document.querySelectorAll('.btn-next').forEach(function(b) { b.classList.remove('show'); }); }
-
-function getWrapper(slide) {
-  var el = slide.parentElement;
-  while (el) { if (el.classList.contains('w-dyn-item')) return el; el = el.parentElement; }
-  return slide;
-}
-function showSlideEl(slide) { var w = getWrapper(slide); w.style.display = 'block'; slide.style.display = 'flex'; slide.classList.add('active'); }
-function hideSlideEl(slide) { slide.style.display = 'none'; slide.classList.remove('active'); getWrapper(slide).style.display = 'none'; }
-
-function animS1(slide) {
-  var tp = slide.querySelector('.text-pill');
-  var h  = slide.querySelector('.slide-h1');
-  var ti = slide.querySelector('.time-pill');
-  if (tp) showElNow(tp);
-  var end = animHeading(h, 100, 65);
-  showEl(ti, end - 100, 450, 12);
-  initLottie(slide);
-  _ct.push(setTimeout(btnShow, end + 400));
-}
-
-function animS2(slide) {
-  var h = slide.querySelector('.slide-h1');
-  var t = slide.querySelector('.slide-txt');
-  var v = slide.querySelector('.slide-visual');
-  var end = animHeading(h, 80, 65);
-  if (t) {
-    t.style.opacity = '0'; t.style.transform = 'translateY(22px)';
-    setTimeout(function() { t.style.transition = 'opacity .5s ease, transform .5s ease'; t.style.opacity = '1'; t.style.transform = 'none'; }, end);
-  }
-  if (v) {
-    v.style.opacity = '0'; v.style.transform = 'translateY(30px)';
-    setTimeout(function() { v.style.transition = 'opacity .5s ease, transform .5s ease'; v.style.opacity = '1'; v.style.transform = 'none'; }, end + 200);
-  }
-  _ct.push(setTimeout(btnShow, end + 600));
-  if (v) initLottie(slide);
-}
-function animS3(slide) {
-  var h   = slide.querySelector('.slide-h1');
-  var d   = slide.querySelector('.concept-card-txt');
-  var end = animHeading(h, 80, 65);
-  showEl(d, end - 80, 500, 22);
-  initLottie(slide);
-  _ct.push(setTimeout(btnShow, end + 600));
-}
-
-function animS4(slide) {
-  var pill = slide.querySelector('.insight-pill,.Insight-pill,.slide-tag');
-  var h    = slide.querySelector('.slide-h1');
-  var t    = slide.querySelector('.slide-txt');
-  var v    = slide.querySelector('.slide-visual');
-  if (pill) showElNow(pill);
-  var end = animHeading(h, 80, 65);
-  showEl(t, end - 80, 500, 22);
-  if (v) showEl(v, end + 200, 500, 30);
-  _ct.push(setTimeout(btnShow, end + 500));
-  initLottie(slide);
-}
-
-function animS5(slide) {
-  var h    = slide.querySelector('.slide-h1');
-  var t    = slide.querySelector('.slide-txt');
-  var grid = slide.querySelector('.coin-grid');
-  var end  = animHeading(h, 80, 65);
-  showEl(t, end - 80, 500, 22);
-  if (grid) showEl(grid, end + 100, 550, 30);
-}
-
-function animS6(slide, dur) {
-  var story = slide.querySelector('.slide-txt');
-  if (story) { story.style.opacity = '0'; }
-  runCoinStack(slide, dur);
-  var h = slide.querySelector('.slide-h1');
-  animHeading(h, 80, 65);
-  _ct.push(setTimeout(btnShow, dur * 0.90));
-}
-
-function animS7(slide) {
-  var h    = slide.querySelector('.slide-h1');
-  var q    = slide.querySelector('.slide-txt, .quiz-q');
-  var opts = slide.querySelectorAll('.answer');
-  var end  = animHeading(h, 80, 65);
-  showEl(q, end - 60, 480, 18);
-  opts.forEach(function(opt, i) { showEl(opt, end + 120 + i * 120, 500, 24); });
-}
-
-function animS8(slide) {
-  var h    = slide.querySelector('.slide-h1');
-  var t    = slide.querySelector('.slide-txt');
-  var opts = slide.querySelectorAll('.rc-opt');
-  var end  = animHeading(h, 80, 65);
-  showEl(t, end - 60, 480, 18);
-  opts.forEach(function(opt, i) { showEl(opt, end + 120 + i * 130, 450, 20); });
-}
-
-function animS9(slide) {
-  var badge = slide.querySelector('.completion-badge');
-  var h     = slide.querySelector('.slide-h1');
-  var sub   = slide.querySelector('.slide-txt');
-  var sc    = slide.querySelector('.score-display');
-  showElPop(badge, 80);
-  initLottie(slide);
-  // The completion heading contains a <span class="current-lesson-name">
-  // that must keep its own accent color (see initLesson()'s heading
-  // injection below, and the CSS rule of the same name). animHeading()
-  // rebuilds a heading's innerHTML word-by-word from plain text, which
-  // would strip that span right back out — so this heading is revealed
-  // as one simple fade/rise block (showEl) instead of the per-word
-  // treatment other headings get. Same visual effect, markup stays intact.
-  var end = 520;
-  showEl(h, end, 600, 28);
-  end += 600;
-  showEl(sub, end - 100, 480, 18);
-  if (sc) showEl(sc, end + 100, 450, 20);
-  _ct.push(setTimeout(btnShow, end + 300));
-}
-
-function runAnim(slide) {
-  var t = sType(slide);
-  if      (t === 'slide-lesson-title')    animS1(slide);
-  else if (t === 'slide-text-title')       animS2(slide);
-  else if (t === 'slide-type-concept')     animS3(slide);
-  else if (t === 'slide-type-keyinsight')  animS4(slide);
-  else if (t === 'slide-type-interactive') animS5(slide);
-  else if (t === 'slide-type-comparison')  animS6(slide, getDur(slide));
-  else if (t === 'slide-type-quiz')        animS7(slide);
-  else if (t === 'slide-type-reflection')  animS8(slide);
-  else if (t === 'slide-type-completion')  animS9(slide);
-}
-
-async function initLesson() {
-  await msLoad();
-
-  var lessonId   = document.body.getAttribute('data-lesson')      || 'lesson';
-  var nextLesson = document.body.getAttribute('data-next-lesson') || '';
-  var lessonNum  = document.body.getAttribute('data-lesson-number') || '1';
-
-  // Module-based quiz scoring reads the Lesson → Module reference and the
-  // Module's Lesson Count field — both already exist in the CMS per spec,
-  // exposed here as two data-attributes on <body> (bind these in Webflow
-  // Designer to the existing fields; no new CMS field is created). If
-  // either binding is missing this falls back to the previous per-lesson
-  // behavior so nothing breaks.
-  var moduleId = document.body.getAttribute('data-module') || 'default-module';
-
-  var params     = new URLSearchParams(window.location.search);
-  var slides     = Array.from(document.querySelectorAll(SLIDE_SEL));
-  var total      = slides.length;
-
-  // Assign position-based background tone — cycles through PAGES
-  // regardless of slide type.
-  slides.forEach(function(s, i) {
-    s.classList.add('tone-' + PAGES[i % PAGES.length]);
-  });
-
-  // Ghost numeral on concept slides shows the LESSON number, not a
-  // per-slide count. Needs data-lesson-number="1" (or 2, 3...) added
-  // to <body> in Designer for each lesson page; defaults to "1" if
-  // that attribute is missing so nothing breaks in the meantime.
-  document.querySelectorAll('.slide-type-concept .slide-col').forEach(function(col) {
-    col.setAttribute('data-num', String(lessonNum).padStart(2, '0'));
-  });
-
-  // "Next up: <lesson>" — split onto its own emphasized line instead of
-  // sitting mid-sentence. Pairs with .finished-line / .next-lesson-label /
-  // .next-lesson-name in the CSS.
-  document.querySelectorAll('.slide-type-completion .slide-txt').forEach(function(p) {
-    var marker = 'Next up:';
-    var html = p.innerHTML;
-    var idx = html.indexOf(marker);
-    if (idx !== -1 && !p.querySelector('.next-lesson-name')) {
-      var before = html.slice(0, idx).trim();
-      var after  = html.slice(idx + marker.length).trim();
-      p.innerHTML =
-        '<span class="finished-line">' + before + '</span>' +
-        '<span class="next-lesson-label">Next up</span>' +
-        '<span class="next-lesson-name">' + after + '</span>';
-    }
-  });
-
-  // "You've finished / <current lesson>" — the current lesson's display
-  // name already exists on this same page, CMS-bound, as the cover
-  // slide's own heading. Reuse it rather than adding a new CMS field:
-  // wrap it in its own <span class="current-lesson-name"> so it can
-  // carry a color independent of the "Next up" name (see CSS).
-  var coverTitleEl = document.querySelector('.slide-lesson-title .slide-h1');
-  var lessonTitleText = coverTitleEl ? (coverTitleEl.textContent || '').trim() : '';
-  document.querySelectorAll('.slide-type-completion .slide-h1').forEach(function(h) {
-    if (lessonTitleText && !h.querySelector('.current-lesson-name')) {
-      h.innerHTML = 'You\u2019ve finished<span class="current-lesson-name">' + escapeHtml(lessonTitleText) + '</span>';
-    }
-  });
-
-  if (!total) { console.warn('[COW] No slides found.'); return; }
-
-  var current;
-  if (params.get('start') === '1') {
-    current = 0;
-    localStorage.setItem('slide-' + lessonId, 0);
-    localStorage.setItem('progress-' + lessonId, 0);
-  } else {
-    current = parseInt(localStorage.getItem('slide-' + lessonId)) || 0;
-  }
-  if (isNaN(current) || current < 0 || current >= total) current = 0;
-
-  var savedProg = parseInt(localStorage.getItem('progress-' + lessonId)) || 0;
-
-  // ── Module-scoped scoring ──────────────────────────────────────────
-  // totalQuiz (quiz slides in THIS lesson) is kept only as a graceful
-  // fallback denominator if the module lesson-count binding isn't wired
-  // up yet — the real denominator per spec is the module's total lesson
-  // count (e.g. Module 1 = 6, Modules 2–5 = 5), not the number of quiz
-  // slides inside one lesson (which is normally just 1, and is exactly
-  // why the completion screen was showing "1 / 1" instead of "4 / 6").
-  var totalQuiz = slides.filter(function(s) { return sType(s) === 'slide-type-quiz'; }).length;
-  var moduleTotal = parseInt(document.body.getAttribute('data-module-lesson-count'), 10);
-  if (!moduleTotal || moduleTotal < 1) moduleTotal = totalQuiz || 1;
-
-  // The module score accumulates across every lesson in the module and
-  // is completely independent of other modules, because it's stored
-  // under a key namespaced by moduleId — starting a new module (a new
-  // moduleId) naturally starts that module's tally at 0 with no manual
-  // reset step required, and Module 1's score can never bleed into
-  // Module 2's.
-  var scoreKey   = 'module-score-' + moduleId;
-  var countedKey = 'module-score-counted-' + moduleId;
-  var moduleScore = parseInt(localStorage.getItem(scoreKey), 10) || 0;
-  var countedLessons = [];
-  try { countedLessons = JSON.parse(localStorage.getItem(countedKey) || '[]'); } catch (e) { countedLessons = []; }
-
-  function updateScoreEls() {
-    document.querySelectorAll('.score-display .score-value:not(.b)').forEach(function(el) {
-      el.textContent = moduleScore + ' / ' + moduleTotal;
-    });
-  }
-
-  // Registers this lesson's FIRST-EVER quiz result toward the module
-  // score, exactly once. Only the first attempt counts: a correct first
-  // answer scores 1, a wrong first answer scores 0, and later retries —
-  // however many, however they turn out — never change that outcome.
-  // Progression (unlocking Next) and scoring are handled separately: see
-  // the .answer click handler below, which always lets a later-correct
-  // retry unlock Next without touching the score.
-  function registerLessonResult(correct) {
-    if (countedLessons.indexOf(lessonId) !== -1) return;
-    countedLessons.push(lessonId);
-    try { localStorage.setItem(countedKey, JSON.stringify(countedLessons)); } catch (e) {}
-    if (correct) {
-      moduleScore++;
-      localStorage.setItem(scoreKey, moduleScore);
-      document.querySelectorAll('.score-display .score-value:not(.b)').forEach(function(el) {
-        el.textContent = moduleScore + ' / ' + moduleTotal;
-        el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
-      });
-    } else {
-      updateScoreEls();
-    }
-    msSave(lessonId, savedProg, current, false);
-  }
-
-  function updateTopBar() {
-    var fill = document.querySelector('.progress-fill');
-    var p = Math.round(((current + 1) / total) * 100);
-    if (p > savedProg) { savedProg = p; localStorage.setItem('progress-' + lessonId, p); }
-    else p = savedProg;
-    if (fill) fill.style.width = p + '%';
-    msSchedule(lessonId, savedProg, current);
-  }
-
-  function resetInteractive() {
-    document.querySelectorAll('.answer').forEach(function(a) { a.classList.remove('correct','wrong'); a.style.pointerEvents = ''; });
-    document.querySelectorAll('.rc-opt').forEach(function(r) { r.classList.remove('selected'); });
-    document.querySelectorAll('.feedback-text').forEach(function(f) { f.classList.remove('show','ok','no'); f.textContent = ''; });
-    document.querySelectorAll('.explanation').forEach(function(e) { e.style.display = 'none'; });
-    document.querySelectorAll('.coin').forEach(function(c) { c.classList.remove('chosen'); });
-  }
-
-  var _wheelLock = false;
-  document.addEventListener('wheel', function(e) {
-    var slide = slides[current];
-    if (!slide) return;
-    if (isScrollable(slide)) {
-      var atBottom = slide.scrollTop + slide.clientHeight >= slide.scrollHeight - 5;
-      var atTop    = slide.scrollTop <= 5;
-      if ((e.deltaY > 0 && atBottom) || (e.deltaY < 0 && atTop && current > 0)) { if (_wheelLock) return; }
-      else { return; }
-    }
-    if (_wheelLock) return;
-    _wheelLock = true;
-    setTimeout(function() { _wheelLock = false; }, 800);
-    if (e.deltaY > 40 && current < total - 1 && !isLocked(slide)) { stopRaf(); clearCT(); advance(); }
-    else if (e.deltaY < -40 && current > 0) { goBack(); }
-  }, { passive: true });
-
-  function showSlide(idx) {
-    if (idx < 0 || idx >= total) return;
-    var prevSlide = slides[current];
-    var doSwitch = function() {
-      current = idx;
-      window._cc = current;
-      stopRaf(); clearCT(); btnHide();
-      slides.forEach(function(s) { hideSlideEl(s); resetSlide(s); });
-      resetInteractive();
-      var slide = slides[idx];
-      showSlideEl(slide);
-      document.querySelectorAll('.btn-back').forEach(function(btn) { btn.classList.toggle('on', idx > 0); });
-      slides.forEach(function(s, i) { var bs = s.querySelector('.btn-start'); if (bs) bs.style.display = (i === 0 && idx === 0) ? 'flex' : 'none'; });
-      setTheme(slide);
-      setNextLabel(slide);
-      updateProgCol(idx, total);
-      updateTopBar();
-      updateScoreEls();
-      localStorage.setItem('slide-' + lessonId, idx);
-      requestAnimationFrame(function() {
-        requestAnimationFrame(function() {
-          runAnim(slide);
-        });
-      });
-    };
-    if (prevSlide && prevSlide.classList.contains('active') && idx !== current) { animateOut(prevSlide, doSwitch); }
-    else { doSwitch(); }
-  }
-
-  function advance() {
-    if (current >= total - 1) {
-      localStorage.setItem('progress-' + lessonId, 100);
-      localStorage.setItem('completed-' + lessonId, 'true');
-      clearTimeout(_sync);
-      msSave(lessonId, 100, current, true);
-      if (nextLesson && nextLesson !== lessonId) {
-        localStorage.setItem('slide-' + nextLesson, 0);
-        localStorage.setItem('progress-' + nextLesson, 0);
-        window.location.href = '/lessons/' + nextLesson;
-      } else { window.location.href = '/module'; }
-      return;
-    }
-    showSlide(current + 1);
-  }
-
-  function goBack() { if (current === 0) return; showSlide(current - 1); }
-
-  document.querySelectorAll('.btn-next').forEach(function(btn) {
-    if (!btn.closest(SLIDE_SEL)) {
-      btn.addEventListener('click', function(e) { e.preventDefault(); if (!btn.classList.contains('show')) return; advance(); });
-    }
-  });
-  document.querySelectorAll('.btn-start').forEach(function(btn) {
-    btn.addEventListener('click', function(e) { e.preventDefault(); stopRaf(); clearCT(); advance(); });
-  });
-  document.querySelectorAll('.btn-back').forEach(function(btn) {
-    btn.addEventListener('click', function(e) { e.preventDefault(); goBack(); });
-  });
-
-  document.querySelectorAll('.answer').forEach(function(ans) {
-    ans.addEventListener('click', function() {
-      var slide   = ans.closest(SLIDE_SEL); if (!slide) return;
-      var correct = (slide.getAttribute('data-correct') || '').trim();
-      var chosen  = (ans.getAttribute('data-answer') || '').trim();
-      var allA    = slide.querySelectorAll('.answer');
-      var fb      = slide.querySelector('.feedback-text');
-      var exp     = slide.querySelector('.explanation');
-      var qId      = lessonId + '-q-' + slides.indexOf(slide);
-      var prevAns  = localStorage.getItem('answered-' + qId);
-      var isFirstAttempt = !prevAns;
-      allA.forEach(function(a) { a.style.pointerEvents = 'none'; a.classList.remove('correct','wrong'); });
-      if (chosen === correct) {
-        ans.classList.add('correct');
-        if (isFirstAttempt) {
-          localStorage.setItem('answered-' + qId, 'correct');
-          registerLessonResult(true);
-          if (fb) { fb.textContent = '✓ Correct! +1 point'; fb.classList.add('show','ok'); }
-        } else {
-          if (fb) { fb.textContent = '✓ Correct.'; fb.classList.add('show','ok'); }
-        }
-        if (exp) exp.style.display = 'block';
-        _ct.push(setTimeout(btnShow, 500));
-      } else {
-        ans.classList.add('wrong');
-        if (isFirstAttempt) {
-          localStorage.setItem('answered-' + qId, 'wrong');
-          registerLessonResult(false);
-        }
-        if (fb) { fb.textContent = 'Not quite — try another answer.'; fb.classList.add('show','no'); }
-        _ct.push(setTimeout(function() {
-          allA.forEach(function(a) { a.style.pointerEvents = 'auto'; a.classList.remove('wrong'); });
-          if (fb) { fb.classList.remove('show','no'); fb.textContent = ''; }
-        }, 1500));
-      }
-    });
-  });
-
-  document.querySelectorAll('.coin').forEach(function(coin) {
-    coin.addEventListener('click', function(e) {
-      e.preventDefault();
-      var slide = coin.closest(SLIDE_SEL); if (!slide) return;
-      slide.querySelectorAll('.coin').forEach(function(c) { c.classList.remove('chosen'); });
-      coin.classList.add('chosen');
-      _ct.push(setTimeout(btnShow, 300));
-    });
-  });
-
-  document.querySelectorAll('.rc-opt').forEach(function(opt) {
-    opt.addEventListener('click', function(e) {
-      e.preventDefault();
-      var slide = opt.closest(SLIDE_SEL); if (!slide) return;
-      slide.querySelectorAll('.rc-opt').forEach(function(r) { r.classList.remove('selected'); });
-      opt.classList.add('selected');
-      _ct.push(setTimeout(btnShow, 300));
-    });
-  });
-
-  document.addEventListener('touchstart', function(e) { _tx = e.touches[0].clientX; _ty = e.touches[0].clientY; }, { passive: true });
-  document.addEventListener('touchend', function(e) {
-    if (isLocked(slides[current])) return;
-    var dx = e.changedTouches[0].clientX - _tx;
-    var dy = e.changedTouches[0].clientY - _ty;
-    if (Math.abs(dx) < 35 || Math.abs(dy) > Math.abs(dx) * 1.2) return;
-    if (dx < -35 && current < total - 1) { stopRaf(); clearCT(); advance(); }
-    else if (dx > 35 && current > 0)     goBack();
-  }, { passive: true });
-
-  updateScoreEls();
-  showSlide(current);
-}
-
-window.addEventListener('load', function() {
-  if (window.$memberstackDom) { initLesson(); }
-  else { document.addEventListener('memberstack.init', initLesson); setTimeout(initLesson, 2500); }
-});
