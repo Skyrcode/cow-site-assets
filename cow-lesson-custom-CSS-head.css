@@ -186,8 +186,8 @@ body.slide-page > .progress-wrapper {
   gap: 10px !important;
   min-width: 0;
 }
-.slide-top > .div-block-20:first-child .btn-back { order: 1; }
-.slide-top > .div-block-20:first-child > .exit-div { order: 2; }
+.slide-top > .div-block-20:first-child .btn-back { order: 2; }
+.slide-top > .div-block-20:first-child > .exit-div { order: 1; }
 
 .btn-back {
   width: 32px !important; height: 32px !important; min-width: 0 !important; padding: 0 !important;
@@ -222,6 +222,29 @@ body.slide-page > .progress-wrapper {
 }
 .slide-top.on-teal > .div-block-20:first-child > .exit-div,
 .slide-top.on-teal .div-block-20:first-child .exit-div { color: #fff; }
+
+/* Cover (lesson-title) slide only: show the word "Dashboard" in this
+   corner instead of the icon. JS toggles .on-cover on .slide-top based
+   on which slide is active — the icon's own markup/CSS (embedded
+   inline by the client) is left completely alone; this just hides its
+   SVG and tooltip and adds a text label via ::after so nothing needs
+   to change in that embed. */
+.slide-top.on-cover .grad-cap-wrap svg { display: none !important; }
+.slide-top.on-cover .grad-cap-tooltip { display: none !important; }
+.slide-top.on-cover .grad-cap-wrap {
+  width: auto !important;
+  height: auto !important;
+}
+.slide-top.on-cover .grad-cap-wrap::after {
+  content: 'Dashboard';
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--teal);
+  white-space: nowrap;
+}
+.slide-top.on-cover.on-teal .grad-cap-wrap::after { color: #fff; }
 
 .brandmark {
   grid-column: 2 !important; justify-self: center !important; text-align: center;
@@ -909,11 +932,15 @@ body.slide-page > .progress-wrapper {
 .slide-type-completion .completion-wrap {
   max-width: 420px !important;
   margin: 0 auto !important;
+  gap: clamp(18px, 3dvh, 30px) !important;
 }
 .slide-type-completion .slide-col {
-  align-items: center !important; justify-content: center !important; gap: clamp(12px, 2dvh, 20px) !important;
+  align-items: center !important; justify-content: center !important; gap: clamp(18px, 3dvh, 28px) !important;
   padding: clamp(56px, 8dvh, 84px) var(--deck-pad) clamp(80px, 10dvh, 96px) !important;
   text-align: center !important; height: auto !important; min-height: 100dvh !important; overflow: visible !important;
+}
+.completion-div-text {
+  gap: clamp(12px, 2.2dvh, 20px) !important;
 }
 .completion-badge {
   width: clamp(120px, 20vh, 190px); height: clamp(120px, 20vh, 190px); border-radius: 50%; background: var(--pink-deep); border: 2px solid rgba(248,187,217,.4);
@@ -925,12 +952,11 @@ body.slide-page > .progress-wrapper {
 .completion-badge .badge { width: 100% !important; height: 100% !important; display: flex !important; align-items: center; justify-content: center; }
 .completion-badge .badge svg { width: 100% !important; height: 100% !important; }
 
-.score-display {
-  background: var(--white); border: 1.5px solid var(--border); border-radius: 18px;
-  padding: 4px 22px; width: 100%; max-width: 320px; text-align: left;
-  font-family: var(--sans); font-size: 13px; color: var(--body-gray);
-  display: flex; flex-direction: column;
-}
+/* Score box removed from the completion screen entirely per request —
+   kept as display:none rather than deleted from markup, since the
+   underlying module-scoped scoring in the JS still runs (it may be
+   surfaced elsewhere later, e.g. a module summary page). */
+.score-display { display: none !important; }
 .scorerow { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 11px 0; position: relative; }
 .scorerow + .scorerow { border-top: 1px solid var(--border); }
 .scorerow-before {
