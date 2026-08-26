@@ -26,7 +26,7 @@
      <a class="cw-m-underline">...</a>               animated underline on hover
      <a class="cw-m-arrow">Text <i>→</i></a>         arrow nudges right on hover
 
-   Load this AFTER site CSS. Pair with cow-motion.js.
+   Load this AFTER site CSS. Pair with cow-story-reveal.js.
    ============================================================ */
 
 /* ---------- FADE + RISE (default building block) ---------- */
@@ -144,3 +144,21 @@
   }
   .cw-m-arrow:hover i{ transform: none; }
 }
+
+/* ============================================================
+   SITEWIDE ADDITIONS — motion audit against Ana Paula's brief
+   ============================================================ */
+
+/* Nav buttons ("Button Text" / "Contact Us") never got cw-m-btn
+   applied in Designer on any page — targeting the real classes
+   directly here fixes it site-wide in one place instead of
+   patching every page's own <style> block. */
+.primary-button, .primary-button-pink{
+  transition: transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s ease;
+}
+.primary-button:hover, .primary-button-pink:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -10px rgba(22,79,92,.28);
+}
+.primary-button:active, .primary-button-pink:active{ transform: translateY(0) scale(.97); }
+@media (hover: none){ .primary-button:hover, .primary-button-pink:hover{ transform: none; box-shadow: none; } }
