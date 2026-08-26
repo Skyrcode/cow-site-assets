@@ -986,7 +986,7 @@ body.slide-page > .progress-wrapper {
   gap: clamp(12px, 2.2dvh, 20px) !important;
 }
 .completion-badge {
-  width: clamp(120px, 20vh, 190px); height: clamp(120px, 20vh, 190px); border-radius: 50%; background: var(--pink-deep); border: 2px solid rgba(248,187,217,.4);
+  width: clamp(120px, 20vh, 190px); height: clamp(120px, 20vh, 190px); border-radius: 50%; border: 2px solid rgba(248,187,217,.4);
   display: flex !important; align-items: center; justify-content: center; font-size: clamp(48px, 8vh, 72px); flex-shrink: 0;
   animation: rP 2.2s ease-in-out infinite;
   overflow: hidden !important;
