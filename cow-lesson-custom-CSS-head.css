@@ -183,7 +183,8 @@ body.slide-page > .progress-wrapper {
   justify-self: start !important;
   display: flex !important;
   align-items: center !important;
-  gap: 10px !important;
+  gap: 22px !important;
+  margin-left: 14px;
   min-width: 0;
 }
 .slide-top > .div-block-20:first-child .btn-back { order: 2; }
@@ -417,16 +418,7 @@ body.slide-page > .progress-wrapper {
   pointer-events: none !important; transform: none !important; max-width: 100% !important; height: auto !important;
 }
 .cover-top-row > * { pointer-events: all !important; }
-.home-btn {
-  position: absolute !important;
-  top: 12px !important; left: 0 !important;
-  font-family: var(--sans) !important; font-size: 13px !important; font-weight: 700 !important; color: var(--teal) !important;
-  background: rgba(250,247,244,.95) !important; border: 1.5px solid var(--border) !important; border-radius: 99px !important;
-  padding: 6px 14px !important; text-decoration: none !important; display: flex !important; align-items: center !important;
-  gap: 5px !important; white-space: nowrap !important; transition: background .2s, color .2s, border-color .2s !important;
-}
-.home-btn:hover { background: var(--teal) !important; color: #fff !important; border-color: var(--teal) !important; }
-.home-btn:active { transform: scale(.96) !important; }
+.cover-top-row .home-btn { display: none !important; }
 
 .intro-illustration {
   position: relative !important; width: 168px !important; height: 168px !important;
@@ -883,6 +875,32 @@ body.slide-page > .progress-wrapper {
   font-family: var(--sans); font-size: 13px; line-height: 1.5; box-sizing: border-box;
 }
 .explanation[style*="block"] { display: block !important; }
+/* ══ QUIZ SLIDE — tone-teal contrast override ══ */
+.tone-teal .answer {
+  background: rgba(250,247,244,.08);
+  border-color: rgba(250,247,244,.25);
+  color: var(--cream);
+}
+.tone-teal .opt-letter { background: rgba(250,247,244,.14); color: var(--cream); }
+.tone-teal .answer.correct {
+  background: rgba(156,184,107,.22);
+  border-color: #b7d98c;
+  color: var(--cream);
+}
+.tone-teal .answer.correct .opt-letter { background: #b7d98c; color: var(--teal); }
+.tone-teal .answer.wrong {
+  background: rgba(196,25,122,.25);
+  border-color: var(--pink-soft);
+  color: var(--cream);
+}
+.tone-teal .answer.wrong .opt-letter { background: var(--pink-soft); color: var(--teal); }
+.tone-teal .feedback-text.ok { background: rgba(156,184,107,.22); color: #d7f0c2; border-color: #b7d98c; }
+.tone-teal .feedback-text.no { background: rgba(196,25,122,.22); color: var(--pink-soft); border-color: var(--pink-soft); }
+.tone-teal .explanation {
+  background: rgba(250,247,244,.08);
+  border-color: rgba(250,247,244,.3);
+  color: rgba(250,247,244,.85);
+}
 
 /* ══════════════════════════════════════════════════════════════
    REFLECTION SLIDE — compact by design: heading + all three options
