@@ -246,24 +246,31 @@ body.slide-page > .progress-wrapper {
   white-space: nowrap;
 }
 .slide-top.on-cover.on-teal .grad-cap-wrap::after { color: #fff; }
-.slide-top.on-cover .exit-div {
-  background: rgba(250,247,244,.95);
-  border: 1.5px solid var(--border);
+/* Scoped to the LEFT group only — never touches the right-side exit icon */
+.slide-top.on-cover > .div-block-20:first-child > .exit-div {
+  background: transparent;
+  border: 1.5px solid transparent;
   border-radius: 99px;
   padding: 6px 14px;
   transition: background .2s ease, border-color .2s ease;
 }
-.slide-top.on-cover.on-teal .exit-div {
-  background: rgba(255,255,255,.14);
-  border-color: rgba(255,255,255,.24);
-}
 @media (hover: hover) {
-  .slide-top.on-cover .exit-div:hover { background: var(--teal); border-color: var(--teal); }
-  .slide-top.on-cover .exit-div:hover .grad-cap-wrap::after { color: #fff; }
-  .slide-top.on-cover.on-teal .exit-div:hover { background: var(--gold); border-color: var(--gold); }
-  .slide-top.on-cover.on-teal .exit-div:hover .grad-cap-wrap::after { color: var(--teal); }
+  .slide-top.on-cover > .div-block-20:first-child > .exit-div:hover {
+    background: var(--teal);
+    border-color: var(--teal);
+  }
+  .slide-top.on-cover > .div-block-20:first-child > .exit-div:hover .grad-cap-wrap::after {
+    color: #fff;
+  }
+  .slide-top.on-cover.on-teal > .div-block-20:first-child > .exit-div:hover {
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+  .slide-top.on-cover.on-teal > .div-block-20:first-child > .exit-div:hover .grad-cap-wrap::after {
+    color: var(--teal);
+  }
 }
-.slide-top.on-cover .exit-div:active { transform: scale(.96); }
+.slide-top.on-cover > .div-block-20:first-child > .exit-div:active { transform: scale(.96); }
 
 .brandmark {
   grid-column: 2 !important; justify-self: center !important; text-align: center;
