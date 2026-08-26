@@ -144,18 +144,19 @@ body.slide-page > .progress-wrapper {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   SLIDE TOP — Back (far left) / Brand (true center) / Counter + Exit (far right, grouped)
+   SLIDE TOP — left group (Back + dashboard-shortcut) / Brand (true
+   center) / right group (Counter + Exit).
    Uses --chrome-pad, NOT --deck-pad, so it sits tight to the real
    corner instead of inheriting the wider body-copy margin.
 
-   Structural note: in the Webflow markup, Back / Brand / the
-   counter+exit group are the THREE direct children of .slide-top —
-   the counter (.slide-count) and the exit link (.exit-div) both live
-   nested one level down, inside a shared wrapper (.div-block-20).
-   That wrapper — not the counter itself — is the real grid item in
-   the third track, so it (not .slide-count) carries the
-   grid-column/justify-self placement. .slide-count and .exit-div are
-   laid out relative to each other with a plain flex row inside it.
+   Structural note: .slide-top has exactly THREE direct children —
+   a left .div-block-20, the .brandmark, and a right .div-block-20.
+   Both groups share the class ".div-block-20", so every rule below
+   is scoped with :first-child / :last-child to tell them apart:
+     - :first-child → left group → Back + the graduation-cap
+       "dashboard shortcut" link the client added. Pinned to column 1.
+     - :last-child  → right group → the slide counter + the Exit
+       icon. Pinned to column 3, unchanged from before.
    ══════════════════════════════════════════════════════════════ */
 .slide-top {
   position: absolute !important;
@@ -174,9 +175,21 @@ body.slide-page > .progress-wrapper {
 .slide-top > * { pointer-events: all; min-width: 0; }
 .slide-top.on-teal { background: linear-gradient(to bottom, var(--teal) 75%, transparent) !important; }
 
-.btn-back {
+/* Left group: Back sits flush at the far-left corner (order:1); the
+   dashboard-shortcut icon sits just to its right (order:2), inside
+   the same group rather than competing with it for the corner. */
+.slide-top > .div-block-20:first-child {
   grid-column: 1 !important;
   justify-self: start !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0;
+}
+.slide-top > .div-block-20:first-child .btn-back { order: 1; }
+.slide-top > .div-block-20:first-child > .exit-div { order: 2; }
+
+.btn-back {
   width: 32px !important; height: 32px !important; min-width: 0 !important; padding: 0 !important;
   border-radius: 50% !important; border: 1.5px solid var(--border) !important;
   background: rgba(250,247,244,.95) !important; color: var(--teal) !important;
@@ -185,6 +198,7 @@ body.slide-page > .progress-wrapper {
   cursor: pointer; text-decoration: none;
   box-shadow: 0 1px 6px rgba(44,44,44,.12);
   opacity: 0; pointer-events: none;
+  flex-shrink: 0;
   transition: opacity .3s ease, transform .2s cubic-bezier(.34,1.4,.64,1), background .2s, border-color .2s, color .2s;
 }
 .btn-back::before { content: "‹"; font-family: var(--sans); font-size: 18px; font-weight: 700; line-height: 1; }
@@ -196,6 +210,19 @@ body.slide-page > .progress-wrapper {
   .slide-top.on-teal .btn-back:hover { border-color: var(--gold); color: var(--gold); }
 }
 
+/* The dashboard-shortcut link's own icon (.grad-cap-wrap) already
+   carries its own sizing/tooltip CSS inline in the Webflow embed —
+   this just keeps its containing link from stretching or shrinking
+   oddly inside the flex row. */
+.slide-top > .div-block-20:first-child > .exit-div {
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  flex-shrink: 0;
+  color: var(--teal);
+  transition: color .2s;
+}
+.slide-top.on-teal > .div-block-20:first-child > .exit-div,
+.slide-top.on-teal .div-block-20:first-child .exit-div { color: #fff; }
+
 .brandmark {
   grid-column: 2 !important; justify-self: center !important; text-align: center;
   font-family: var(--display); font-weight: 500; font-size: 14px;
@@ -204,9 +231,9 @@ body.slide-page > .progress-wrapper {
 }
 .slide-top.on-teal .brandmark { color: var(--pink-soft); }
 
-/* Right-hand group: counter immediately left of Exit, both pinned to
-   the far right edge as a single unit. */
-.div-block-20 {
+/* Right group: counter immediately left of Exit, both pinned to the
+   far right edge as a single unit — unchanged from before. */
+.slide-top > .div-block-20:last-child {
   grid-column: 3 !important;
   justify-self: end !important;
   display: flex !important;
@@ -223,9 +250,11 @@ body.slide-page > .progress-wrapper {
 }
 .slide-top.on-teal .slide-count { color: rgba(250,247,244,.65); }
 
-/* Exit — icon only, no button chrome, sized to just its glyph, sitting
-   flush against the far right edge with the counter immediately to its left. */
-.exit-div {
+/* Exit (right group) — icon only, no button chrome, sized to just its
+   glyph, sitting flush against the far right edge with the counter
+   immediately to its left. Scoped to :last-child so it never touches
+   the dashboard-shortcut link in the left group. */
+.slide-top > .div-block-20:last-child > .exit-div {
   position: static !important;
   width: 18px !important; height: 18px !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
@@ -233,22 +262,23 @@ body.slide-page > .progress-wrapper {
   text-decoration: none !important;
   flex-shrink: 0;
 }
-.code-embed-7, .exit-btn {
+.slide-top > .div-block-20:last-child .code-embed-7,
+.slide-top > .div-block-20:last-child .exit-btn {
   width: 100% !important; height: 100% !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
 }
-.exit-btn {
+.slide-top > .div-block-20:last-child .exit-btn {
   border: 0 !important; border-radius: 0 !important;
   background: transparent !important; box-shadow: none !important; padding: 0 !important;
   color: var(--teal) !important;
   transition: color .2s, transform .2s;
 }
-.exit-btn svg { width: 15px !important; height: 15px !important; display: block; }
-.exit-btn:active { transform: scale(.86); }
-.slide-top.on-teal .exit-btn { color: #fff !important; }
+.slide-top > .div-block-20:last-child .exit-btn svg { width: 15px !important; height: 15px !important; display: block; }
+.slide-top > .div-block-20:last-child .exit-btn:active { transform: scale(.86); }
+.slide-top.on-teal > .div-block-20:last-child .exit-btn { color: #fff !important; }
 @media (hover: hover) {
-  .exit-btn:hover { color: var(--pink-deep) !important; }
-  .slide-top.on-teal .exit-btn:hover { color: var(--gold) !important; }
+  .slide-top > .div-block-20:last-child .exit-btn:hover { color: var(--pink-deep) !important; }
+  .slide-top.on-teal > .div-block-20:last-child .exit-btn:hover { color: var(--gold) !important; }
 }
 
 /* ─── Slide footer / Next button — same edge inset as the top bar ─── */
@@ -333,11 +363,14 @@ body.slide-page > .progress-wrapper {
   background: none; border: none; padding: 0; width: auto;
 }
 
-/* Editorial headline scale for "hero" slide types */
+/* Editorial headline scale for "hero" slide types. Reflection is
+   deliberately NOT part of this group — at hero scale its heading
+   left no room for all three answer options to fit without scrolling
+   (see the Reflection slide section below for its own, smaller scale). */
 .slide-lesson-title .slide-h1,
 .slide-type-comparison .slide-h1,
-.slide-type-reflection .slide-h1,
 .slide-type-completion .slide-h1 {
+  font-size: clamp(2.5rem, 9vw, 4.2rem) !important;
   line-height: 1.05 !important;
   letter-spacing: -.02em !important;
 }
@@ -393,13 +426,19 @@ body.slide-page > .progress-wrapper {
 
 /* ══════════════════════════════════════════════════════════════
    TEXT-TITLE + KEY-INSIGHT SLIDES
-   Deliberately mirrors the Concept slide's layout numbers (padding,
-   content-wrap width, vertical rhythm, heading/body scale) so title
-   and key-insight slides read as part of the same visual family
-   instead of feeling separately tuned. The Lottie gets its own fixed
-   circular frame (concept leaves its Lottie unstyled/intrinsic —
-   these two slide types instead show a portrait Lottie meant for a
-   consistent frame, so it is deliberately size-locked here).
+   Mirrors the Concept slide's layout numbers (padding, content-wrap
+   width, vertical rhythm, heading/body scale) so these read as part
+   of the same visual family instead of feeling separately tuned or
+   smaller/cramped by comparison.
+
+   The Lottie visual is intentionally left open (no fixed circular
+   crop) for the same reason Concept's is unstyled: a fixed small box
+   was clipping/shrinking whatever artwork got dropped in — on one
+   key-insight slide this produced a tiny, malformed render instead of
+   the intended graphic. Lottie's own injected <svg> also needs an
+   explicit width/height fill rule of its own (see below) — object-fit
+   on the wrapper div alone doesn't reach the SVG lottie.js creates
+   inside it, which otherwise keeps its native artboard pixel size.
    ══════════════════════════════════════════════════════════════ */
 .slide-text-title .slide-col,
 .slide-type-keyinsight .slide-col {
@@ -458,31 +497,33 @@ body.slide-page > .progress-wrapper {
 
 .slide-text-title .slide-visual,
 .slide-type-keyinsight .slide-visual {
-  width: 600px !important;
-  height: 600px !important;
-  max-width: 600px !important;
-  max-height: 168px !important;
-  aspect-ratio: 1 / 1 !important;
+  width: 100% !important;
+  max-width: clamp(200px, 30vh, 300px) !important;
+  height: auto !important;
   margin: 0 auto !important;
   padding: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   overflow: visible !important;
-  border-radius: 50% !important;
-  flex: 0 0 168px !important;
 }
+/* The wrapper div lottie.js mounts into, and — critically — the <svg>
+   it injects inside that div, which otherwise keeps its own native
+   artboard pixel size regardless of the wrapper's CSS. */
 .slide-text-title .slide-visual > div,
 .slide-text-title .slide-visual iframe,
 .slide-text-title .slide-visual dotlottie-player,
 .slide-type-keyinsight .slide-visual > div,
 .slide-type-keyinsight .slide-visual iframe,
 .slide-type-keyinsight .slide-visual dotlottie-player {
-  width: 600px !important;
-  height: 600px !important;
-  max-width: 600px!important;
-  max-height: 600px !important;
-  object-fit: contain !important;
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
+}
+.slide-text-title .slide-visual svg,
+.slide-type-keyinsight .slide-visual svg {
+  width: 100% !important;
+  height: 100% !important;
   display: block !important;
 }
 
@@ -513,18 +554,7 @@ body.slide-page > .progress-wrapper {
   }
   .slide-text-title .slide-visual,
   .slide-type-keyinsight .slide-visual {
-    width: 150px !important; height: 150px !important;
-    max-width: 150px !important; max-height: 150px !important;
-    flex-basis: 150px !important;
-  }
-  .slide-text-title .slide-visual > div,
-  .slide-text-title .slide-visual iframe,
-  .slide-text-title .slide-visual dotlottie-player,
-  .slide-type-keyinsight .slide-visual > div,
-  .slide-type-keyinsight .slide-visual iframe,
-  .slide-type-keyinsight .slide-visual dotlottie-player {
-    width: 116px !important; height: 116px !important;
-    max-width: 116px !important; max-height: 116px !important;
+    max-width: clamp(180px, 24vh, 260px) !important;
   }
 }
 
@@ -545,18 +575,7 @@ body.slide-page > .progress-wrapper {
   }
   .slide-text-title .slide-visual,
   .slide-type-keyinsight .slide-visual {
-    width: 150px !important; height: 150px !important;
-    max-width: 150px !important; max-height: 150px !important;
-    flex-basis: 150px !important;
-  }
-  .slide-text-title .slide-visual > div,
-  .slide-text-title .slide-visual iframe,
-  .slide-text-title .slide-visual dotlottie-player,
-  .slide-type-keyinsight .slide-visual > div,
-  .slide-type-keyinsight .slide-visual iframe,
-  .slide-type-keyinsight .slide-visual dotlottie-player {
-    width: 116px !important; height: 116px !important;
-    max-width: 116px !important; max-height: 116px !important;
+    max-width: 220px !important;
   }
 }
 
@@ -571,18 +590,7 @@ body.slide-page > .progress-wrapper {
   }
   .slide-text-title .slide-visual,
   .slide-type-keyinsight .slide-visual {
-    width: 140px !important; height: 140px !important;
-    max-width: 140px !important; max-height: 140px !important;
-    flex-basis: 140px !important;
-  }
-  .slide-text-title .slide-visual > div,
-  .slide-text-title .slide-visual iframe,
-  .slide-text-title .slide-visual dotlottie-player,
-  .slide-type-keyinsight .slide-visual > div,
-  .slide-type-keyinsight .slide-visual iframe,
-  .slide-type-keyinsight .slide-visual dotlottie-player {
-    width: 108px !important; height: 108px !important;
-    max-width: 108px !important; max-height: 108px !important;
+    max-width: 190px !important;
   }
 }
 
@@ -642,10 +650,12 @@ body.slide-page > .progress-wrapper {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   INTERACTIVE (AMOUNT PICKER) SLIDE — flat rectangular buttons
+   INTERACTIVE (AMOUNT PICKER) SLIDE — smaller square buttons
    ══════════════════════════════════════════════════════════════ */
 .slide-type-interactive .slide-col {
-  padding: clamp(40px, 5.5dvh, 58px) var(--deck-pad) clamp(80px, 10dvh, 100px) !important;
+  /* More top clearance than before — the heading was sitting right
+     under the fixed .slide-top bar with barely any breathing room. */
+  padding: clamp(64px, 9dvh, 84px) var(--deck-pad) clamp(80px, 10dvh, 100px) !important;
   min-height: 100dvh !important;
   height: 100dvh !important;
   overflow: hidden !important;
@@ -696,25 +706,26 @@ body.slide-page > .progress-wrapper {
 .tone-teal .sparkle { color: rgba(250,247,244,.55); }
 
 .slide-type-interactive .coin {
-  flex: 1 1 0;
-  min-width: 92px;
-  max-width: 220px;
+  flex: 0 0 auto;
+  width: clamp(76px, 21vw, 98px);
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 26px 12px;
+  padding: 0;
   border-radius: 14px;
   border: 1.5px solid var(--border);
   background: var(--white);
   color: var(--teal);
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(19px, 4.4vw, 26px);
+  font-size: clamp(16px, 4vw, 21px);
   letter-spacing: -.01em;
   cursor: pointer;
   text-decoration: none;
   box-shadow: 0 1px 0 rgba(44,44,44,.03), 0 8px 20px -14px rgba(27,75,84,.2);
-  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .15s ease;
+  transition: background .18s ease, border-color .18s ease, color .18s ease,
+              transform .22s cubic-bezier(.34,1.4,.64,1), box-shadow .22s ease;
   -webkit-tap-highlight-color: transparent;
 }
 .tone-teal .coin {
@@ -722,17 +733,25 @@ body.slide-page > .progress-wrapper {
   border-color: rgba(250,247,244,.22);
   color: var(--cream);
 }
-.slide-type-interactive .coin:active { transform: scale(.97); }
+.slide-type-interactive .coin:active { transform: translateY(-1px) scale(.96); }
 @media (hover: hover) {
-  .slide-type-interactive .coin:not(.chosen):hover { border-color: var(--teal); }
-  .tone-teal .slide-type-interactive .coin:not(.chosen):hover { border-color: var(--gold); }
+  .slide-type-interactive .coin:not(.chosen):hover {
+    border-color: var(--teal);
+    transform: translateY(-5px);
+    box-shadow: 0 14px 26px -12px rgba(27,75,84,.3);
+  }
+  .tone-teal .slide-type-interactive .coin:not(.chosen):hover {
+    border-color: var(--gold);
+    box-shadow: 0 14px 26px -12px rgba(0,0,0,.35);
+  }
 }
 
 .slide-type-interactive .coin.chosen {
   background: var(--teal);
   border-color: var(--teal);
   color: var(--cream);
-  box-shadow: 0 10px 24px -10px rgba(27,75,84,.45);
+  transform: translateY(-5px);
+  box-shadow: 0 14px 28px -10px rgba(27,75,84,.45);
 }
 .tone-teal .coin.chosen {
   background: var(--gold);
@@ -743,10 +762,10 @@ body.slide-page > .progress-wrapper {
 .slide-type-interactive .coin.coin-50,
 .slide-type-interactive .coin.coin-100,
 .slide-type-interactive .coin.coin-500 {
-  width: auto;
+  width: clamp(76px, 21vw, 98px);
   height: auto;
-  min-width: 92px;
-  aspect-ratio: auto;
+  min-width: 0;
+  aspect-ratio: 1 / 1;
 }
 
 .slide-type-interactive .coin.bob,
@@ -843,18 +862,25 @@ body.slide-page > .progress-wrapper {
 .explanation[style*="block"] { display: block !important; }
 
 /* ══════════════════════════════════════════════════════════════
-   REFLECTION SLIDE
+   REFLECTION SLIDE — compact by design: heading + all three options
+   need to fit in one view with no scrolling, so this slide gets its
+   own smaller heading scale instead of the "hero" one.
    ══════════════════════════════════════════════════════════════ */
 .slide-type-reflection .content-wrap {
-  max-width: 560px !important;
+  max-width: 520px !important;
   margin: 0 auto !important;
 }
-.slide-type-reflection .slide-col { padding: 56px var(--deck-pad) 100px !important; gap: 4px; height: 100dvh !important; overflow: hidden !important; }
-.reflect-opts { display: flex; flex-direction: column; gap: 14px; flex: 1; justify-content: center; }
-.rc-opt { display: flex !important; align-items: center; gap: 16px; cursor: pointer; padding: 4px 0; -webkit-tap-highlight-color: transparent; }
+.slide-type-reflection .slide-col { padding: 48px var(--deck-pad) 88px !important; gap: 4px; height: 100dvh !important; overflow: hidden !important; }
+.slide-type-reflection .slide-h1 {
+  font-size: clamp(1.6rem, 5.4vw, 2.3rem) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -.01em !important;
+}
+.reflect-opts { display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: center; }
+.rc-opt { display: flex !important; align-items: center; gap: 14px; cursor: pointer; padding: 4px 0; -webkit-tap-highlight-color: transparent; }
 .rc-bubble {
-  width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0; display: flex !important; align-items: center; justify-content: center;
-  background: rgba(27,75,84,.07); border: 1.5px solid rgba(27,75,84,.16); font-size: 22px; line-height: 1;
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display: flex !important; align-items: center; justify-content: center;
+  background: rgba(27,75,84,.07); border: 1.5px solid rgba(27,75,84,.16); font-size: 18px; line-height: 1;
   transition: background .22s, border-color .22s, transform .22s cubic-bezier(.34,1.4,.64,1);
   animation: rcP 3s ease-in-out infinite;
 }
@@ -870,7 +896,7 @@ body.slide-page > .progress-wrapper {
 }
 .rc-opt .rc-text {
   color: var(--ink) !important; line-height: 1.4; font-family: var(--sans) !important; font-weight: 500 !important;
-  font-size: 16px !important; text-decoration: none !important; background: none !important; border: none !important;
+  font-size: 15px !important; text-decoration: none !important; background: none !important; border: none !important;
   padding: 0 !important; margin: 0 !important; cursor: pointer;
 }
 .tone-teal .rc-opt .rc-text { color: var(--cream) !important; }
@@ -920,23 +946,14 @@ body.slide-page > .progress-wrapper {
 .completion-msg { font-family: var(--sans); font-size: 12.5px; color: var(--body-gray); }
 .tone-teal .completion-msg { color: rgba(250,247,244,.55); }
 
-/* "You've finished / <current lesson>" — current-lesson-name is a
-   dedicated span so it can carry its own accent color, independent of
-   the ordinary heading color, and survives slide re-renders because
-   the completion heading is animated as a whole block (see JS) rather
-   than being torn down into per-word spans. */
-.slide-type-completion .slide-h1 .current-lesson-name {
-  display: block;
-  margin-top: 8px;
-  font-style: italic;
-  font-weight: 600;
-  color: var(--pink-deep);
-}
-.tone-teal.slide-type-completion .slide-h1 .current-lesson-name { color: var(--pink-soft); }
-
-/* "Next up: <lesson>" — the JS snippet splits this into three parts so
-   the next-lesson name can sit on its own line with real weight,
-   instead of being buried mid-sentence. */
+/* "You've finished {current lesson}. Next up: {next lesson}" — the JS
+   splits this single small paragraph into three parts:
+     .finished-line        "You've finished" (+ colored current-lesson-name)
+     .next-lesson-label    "Next up" (small label)
+     .next-lesson-name     the next lesson's title (own line, larger)
+   The completion heading itself ("Lesson Complete") is untouched —
+   both lesson names live in this one small paragraph, each with its
+   own accent color, at the paragraph's normal (small) font size. */
 .slide-type-completion .slide-txt {
   display: flex !important;
   flex-direction: column !important;
@@ -950,6 +967,11 @@ body.slide-page > .progress-wrapper {
   color: var(--body-gray);
 }
 .tone-teal .finished-line { color: rgba(250,247,244,.78); }
+.finished-line .current-lesson-name {
+  color: var(--pink-deep);
+  font-weight: 600;
+}
+.tone-teal .finished-line .current-lesson-name { color: var(--pink-soft); }
 .next-lesson-label {
   font-family: var(--sans);
   font-size: 10.5px;
@@ -978,8 +1000,11 @@ body.slide-page > .progress-wrapper {
 
   .slide-h1 { font-size: clamp(2rem, 3.2vw, 2.7rem) !important; }
   .slide-lesson-title .slide-h1, .slide-type-interactive .slide-h1,
-  .slide-type-comparison .slide-h1, .slide-type-reflection .slide-h1, .slide-type-completion .slide-h1 {
+  .slide-type-comparison .slide-h1, .slide-type-completion .slide-h1 {
     font-size: clamp(3.2rem, 4.6vw, 5rem) !important;
+  }
+  .slide-type-reflection .slide-h1 {
+    font-size: clamp(1.8rem, 2.6vw, 2.3rem) !important;
   }
   .slide-type-comparison .slide-txt,
   .slide-type-reflection .slide-txt, .slide-type-completion .slide-txt {
@@ -1015,7 +1040,7 @@ body.slide-page > .progress-wrapper {
   .slide-type-interactive .slide-h1 { font-size: clamp(1.9rem, 8.6vw, 2.5rem) !important; }
   .slide-type-interactive .slide-txt { font-size: 16px !important; }
   .slide-type-interactive .coin-grid { gap: 10px; margin-top: 14px; }
-  .slide-type-interactive .coin { padding: 20px 8px; min-width: 84px; font-size: clamp(17px, 5vw, 22px); }
+  .slide-type-interactive .coin { width: clamp(70px, 24vw, 88px); font-size: clamp(15px, 4.6vw, 19px); }
 
   .brandmark { max-width: 40vw; font-size: 13px; }
 }
@@ -1029,7 +1054,8 @@ body.slide-page > .progress-wrapper {
   .completion-badge { width: 90px !important; height: 90px !important; font-size: 40px !important; }
 
   .slide-lesson-title .slide-h1, .slide-type-comparison .slide-h1,
-  .slide-type-reflection .slide-h1, .slide-type-completion .slide-h1 { font-size: 2.15rem !important; }
+  .slide-type-completion .slide-h1 { font-size: 2.15rem !important; }
+  .slide-type-reflection .slide-h1 { font-size: 1.5rem !important; }
 
   .brandmark { font-size: 12px; max-width: 34vw; }
 }
