@@ -260,7 +260,7 @@ body.slide-page > .progress-wrapper {
     border-color: var(--teal);
   }
   .slide-top.on-cover > .div-block-20:first-child > .exit-div:hover .grad-cap-wrap::after {
-    color: #fff;
+    color: var(--pink);
   }
   .slide-top.on-cover.on-teal > .div-block-20:first-child > .exit-div:hover {
     background: var(--gold);
