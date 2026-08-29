@@ -23,7 +23,7 @@
    ============================================================ */
 document.addEventListener('DOMContentLoaded', function(){
 
-  var revealSelectors = '.cw-m-fade, .cw-m-clip, .cw-m-text';
+  var revealSelectors = '.cw-m-fade, .cw-m-clip, .cw-m-text, .cw-m-bar';
   var revealEls = Array.prototype.slice.call(document.querySelectorAll(revealSelectors));
   if(!revealEls.length) return;
 
