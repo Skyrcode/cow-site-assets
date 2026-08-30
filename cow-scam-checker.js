@@ -2,25 +2,34 @@
 /* =========================================================
    CHOICE OF WEALTH™ — SCAM RED-FLAG CHECKER
    Logic module: configuration + deterministic evaluation
-   + Memberstack sync layer (added for the members' area).
+   + Memberstack member-record storage (members' area only).
 
-   MEMBERSTACK SYNC — WHAT WAS ADDED
+   MEMBER STORAGE — HOW THIS DIFFERS FROM THE PROTOTYPE
    ------------------------------------------------------------
-   The original tool saved a check in progress to this device's
-   localStorage only, and expired it after 24 hours. Since this
-   tool now lives in the members' area alongside Savings
-   Challenges, the same sync pattern has been added: when a
-   member is signed in, her in-progress check (category,
-   answers, position) is written to her own Memberstack member
-   record under its own namespace, so it is available if she
-   returns on another device or browser. The device copy is
-   always written first and immediately; the account copy
-   follows, debounced. If Memberstack is unavailable or she is
-   signed out, the tool behaves exactly as it did before: saved
-   to this device only.
+   This tool lives inside the gated members' area, so progress
+   is saved to the signed-in member's own Memberstack record
+   under its own namespace, not to this device's localStorage.
+   That means a member's in-progress check follows her account,
+   not the browser: she can start on her phone and finish on her
+   laptop. Nothing is written to localStorage or any other
+   on-device storage at all.
 
-   Nothing about the questions, scoring, results, PDF generator
-   or wording was changed. Only the storage layer was extended.
+   Every answer schedules a small debounced write to the member
+   record (so rapid clicks through the assessment don't fire a
+   network request per click); a write is also flushed
+   immediately when the tab is hidden or the check is completed,
+   so nothing is lost. "Start again and clear my check" removes
+   the saved record entirely.
+
+   If Memberstack has not finished initialising yet, or no
+   member is signed in, the check simply runs in memory for
+   that page view with nothing persisted — there is no
+   device-storage fallback, by design, since this tool is only
+   ever shown to signed-in members.
+
+   Nothing about the questions, scoring, results or PDF
+   generator was changed from the original logic. Only the
+   storage layer was rewritten.
    ========================================================= */
 
 /* ---------- 1. CATEGORIES ---------- */
@@ -527,13 +536,11 @@ const state = {
 const $ = sel => document.querySelector(sel);
 
 /* ============================================================
-   STORAGE — device copy + Memberstack sync
+   STORAGE — signed-in member's account only (no device storage)
    ------------------------------------------------------------
-   Device copy behaves exactly as the original tool: category,
-   answers and position only. Never notes, results or score.
-   Expires after 24 hours either way.
+   Category, answers and position only — never notes, results
+   or the internal score. Expires after 24 hours.
    ============================================================ */
-const STORE_KEY = "cow-srfc-progress-v1";
 const STORE_TTL = 24 * 60 * 60 * 1000;
 
 const MEMBERSTACK = {
@@ -543,26 +550,8 @@ const MEMBERSTACK = {
   debounceMs: 800
 };
 
-function readLocal(){
-  try{
-    const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return null;
-    const d = JSON.parse(raw);
-    if (!d || !d.category || !CATEGORIES.some(c => c.id === d.category)) return null;
-    if (Date.now() - (d.t || 0) > STORE_TTL) return null;
-    return d;
-  } catch(e){ return null; }
-}
-function writeLocal(payload){
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify(payload)); } catch(e){ /* device storage unavailable */ }
-}
-function clearLocal(){
-  try{ localStorage.removeItem(STORE_KEY); } catch(e){}
-}
-
 /* Memberstack member record. Reads and writes the namespace only,
-   merging into whatever else the member record already holds.
-   Same pattern already proven in the Savings Challenges tool. */
+   merging into whatever else the member record already holds. */
 const MS = {
   api: null, available: false,
   init(){
@@ -611,12 +600,18 @@ const MS = {
   }
 };
 
-let syncReady = false;
-let remoteTimer = null;
+let syncReady = false;      // true once the initial sign-in check has run
+let remoteTimer = null;     // debounce handle for the next account write
+let remoteCache = null;     // last payload loaded from / written to the account
 
 function currentPayload(){
   if (!state.category) return null;
   return { v:"1.1", t:Date.now(), category:state.category, answers:state.answers, index:state.index };
+}
+
+function validPayload(p){
+  return !!(p && p.category && CATEGORIES.some(c => c.id === p.category) &&
+            (Date.now() - (p.t || 0) <= STORE_TTL));
 }
 
 function flushRemote(){
@@ -625,6 +620,7 @@ function flushRemote(){
   if (!syncReady || !MS.available) return;
   const payload = currentPayload();
   if (!payload) return;
+  remoteCache = payload;
   MS.save(payload);
 }
 function scheduleRemote(){
@@ -635,18 +631,20 @@ function scheduleRemote(){
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") flushRemote();
 });
+window.addEventListener("pagehide", flushRemote);
 
-/* Device copy is written immediately, same as before. The member
-   record follows, debounced, once the initial sync check has run. */
+/* Nothing is written to this device. Every change schedules a
+   debounced write straight to the member's account. If no member
+   is signed in (or Memberstack hasn't finished initialising),
+   the check simply runs in memory for this page view only. */
 function saveProgress(){
   if (!state.category) return;
-  const payload = currentPayload();
-  writeLocal(payload);
   scheduleRemote();
 }
 function clearProgress(){
-  clearLocal();
   clearTimeout(remoteTimer);
+  remoteTimer = null;
+  remoteCache = null;
   if (syncReady && MS.available) MS.save(null);
 }
 
@@ -1022,8 +1020,8 @@ $("#resumeClearBtn").addEventListener("click", () => {
   $("#resumeBar").hidden = true;
 });
 $("#resumeBtn").addEventListener("click", () => {
-  const p = readLocal();
-  if (!p) { $("#resumeBar").hidden = true; return; }
+  const p = remoteCache;
+  if (!validPayload(p)) { $("#resumeBar").hidden = true; return; }
   state.category = p.category;
   state.answers = p.answers || {};
   state.index = p.index || 0;
@@ -1046,41 +1044,35 @@ renderActed();
 /* ============================================================
    BOOT
    ------------------------------------------------------------
-   Loads the device copy first and offers to resume immediately,
-   so nothing waits on the network. Then checks Memberstack: if
-   a signed-in member has a newer saved check on her account
-   than the one on this device, that one is offered instead.
+   There is no device copy to check first, so the resume bar
+   stays hidden until Memberstack has confirmed who is signed in
+   and her saved check (if any) has been loaded from her account.
    ============================================================ */
 function offerResumeFrom(payload){
-  if (payload) $("#resumeBar").hidden = false;
+  if (validPayload(payload)){
+    remoteCache = payload;
+    $("#resumeBar").hidden = false;
+  }
 }
 
-const localAtBoot = readLocal();
-offerResumeFrom(localAtBoot);
-
 MS.init().then(signedIn => {
+  syncReady = true;
   if (!signedIn){
-    syncReady = true;
-    console.log("Scam Red-Flag Checker: saving on this device only. No signed-in member found.");
+    console.log("Scam Red-Flag Checker: no signed-in member found. Progress will not be saved.");
     return null;
   }
   return MS.load().then(remote => {
-    syncReady = true;
-    if (!remote) { flushRemote(); return null; }
-    const remoteIsNewer = !localAtBoot || (remote.t || 0) > (localAtBoot.t || 0);
-    if (remoteIsNewer && remote.category && CATEGORIES.some(c => c.id === remote.category) &&
-        (Date.now() - (remote.t || 0) <= STORE_TTL)){
-      writeLocal(remote);
+    if (remote && validPayload(remote)){
       offerResumeFrom(remote);
       console.log("Scam Red-Flag Checker: a saved check was found on this member's account.");
     } else {
-      console.log("Scam Red-Flag Checker: progress saving to the member's account.");
+      console.log("Scam Red-Flag Checker: progress will save to this member's account.");
     }
     return null;
   });
 }).catch(err => {
   syncReady = true;
-  console.warn("Scam Red-Flag Checker: member storage unavailable, this device only.", err);
+  console.warn("Scam Red-Flag Checker: member storage unavailable this session.", err);
 });
 
 /* =========================================================
