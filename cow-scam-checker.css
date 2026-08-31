@@ -45,6 +45,36 @@
 
 .cow-srfc *,.cow-srfc *::before,.cow-srfc *::after{box-sizing:border-box}
 
+/* ---------- DEFENSIVE BASELINE ----------
+   Resets every element tag inside .cow-srfc to safe defaults BEFORE
+   any of the specific component rules below apply their real design.
+   This selector (element + .cow-srfc class) automatically outranks
+   any bare single-class rule the site itself might define with the
+   same class name (e.g. its own .hero, .wrap, .footer), regardless
+   of what that class is called, so nothing here can be silently
+   overridden by an unrelated same-named rule elsewhere on the site. */
+.cow-srfc div,.cow-srfc section,.cow-srfc header,.cow-srfc footer,.cow-srfc main,
+.cow-srfc article,.cow-srfc figure,.cow-srfc figcaption,.cow-srfc blockquote,
+.cow-srfc ul,.cow-srfc li,.cow-srfc fieldset,.cow-srfc legend,.cow-srfc label,
+.cow-srfc textarea,.cow-srfc button,.cow-srfc span,.cow-srfc sup{
+  background:transparent;
+  background-color:transparent;
+  margin:0;
+  padding:0;
+  border:0;
+  float:none;
+  position:static;
+  width:auto;
+  max-width:none;
+  min-width:0;
+  min-height:0;
+  display:block;
+  box-shadow:none;
+  transform:none;
+}
+.cow-srfc span,.cow-srfc sup,.cow-srfc button,.cow-srfc a{display:inline}
+.cow-srfc button{display:inline-flex}
+
 .cow-srfc h1,.cow-srfc h2,.cow-srfc h3,.cow-srfc h4{margin:0;font-weight:400}
 .cow-srfc p{margin:0 0 1.1em}
 .cow-srfc p:last-child{margin-bottom:0}
