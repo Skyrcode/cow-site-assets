@@ -1,12 +1,6 @@
 (function(){
 "use strict";
 
-/* The tool's root element. State attributes (data-arrange, data-editing,
-   data-complete) are set here, not on document.body, so this tool's
-   state can never collide with the site's own body-level attributes
-   or CSS that might key off the real page body. */
-var ROOT = document.querySelector(".cow-sav") || document.body;
-
 /* ============================================================
    CONFIGURATION
    ------------------------------------------------------------
@@ -431,7 +425,7 @@ $("gate-back").addEventListener("click", function(){
 
 /* ---------- Challenge ---------- */
 function enterChallenge(){
-  ROOT.setAttribute("data-arrange", P.arrange);
+  document.body.setAttribute("data-arrange", P.arrange);
   Array.prototype.forEach.call(document.querySelectorAll(".arrange__btn"), function(b){
     b.setAttribute("aria-pressed", b.getAttribute("data-arrange") === P.arrange ? "true" : "false");
   });
@@ -527,7 +521,7 @@ function renderDash(){
     el.setAttribute("data-reached", exact >= parseInt(el.getAttribute("data-milestone"), 10) ? "true" : "false");
   });
 
-  ROOT.setAttribute("data-complete", P.completed.length === C.count ? "true" : "false");
+  document.body.setAttribute("data-complete", P.completed.length === C.count ? "true" : "false");
 }
 
 function announce(msg){ $("live").textContent = msg; }
@@ -919,7 +913,7 @@ function setCurrency(code){
 
 function setEditing(on){
   editing = on;
-  ROOT.setAttribute("data-editing", on ? "true" : "false");
+  document.body.setAttribute("data-editing", on ? "true" : "false");
   var b = $("edit-btn");
   b.setAttribute("aria-pressed", on ? "true" : "false");
   b.textContent = on ? "Done editing" : "Edit progress";
@@ -989,7 +983,7 @@ Array.prototype.forEach.call(document.querySelectorAll(".arrange__btn"), functio
     var mode = btn.getAttribute("data-arrange");
     if (mode === P.arrange) return;
     P.arrange = mode;
-    ROOT.setAttribute("data-arrange", mode);
+    document.body.setAttribute("data-arrange", mode);
     Array.prototype.forEach.call(document.querySelectorAll(".arrange__btn"), function(b){
       b.setAttribute("aria-pressed", b.getAttribute("data-arrange") === mode ? "true" : "false");
     });
