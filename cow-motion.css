@@ -1,126 +1,78 @@
 /* ============================================================
-   CHOICE OF WEALTH — Motion Pack v2 (CSS)
-   Unified site-wide scroll-reveal + hover system.
-
-   Philosophy: restrained, editorial, never flashy. Every effect
-   here is deliberately measured — no bounce, no spin, no color
-   shifting on scroll — but tuned to be CLEARLY visible, per the
-   brief: "make it obvious everything is animating, without being
-   aggressive or distracting."
-
-   WHAT CHANGED FROM v1 — AND WHY IT MATTERS FOR FUTURE EDITS:
-   In v1, several classes each declared their own full `transition:`
-   shorthand (e.g. .cw-m-fade and .cw-m-lift both did). Because CSS
-   never merges two equally-specific rules for the same property —
-   the later one in the file wins WHOLESALE — any element carrying
-   both classes (e.g. the Understand/Build/Connect cards, which are
-   cw-m-fade + cw-m-lift together) silently lost its opacity fade
-   and got the wrong duration for its rise-in. That's why almost
-   nothing looked like it was animating even though the classes
-   were correctly applied throughout the site.
-
-   THE FIX: transition timing now lives in exactly ONE place — the
-   "MASTER TRANSITION" block below — listing every class in the
-   pack as a selector, and every property any of them touch, each
-   with its own duration. Every class further down only sets STATE
-   values (opacity, transform, box-shadow, clip-path, width), never
-   `transition` itself.
-
-   ⚠️ IF YOU ADD A NEW CLASS TO THIS PACK: add its selector to the
-   master list and its property to the master list. Do NOT give it
-   its own `transition:` declaration — that reintroduces the exact
-   bug this rewrite fixes.
-
-   USAGE — SCROLL REVEALS:
-     <div class="cw-m-fade">...</div>              fade + rise, default
-     <div class="cw-m-fade cw-m-d1">...</div>       staggered delay (d1–d6)
-     <img class="cw-m-clip">...</img>               clip-path reveal, for images
-     <h2 class="cw-m-text">...</h2>                 mask-in text reveal, for headings
-
-   USAGE — HOVER (pure CSS, no scroll trigger needed):
-     <div class="cw-m-lift">...</div>               card lift + shadow on hover
-     <div class="cw-m-tilt">...</div>               book-cover style rise + slight tilt
-     <div class="cw-m-emphasis">...</div>           stronger lift for one standout card
-     <a class="cw-m-underline">...</a>               animated underline on hover
-     <a class="cw-m-arrow">Text <i>→</i></a>         arrow nudges right on hover
-     any .cw-m-btn / .primary-button / .primary-button-pink / .w-button
-                                                      gets press + hover feedback automatically
-
-   USAGE — NEW: SCROLL-TRIGGERED BAR FILL (Story page values):
-     <div class="cw-m-bar cw-m-fade">
-       <span class="cw-m-bar-fill" style="--cw-target: 82%"></span>
-     </div>
-   Requires a one-line addition to cow-story-reveal.js: add
-   '.cw-m-bar' to the revealSelectors string, so scrolling into
-   view adds .cw-m-in to it the same way it already does for
-   .cw-m-fade / .cw-m-clip / .cw-m-text.
-
-   Load this AFTER site CSS. Pair with cow-story-reveal.js.
+   CHOICE OF WEALTH — Motion Pack v3
+   Fixes: v2's .cw-m-fade/.cw-m-in was never toggled by any JS
+   (cow-story-reveal.js only touched .cw-reveal/.cw-in). v3's JS
+   below fixes that at the source — this file is otherwise the
+   same architecture as v2, plus:
+   - concrete bar-fill styling (track + fill, was unstyled before)
+   - hero/soft variants for motion hierarchy (--cw-fade-dist/dur)
+   - image zoom-on-hover (.cw-m-zoom) for covers/portraits
+   - word-by-word heading reveal (.cw-m-text-split, opt-in)
+   - form field focus ring + success pulse
+   Load AFTER site CSS. Pair with cow-story-reveal.js v3.
    ============================================================ */
 
-/* ---------- MASTER TRANSITION (the fix — read the note above) ---------- */
-.cw-m-fade, .cw-m-clip, .cw-m-text,
-.cw-m-lift, .cw-m-tilt, .cw-m-emphasis,
-.cw-m-btn, .primary-button, .primary-button-pink, .w-button,
-.cw-m-bar-fill{
-  transition:
-    opacity            .65s cubic-bezier(.16,1,.3,1),
-    transform          .45s cubic-bezier(.16,1,.3,1),
-    box-shadow         .3s  ease,
-    clip-path          .9s  cubic-bezier(.16,1,.3,1),
-    -webkit-clip-path  .9s  cubic-bezier(.16,1,.3,1),
-    width              .9s  cubic-bezier(.16,1,.3,1);
+:root{
+  --cw-fade-dist: 26px;
+  --cw-fade-dur: .65s;
+  --cw-rise-dur: .45s;
 }
 
-/* ---------- FADE + RISE (default building block) ---------- */
-.cw-m-fade{ opacity: 0; transform: translateY(26px); }
+/* ---------- MASTER TRANSITION ---------- */
+.cw-m-fade, .cw-m-clip, .cw-m-text, .cw-word > span,
+.cw-m-lift, .cw-m-tilt, .cw-m-emphasis, .cw-m-zoom img,
+.cw-m-btn, .primary-button, .primary-button-pink, .w-button,
+.cw-m-bar-fill, .cw-m-field{
+  transition:
+    opacity     var(--cw-fade-dur) cubic-bezier(.16,1,.3,1),
+    transform   var(--cw-rise-dur) cubic-bezier(.16,1,.3,1),
+    box-shadow  .3s ease,
+    border-color .3s ease,
+    clip-path   .9s cubic-bezier(.16,1,.3,1),
+    -webkit-clip-path .9s cubic-bezier(.16,1,.3,1),
+    width       .9s cubic-bezier(.16,1,.3,1);
+}
+
+/* ---------- FADE + RISE ---------- */
+.cw-m-fade{ opacity: 0; transform: translateY(var(--cw-fade-dist)); }
 .cw-m-fade.cw-m-in{ opacity: 1; transform: translateY(0); }
 
-/* stagger delays — apply alongside cw-m-fade for sequential groups */
-.cw-m-d1{ transition-delay: .08s; }
-.cw-m-d2{ transition-delay: .16s; }
-.cw-m-d3{ transition-delay: .24s; }
-.cw-m-d4{ transition-delay: .32s; }
-.cw-m-d5{ transition-delay: .40s; }
-.cw-m-d6{ transition-delay: .48s; }
+/* motion hierarchy — apply alongside cw-m-fade */
+.cw-m-hero{ --cw-fade-dist: 42px; --cw-fade-dur: .9s; }
+.cw-m-soft{ --cw-fade-dist: 14px; --cw-fade-dur: .5s; }
+
+.cw-m-d1{ transition-delay: .08s; } .cw-m-d2{ transition-delay: .16s; }
+.cw-m-d3{ transition-delay: .24s; } .cw-m-d4{ transition-delay: .32s; }
+.cw-m-d5{ transition-delay: .40s; } .cw-m-d6{ transition-delay: .48s; }
 
 /* ---------- IMAGE CLIP REVEAL ---------- */
-.cw-m-clip{
-  clip-path: inset(0 0 14% 0);
-  -webkit-clip-path: inset(0 0 14% 0);
-  opacity: 0;
-}
-.cw-m-clip.cw-m-in{
-  clip-path: inset(0 0 0% 0);
-  -webkit-clip-path: inset(0 0 0% 0);
-  opacity: 1;
-}
+.cw-m-clip{ clip-path: inset(0 0 14% 0); -webkit-clip-path: inset(0 0 14% 0); opacity: 0; }
+.cw-m-clip.cw-m-in{ clip-path: inset(0 0 0% 0); -webkit-clip-path: inset(0 0 0% 0); opacity: 1; }
 
-/* ---------- TEXT MASK REVEAL (headings) ---------- */
-.cw-m-text{
-  clip-path: inset(0 0 100% 0);
-  -webkit-clip-path: inset(0 0 100% 0);
-  transform: translateY(14px);
-}
-.cw-m-text.cw-m-in{
-  clip-path: inset(0 0 0% 0);
-  -webkit-clip-path: inset(0 0 0% 0);
-  transform: translateY(0);
-}
+/* ---------- HEADING MASK REVEAL ---------- */
+.cw-m-text{ clip-path: inset(0 0 100% 0); -webkit-clip-path: inset(0 0 100% 0); transform: translateY(14px); }
+.cw-m-text.cw-in-text{ clip-path: inset(0 0 0% 0); -webkit-clip-path: inset(0 0 0% 0); transform: translateY(0); }
+
+/* word-by-word variant — opt in with cw-m-text-split, JS wraps words */
+.cw-word{ display: inline-block; overflow: hidden; }
+.cw-word > span{ display: inline-block; transform: translateY(110%); }
+.cw-m-text-split.cw-in-text .cw-word > span{ transform: translateY(0); }
 
 /* ---------- HOVER: CARD LIFT ---------- */
-.cw-m-lift:hover{
-  transform: translateY(-7px);
-  box-shadow: 0 18px 34px -16px rgba(22,79,92,.28);
-}
+.cw-m-lift:hover{ transform: translateY(-7px); box-shadow: 0 18px 34px -16px rgba(22,79,92,.28); }
 @media (hover: none){ .cw-m-lift:hover{ transform: none; box-shadow: none; } }
+
+/* ---------- HOVER: IMAGE ZOOM (book covers, portraits, avatars) ---------- */
+.cw-m-zoom{ overflow: hidden; }
+.cw-m-zoom img{ transform: scale(1); }
+.cw-m-zoom:hover img{ transform: scale(1.045); }
+@media (hover: none){ .cw-m-zoom:hover img{ transform: none; } }
 
 /* ---------- HOVER: UNDERLINE DRAW ---------- */
 .cw-m-underline{ position: relative; display: inline-block; text-decoration: none; }
 .cw-m-underline::after{
   content:''; position:absolute; left:0; bottom:-2px; width:0; height:1px;
-  background: currentColor;
-  transition: width .4s cubic-bezier(.16,1,.3,1);
+  background: currentColor; transition: width .4s cubic-bezier(.16,1,.3,1);
 }
 .cw-m-underline:hover::after{ width: 100%; }
 
@@ -129,25 +81,12 @@
 .cw-m-arrow i{ font-style: normal; display: inline-block; transition: transform .3s cubic-bezier(.16,1,.3,1); }
 .cw-m-arrow:hover i{ transform: translateX(5px); }
 
-/* ---------- BUTTONS — unified, sitewide ----------
-   Covers manually-tagged .cw-m-btn AND every native Webflow
-   button (.w-button, which every Contact/Membership/Wealth
-   Shelf/Manifesto CTA already carries by default) plus the two
-   custom nav classes, so buttons animate consistently sitewide
-   even where a designer forgot to hand-tag cw-m-btn. */
-.cw-m-btn:hover,
-.primary-button:hover,
-.primary-button-pink:hover,
-.w-button:hover{
-  transform: translateY(-3px);
-  box-shadow: 0 14px 26px -12px rgba(22,79,92,.32);
+/* ---------- BUTTONS — sitewide ---------- */
+.cw-m-btn:hover, .primary-button:hover, .primary-button-pink:hover, .w-button:hover{
+  transform: translateY(-3px); box-shadow: 0 14px 26px -12px rgba(22,79,92,.32);
 }
-.cw-m-btn:active,
-.primary-button:active,
-.primary-button-pink:active,
-.w-button:active{
-  transform: translateY(0) scale(.96);
-  transition-duration: .12s; /* snappy press feedback, overrides the .45s hover speed */
+.cw-m-btn:active, .primary-button:active, .primary-button-pink:active, .w-button:active{
+  transform: translateY(0) scale(.96); transition-duration: .12s;
 }
 @media (hover: none){
   .cw-m-btn:hover, .primary-button:hover, .primary-button-pink:hover, .w-button:hover{
@@ -155,40 +94,49 @@
   }
 }
 
-/* ---------- HOVER: BOOK COVER TILT (Wealth Shelf) ---------- */
+/* ---------- BUTTON SUCCESS PULSE — triggered by JS (form submit, add-to-bag) ---------- */
+.cw-m-pulse{ animation: cwPulse .5s cubic-bezier(.16,1,.3,1); }
+@keyframes cwPulse{ 0%{ transform: scale(1); } 40%{ transform: scale(1.06); } 100%{ transform: scale(1); } }
+
+/* ---------- HOVER: BOOK COVER TILT ---------- */
 .cw-m-tilt{ transform-style: preserve-3d; }
-.cw-m-tilt:hover{
-  transform: translateY(-6px) rotate(-2deg);
-  box-shadow: 0 20px 34px -16px rgba(22,79,92,.3);
-}
+.cw-m-tilt:hover{ transform: translateY(-6px) rotate(-2deg); box-shadow: 0 20px 34px -16px rgba(22,79,92,.3); }
 @media (hover: none){ .cw-m-tilt:hover{ transform: none; box-shadow: none; } }
 
-/* ---------- EMPHASIS: one standout card (Annual "Best Value") ---------- */
-.cw-m-emphasis:hover{
-  transform: translateY(-9px) scale(1.02);
-  box-shadow: 0 26px 46px -18px rgba(22,79,92,.34);
-}
+/* ---------- EMPHASIS: Annual "Best Value" card ---------- */
+.cw-m-emphasis:hover{ transform: translateY(-9px) scale(1.02); box-shadow: 0 26px 46px -18px rgba(22,79,92,.34); }
 @media (hover: none){ .cw-m-emphasis:hover{ transform: none; box-shadow: none; } }
 
-/* ---------- NEW: SCROLL-TRIGGERED BAR FILL (Story page values) ----------
-   See usage note at the top of this file. */
-.cw-m-bar{ position: relative; overflow: hidden; }
-.cw-m-bar-fill{ display: block; width: 0; height: 100%; }
+/* ---------- SCROLL-TRIGGERED BAR FILL (values bar) — now actually styled ---------- */
+.cw-m-bar{
+  position: relative; overflow: hidden; height: 3px; border-radius: 2px;
+  background: var(--hair-soft, rgba(0,0,0,.08));
+}
+.cw-m-bar-fill{
+  position: absolute; inset: 0 auto 0 0; display: block; width: 0; height: 100%;
+  border-radius: 2px; background: var(--pink, #E91E8C);
+}
 .cw-m-bar.cw-m-in .cw-m-bar-fill{ width: var(--cw-target, 100%); }
 
-/* ---------- REDUCED MOTION — always respected ---------- */
+/* ---------- FORM FIELDS — focus ring ---------- */
+.cw-m-field:focus{
+  border-color: var(--pink-deep, #C4197A);
+  box-shadow: 0 0 0 3px rgba(233,30,140,.12);
+  outline: none;
+}
+
+/* ---------- REDUCED MOTION ---------- */
 @media (prefers-reduced-motion: reduce){
-  .cw-m-fade, .cw-m-clip, .cw-m-text,
-  .cw-m-lift, .cw-m-tilt, .cw-m-emphasis,
+  .cw-m-fade, .cw-m-clip, .cw-m-text, .cw-word > span,
+  .cw-m-lift, .cw-m-tilt, .cw-m-emphasis, .cw-m-zoom img,
   .cw-m-btn, .primary-button, .primary-button-pink, .w-button,
-  .cw-m-bar-fill{
-    transition: none !important;
+  .cw-m-bar-fill, .cw-m-pulse{
+    transition: none !important; animation: none !important;
   }
-  .cw-m-fade, .cw-m-clip, .cw-m-text{
-    opacity: 1; transform: none; clip-path: none; -webkit-clip-path: none;
-  }
+  .cw-m-fade, .cw-m-clip{ opacity: 1; transform: none; clip-path: none; -webkit-clip-path: none; }
+  .cw-m-text, .cw-word > span{ clip-path: none; -webkit-clip-path: none; transform: none; }
   .cw-m-bar.cw-m-in .cw-m-bar-fill{ width: var(--cw-target, 100%); }
-  .cw-m-lift:hover, .cw-m-tilt:hover, .cw-m-emphasis:hover,
+  .cw-m-lift:hover, .cw-m-tilt:hover, .cw-m-emphasis:hover, .cw-m-zoom:hover img,
   .cw-m-btn:hover, .primary-button:hover, .primary-button-pink:hover, .w-button:hover{
     transform: none; box-shadow: none;
   }
