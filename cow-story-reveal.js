@@ -1,71 +1,115 @@
 /* ============================================================
-   CHOICE OF WEALTH — Motion Pack v1 (JS)
-   Drives cw-m-fade / cw-m-clip / cw-m-text reveals.
-
-   No auto-tagging. Only watches elements that already carry
-   one of the reveal classes in the HTML — you place those by
-   hand, once, on exactly the elements you want to move.
-
-   REPLAY MODE: elements reveal every time they scroll into
-   view, and re-mask every time they scroll out — either
-   direction. Scrolling back up past a section replays its
-   entrance animation again, same as scrolling down to it.
-
-   Includes a built-in safety net: on first load, if an
-   element that's already on screen hasn't revealed within 2s
-   (e.g. the very first section, before any scrolling happens),
-   it force-reveals. This only runs once, on load — after that,
-   the observer alone drives all reveal/re-mask behavior.
-
-   Load this AFTER cow-motion.css, and AFTER any CMS content
-   has had a chance to render (place near the end of body,
-   same as other COW scripts).
+   CHOICE OF WEALTH — Reveal Pack v3
+   Fixes the v2 mismatch: this now toggles .cw-m-in on the exact
+   classes cow-motion.css v3 expects (.cw-m-fade / .cw-m-clip /
+   .cw-m-bar), and .cw-in-text on .cw-m-text headings.
+   Removed vs. the old file (not in Ana's brief, and #2/#3 were
+   literal infinite loops — the exact thing she said not to do):
+     - custom cursor (dot + ring)
+     - magnetic buttons
+     - hero parallax drift
+     - hero number count-up
+     - Tools Hub auto-injected bar charts
+     - Worksheet auto-injected icons
+     - Dispatches auto-injected scrolling headline ticker
+   Kept: avatar safety net (unrelated site function, still needed).
+   Added: word-by-word heading reveal, form success pulse, a
+   global window.cwPulse() helper other scripts can call.
    ============================================================ */
 document.addEventListener('DOMContentLoaded', function(){
 
-  var revealSelectors = '.cw-m-fade, .cw-m-clip, .cw-m-text, .cw-m-bar';
-  var revealEls = Array.prototype.slice.call(document.querySelectorAll(revealSelectors));
-  if(!revealEls.length) return;
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Direct geometry check on scroll, instead of IntersectionObserver.
-  // An element counts as "in view" once 15% of its height has
-  // crossed into the viewport, with a small bottom margin so it
-  // reveals slightly before hitting the very edge of the screen —
-  // same visual timing as before, just computed directly instead
-  // of relying on the browser's IO callback, which has been an
-  // unpredictable source of bugs on this project (stuck masks,
-  // false negatives on elements confirmed to be on-screen).
-  var BOTTOM_MARGIN = 40;
+  /* ---------- 1. AVATAR SAFETY NET ---------- */
+  setTimeout(function(){
+    var avatar = document.querySelector('.member-avatar');
+    if(avatar && !avatar.textContent.trim()) avatar.textContent = 'M';
+  }, 1800);
 
-  function isRevealed(el){
-    var rect = el.getBoundingClientRect();
-    var vh = window.innerHeight;
-    if(rect.height <= 0) return false;
-    var visibleTop = Math.max(rect.top, 0);
-    var visibleBottom = Math.min(rect.bottom, vh - BOTTOM_MARGIN);
-    var visibleHeight = visibleBottom - visibleTop;
-    var ratio = visibleHeight / rect.height;
-    return ratio >= 0.15;
-  }
-
-  var ticking = false;
-  function update(){
-    revealEls.forEach(function(el){
-      var should = isRevealed(el);
-      var has = el.classList.contains('cw-m-in');
-      if(should && !has) el.classList.add('cw-m-in');
-      if(!should && has) el.classList.remove('cw-m-in'); // re-mask on exit, replays next time it's in view
+  /* ---------- 2. GLOBAL PULSE HELPER ---------- */
+  window.cwPulse = function(el){
+    if(!el || reduceMotion) return;
+    el.classList.remove('cw-m-pulse');
+    void el.offsetWidth;
+    el.classList.add('cw-m-pulse');
+    el.addEventListener('animationend', function handler(){
+      el.classList.remove('cw-m-pulse');
+      el.removeEventListener('animationend', handler);
     });
-    ticking = false;
+  };
+
+  /* ---------- 3. SCROLL REVEAL — repeatable (cw-m-fade / cw-m-clip / cw-m-bar) ---------- */
+  var repeatEls = document.querySelectorAll('.cw-m-fade, .cw-m-clip, .cw-m-bar');
+  if('IntersectionObserver' in window && !reduceMotion){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        entry.target.classList.toggle('cw-m-in', entry.isIntersecting);
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+    repeatEls.forEach(function(el){ io.observe(el); });
+  } else {
+    repeatEls.forEach(function(el){ el.classList.add('cw-m-in'); });
   }
 
-  function onScroll(){
-    if(!ticking){ window.requestAnimationFrame(update); ticking = true; }
+  /* ---------- 4. HEADING REVEAL — fires once (cw-m-text), optional word split ---------- */
+  function wrapWords(el){
+    Array.from(el.childNodes).forEach(function(node){
+      if(node.nodeType === 3 && node.textContent.trim()){
+        var parts = node.textContent.split(/(\s+)/);
+        var frag = document.createDocumentFragment();
+        parts.forEach(function(part, idx){
+          if(part === '' || /^\s+$/.test(part)){ frag.appendChild(document.createTextNode(part)); return; }
+          var outer = document.createElement('span');
+          outer.className = 'cw-word';
+          var inner = document.createElement('span');
+          inner.textContent = part;
+          inner.style.transitionDelay = Math.min(idx * 0.03, 0.5) + 's';
+          outer.appendChild(inner);
+          frag.appendChild(outer);
+        });
+        el.replaceChild(frag, node);
+      }
+    });
   }
 
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', onScroll);
+  var textEls = document.querySelectorAll('.cw-m-text');
+  textEls.forEach(function(el, i){
+    el.style.transitionDelay = Math.min((i % 5) * 0.06, 0.24) + 's';
+    if(el.classList.contains('cw-m-text-split')) wrapWords(el);
+  });
 
-  update(); // run once immediately for whatever's on screen at load
+  if('IntersectionObserver' in window && !reduceMotion){
+    var ioText = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add('cw-in-text');
+          ioText.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
+    textEls.forEach(function(el){ ioText.observe(el); });
+  } else {
+    textEls.forEach(function(el){ el.classList.add('cw-in-text'); });
+  }
+
+  setTimeout(function(){
+    textEls.forEach(function(el){
+      if(!el.classList.contains('cw-in-text')) el.classList.add('cw-in-text');
+    });
+  }, 2000);
+
+  /* ---------- 5. FORM SUCCESS PULSE ---------- */
+  document.querySelectorAll('.w-form').forEach(function(formWrap){
+    var doneEl = formWrap.querySelector('.w-form-done');
+    var submitBtn = formWrap.querySelector('[type="submit"]');
+    if(!doneEl || !submitBtn) return;
+    var mo = new MutationObserver(function(){
+      if(doneEl.offsetParent !== null && !formWrap._cwPulsed){
+        formWrap._cwPulsed = true;
+        window.cwPulse(submitBtn);
+      }
+    });
+    mo.observe(doneEl, { attributes: true });
+  });
 
 });
