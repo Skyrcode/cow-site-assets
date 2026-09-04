@@ -810,8 +810,8 @@ function drawCertificate(){
   x.fillText(d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear(), W / 2, H - 220);
 
   x.fillStyle = "#8F7A6A"; x.fillRect(W / 2 - 40, H - 186, 80, 1);
-  x.fillStyle = "#252326"; x.font = '600 18px Inter, sans-serif';
-  letterspace(x, "CHOICEOFWEALTH.COM", W / 2, H - 142, 5);
+ x.fillStyle = "#252326"; x.font = '600 18px Inter, sans-serif';
+letterspace(x, "choiceofwealth.com", W / 2, H - 142, 0.5);
 
   return c;
 }
@@ -1130,6 +1130,21 @@ Store.load(KEY).then(function(saved){
   routeToScreen();
   return MS.init();
 }).then(function(signedIn){
+   }).then(function(signedIn){
+  var fn = $("footnote-persist");
+  if (fn){
+    fn.textContent = signedIn
+      ? "Your progress is saved to your account and follows you across devices. Choice of Wealth does not hold, transfer or access your money or banking information."
+      : "Your progress is saved on this device. Choice of Wealth does not hold, transfer or access your money or banking information.";
+  }
+
+  if (!signedIn){
+    syncReady = true;
+    console.log("Savings challenges: saving on this device only. No signed-in member found.");
+    return null;
+  }
+  return MS.load().then(function(remote){
+    ...
   if (!signedIn){
     syncReady = true;
     console.log("Savings challenges: saving on this device only. No signed-in member found.");
