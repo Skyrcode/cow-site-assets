@@ -811,7 +811,7 @@ function drawCertificate(){
 
   x.fillStyle = "#8F7A6A"; x.fillRect(W / 2 - 40, H - 186, 80, 1);
  x.fillStyle = "#252326"; x.font = '600 18px Inter, sans-serif';
-letterspace(x, "choiceofwealth.com", W / 2, H - 142, 0.5);
+letterspace(x, "choiceofwealth.com", W / 2, H - 142, 1);
 
   return c;
 }
