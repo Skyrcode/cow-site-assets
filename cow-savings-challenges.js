@@ -1144,13 +1144,6 @@ Store.load(KEY).then(function(saved){
     return null;
   }
   return MS.load().then(function(remote){
-    ...
-  if (!signedIn){
-    syncReady = true;
-    console.log("Savings challenges: saving on this device only. No signed-in member found.");
-    return null;
-  }
-  return MS.load().then(function(remote){
     var remoteIsNewer = remote && (remote.updatedAt || 0) > (store.updatedAt || 0);
     if (remoteIsNewer){
       store = mergeLocalChangesInto(adopt(remote), baseline, store);
