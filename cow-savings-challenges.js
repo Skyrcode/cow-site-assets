@@ -1130,7 +1130,6 @@ Store.load(KEY).then(function(saved){
   routeToScreen();
   return MS.init();
 }).then(function(signedIn){
-   }).then(function(signedIn){
   var fn = $("footnote-persist");
   if (fn){
     fn.textContent = signedIn
