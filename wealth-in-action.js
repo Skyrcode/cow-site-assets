@@ -85,8 +85,8 @@ a{color:var(--charcoal)}
 .figure-md{font-size:24px;line-height:1.15}
 
 /* ---------- shell ---------- */
-.wia-wrap{margin:0 auto;padding:0 20px}
-.wia-wrap-wide{margin:0 auto;padding:0 20px}
+.wia-wrap{max-width:720px;margin:0 auto;padding:0 20px}
+.wia-wrap-wide{max-width:1080px;margin:0 auto;padding:0 20px}
 header.jh{position:sticky;top:0;z-index:30;background:rgba(250,247,242,.94);
   backdrop-filter:saturate(140%) blur(6px);border-bottom:1px solid var(--grey)}
 .jh-in{display:flex;align-items:center;gap:14px;justify-content:space-between;padding:10px 0}
@@ -186,7 +186,7 @@ section.screen.on{display:block;animation:riseIn .32s ease-out both}
 .footbar{position:fixed;left:0;right:0;bottom:0;background:rgba(250,247,242,.96);
   backdrop-filter:blur(6px);border-top:1px solid var(--grey);
   padding:10px 20px calc(10px + env(safe-area-inset-bottom));z-index:25}
-.footbar .inner{margin:0 auto;display:flex;flex-direction:column;gap:6px}
+.footbar .inner{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
 .helper{font-size:14px;margin:0;color:var(--taupe-deep)}
 
 /* ---------- option cards ---------- */
@@ -386,7 +386,7 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
   .trans h1{font-size:64px}
   .footbar{position:static;border-top:none;background:none;backdrop-filter:none;padding:0}
   .footbar .inner{flex-direction:row-reverse;justify-content:flex-start;align-items:center;gap:16px;
-    margin-top:20px;padding:0 32px}
+    margin-top:20px;padding:0 32px;max-width:1080px}
   .footbar .inner .btn{width:auto}
   main{padding-bottom:56px}
   .actions{flex-direction:row}
@@ -3030,7 +3030,7 @@ function paintGreeting(){
   if (wiaMember && wiaMember.customFields){
     name = wiaMember.customFields["first-name"] || wiaMember.customFields["firstName"] || wiaMember.customFields["first_name"] || "";
   }
-  el.textContent = name ? (timeGreeting + ", " + name + ".") : (timeGreeting + ".");
+  el.textContent = name ? (timeGreeting + ", " + name.toUpperCase() + ".") : (timeGreeting + ".");
 }
 
 /* ============================================================
