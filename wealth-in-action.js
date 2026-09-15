@@ -1,9 +1,9 @@
 /* ============================================================
-   WEALTH IN ACTION — EMBED BOOTSTRAP (self-contained)
-   Mounts the tool inside a Shadow DOM root so its CSS, markup
-   and element IDs never collide with the host Webflow page.
-   CSS and markup are bundled in this one file on purpose —
-   nothing else needs to be added to Webflow's custom code.
+   WEALTH IN ACTION — EMBED BOOTSTRAP (self-contained, member-gated)
+   Mounts the tool inside a Shadow DOM root so its CSS, markup and
+   element IDs never collide with the host Webflow page. Only shows
+   the tool to a signed-in Memberstack member, and saves progress
+   to that member's account (member JSON) instead of the browser.
    ============================================================ */
 (function(){
   "use strict";
@@ -11,17 +11,36 @@
   var host = document.getElementById('wia-app-root');
   if (!host) return;
 
-  // Load the two webfonts once globally on the host page (harmless if this embed appears more than once)
-  if (!document.getElementById('wia-fonts-link')){
-    var pc1 = document.createElement('link'); pc1.rel = 'preconnect'; pc1.href = 'https://fonts.googleapis.com'; document.head.appendChild(pc1);
-    var pc2 = document.createElement('link'); pc2.rel = 'preconnect'; pc2.href = 'https://fonts.gstatic.com'; pc2.crossOrigin = ''; document.head.appendChild(pc2);
-    var fl = document.createElement('link'); fl.id = 'wia-fonts-link'; fl.rel = 'stylesheet';
-    fl.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Inter:wght@400;500;600&display=swap';
-    document.head.appendChild(fl);
+  var SIGNED_OUT_HTML = '<div style="font-family:-apple-system,system-ui,sans-serif;'
+    + 'max-width:520px;margin:40px auto;padding:28px;text-align:center;'
+    + 'border:1px solid #E8E4E1;border-radius:18px;background:#FAF7F2;color:#252326">'
+    + '<p style="font-size:17px;line-height:1.5;margin:0 0 16px">Wealth in Action saves your progress to your account, so please sign in to start or continue your journey.</p>'
+    + '<button id="wia-signin-btn" style="font-family:inherit;font-size:16px;font-weight:500;'
+    + 'min-height:48px;padding:0 22px;border-radius:12px;border:1px solid transparent;'
+    + 'background:#FF4F9A;color:#252326;cursor:pointer">Sign in</button></div>';
+
+  function showSignedOut(){
+    host.innerHTML = SIGNED_OUT_HTML;
+    var btn = document.getElementById('wia-signin-btn');
+    if (btn) btn.addEventListener('click', function(){
+      if (window.$memberstackDom) window.$memberstackDom.openModal('LOGIN');
+    });
   }
 
-  var shadow = host.attachShadow({mode:'open'});
-  shadow.innerHTML = `<style>:root{
+  function bootTool(member){
+    var wiaMember = member;
+
+    // Load the two webfonts once globally on the host page (harmless if this embed appears more than once)
+    if (!document.getElementById('wia-fonts-link')){
+      var pc1 = document.createElement('link'); pc1.rel = 'preconnect'; pc1.href = 'https://fonts.googleapis.com'; document.head.appendChild(pc1);
+      var pc2 = document.createElement('link'); pc2.rel = 'preconnect'; pc2.href = 'https://fonts.gstatic.com'; pc2.crossOrigin = ''; document.head.appendChild(pc2);
+      var fl = document.createElement('link'); fl.id = 'wia-fonts-link'; fl.rel = 'stylesheet';
+      fl.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Inter:wght@400;500;600&display=swap';
+      document.head.appendChild(fl);
+    }
+
+    var shadow = host.attachShadow({mode:'open'});
+    shadow.innerHTML = `<style>:root{
   --pink:#FF4F9A; --pink-hover:#FF63A6; --cream:#FAF7F2; --blush:#FFF0F6; --white:#FFFFFF;
   --charcoal:#252326; --taupe:#8F7A6A; --taupe-deep:#6F5C4E; --grey:#E8E4E1;
   --green:#4F8068; --red:#B85C68; --amber:#D89B45;
@@ -407,7 +426,7 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
   <div class="wia-wrap-wide jh-in">
     <span class="mark">Wealth in Action</span>
     <span class="chapter" id="chapterLabel"></span>
-    <button class="btn-link" id="exitBtn" style="font-size:15px">Save on this device and exit</button>
+    <button class="btn-link" id="exitBtn" style="font-size:15px">Save to my account and exit</button>
   </div>
   <div class="progress"><span id="progFill" style="width:0%"></span></div>
   <div class="wia-wrap-wide"><div class="progress-label num" id="progLabel"></div></div>
@@ -456,7 +475,7 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
       <a href="https://anas-choice-of-wealth-site.webflow.io/wealth-tools" rel="noopener" target="_top">More Wealth Tools</a> &nbsp;·&nbsp;
       <a href="https://anas-choice-of-wealth-site.webflow.io/" rel="noopener" target="_top">Choice of Wealth</a>
     </p>
-    <p class="cap">Your progress is saved in this browser only. It will not automatically appear on another device or browser, and clearing your browser data may remove it.</p>
+    <p class="cap">Your progress is saved to your account, so it will be here the next time you sign in, on any device.</p>
     <p class="disc">Virtual money. Simulated scenario. Not investment advice.</p>
   </div>
  </div>
@@ -947,16 +966,16 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
 </div>
 `;
 
-  var skipLink = shadow.querySelector('.skip');
-  if (skipLink) skipLink.addEventListener('click', function(e){
-    e.preventDefault();
-    var m = shadow.getElementById('main');
-    if (m){ m.setAttribute('tabindex','-1'); m.focus(); m.scrollIntoView(); }
-  });
+    var skipLink = shadow.querySelector('.skip');
+    if (skipLink) skipLink.addEventListener('click', function(e){
+      e.preventDefault();
+      var m = shadow.getElementById('main');
+      if (m){ m.setAttribute('tabindex','-1'); m.focus(); m.scrollIntoView(); }
+    });
 
-  function wiaActiveEl(){ return shadow.activeElement || document.activeElement; }
+    function wiaActiveEl(){ return shadow.activeElement || document.activeElement; }
 
-  (function(shadowRoot){
+    (function(shadowRoot, wiaMember){
 /* ============================================================
    WEALTH IN ACTION — APP LOGIC (production build, unmodified)
    See README-webflow-integration.md before pasting this anywhere.
@@ -1147,67 +1166,93 @@ function buildRecord(pathId, alloc){
 /* ============================================================
    APP STATE + STORAGE
    ============================================================ */
-const KEY = "cow.wealthInAction.journey1.v1";
+const MS_KEY = "cow.wealthInAction.journey1.v1";
 let storageOK = true;
 let saveConfirmed = false;      /* only ever true after a save has actually succeeded */
-let app = {
-  schema: 1,
-  screen: "dashboard",
-  currency: "GBP",
-  disclaimerAccepted: false,
-  goal: null,
-  horizon: null,
-  prediction: null,
-  alloc: { cash:0, bonds:0, global:0, tech:0, property:0, gold:0 },
-  allocConfirmed: false,
-  reasons: [],
-  reasonNote: "",
-  panels: [],
-  stage: 1,                     /* which market period the visitor is on, 1 to 3 */
-  holdings: null,               /* live holdings, in cents, carried across periods */
-  contributions: "0",
-  points: [],                   /* portfolio value at the start and after each period */
-  decisions: [],                /* one entry per confirmed decision */
-  holdReflection: null,
-  decision: null,
-  completed: false,
-  divers: false,
-  moveOpened: false,
-  rebalOpened: false
-};
-/* The interface never claims a save happened unless it actually did. */
-function save(){
-  if (!storageOK){ saveConfirmed = false; return false; }
-  try {
-    localStorage.setItem(KEY, JSON.stringify(app));
-    saveConfirmed = true;
+function defaultApp(){
+  return {
+    schema: 1,
+    screen: "dashboard",
+    currency: "GBP",
+    disclaimerAccepted: false,
+    goal: null,
+    horizon: null,
+    prediction: null,
+    alloc: { cash:0, bonds:0, global:0, tech:0, property:0, gold:0 },
+    allocConfirmed: false,
+    reasons: [],
+    reasonNote: "",
+    panels: [],
+    stage: 1,                     /* which market period the visitor is on, 1 to 3 */
+    holdings: null,               /* live holdings, in cents, carried across periods */
+    contributions: "0",
+    points: [],                   /* portfolio value at the start and after each period */
+    decisions: [],                /* one entry per confirmed decision */
+    holdReflection: null,
+    decision: null,
+    completed: false,
+    divers: false,
+    moveOpened: false,
+    rebalOpened: false
+  };
+}
+let app = defaultApp();
+/* Progress is saved to the signed-in member's account via Memberstack's
+   member JSON store, not to this browser/device. memberJsonCache holds the
+   member's FULL json blob (which may hold data for other tools too), so a
+   save merges MS_KEY into it rather than overwriting the whole thing.
+   Writes are debounced so we are not hitting the API on every keystroke;
+   the interface never claims a save happened until it actually has. */
+let memberJsonCache = {};
+let saveTimer = null;
+function scheduleSave(){
+  saveConfirmed = false;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushSave, 800);
+}
+function flushSave(){
+  clearTimeout(saveTimer);
+  if (!wiaMember || !window.$memberstackDom){ storageOK = false; saveConfirmed = false; return Promise.resolve(false); }
+  const payload = Object.assign({}, memberJsonCache, { [MS_KEY]: app });
+  return window.$memberstackDom.updateMemberJSON({ json: payload }).then(function(){
+    memberJsonCache = payload;
+    storageOK = true; saveConfirmed = true;
     return true;
-  } catch (e) {
+  }).catch(function(e){
     storageOK = false; saveConfirmed = false; showStorageNotice(); paintExitControl();
     return false;
-  }
+  });
 }
+/* Fire-and-forget from the ~200 call sites throughout this file; the actual
+   network write is debounced via flushSave above. */
+function save(){ scheduleSave(); return true; }
 function load(){
-  try {
-    localStorage.setItem(KEY + ".t", "1"); localStorage.removeItem(KEY + ".t");
-  } catch (e) { storageOK = false; showStorageNotice(); paintExitControl(); return; }
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw){
-      const p = JSON.parse(raw);
-      if (p && p.schema === 1) app = Object.assign(app, p);
-    }
-  } catch (e) { /* unreadable: keep defaults */ }
+  if (!wiaMember || !window.$memberstackDom){ storageOK = false; return Promise.resolve(); }
+  return window.$memberstackDom.getMemberJSON().then(function(res){
+    const full = (res && typeof res.data !== "undefined") ? res.data : res;
+    memberJsonCache = full && typeof full === "object" ? full : {};
+    const p = memberJsonCache[MS_KEY];
+    if (p && p.schema === 1) app = Object.assign(app, p);
+  }).catch(function(e){
+    storageOK = false; showStorageNotice(); paintExitControl();
+  });
 }
 function clearStore(){
-  try { localStorage.removeItem(KEY); } catch (e) {}
-  location.reload();
+  const fresh = defaultApp();
+  app = fresh;
+  const payload = Object.assign({}, memberJsonCache);
+  delete payload[MS_KEY];
+  memberJsonCache = payload;
+  if (wiaMember && window.$memberstackDom){
+    window.$memberstackDom.updateMemberJSON({ json: payload }).catch(function(){});
+  }
+  go("dashboard");
 }
 function showStorageNotice(){
   if (shadowRoot.getElementById("storeBanner")) return;
   const b = document.createElement("div");
   b.id = "storeBanner"; b.className = "callout"; b.style.margin = "0 20px 16px";
-  b.innerHTML = '<p class="kicker">Worth knowing</p><p class="sm" style="margin:0">Your browser is not allowing this page to save progress, so this journey needs to be completed in one sitting. If you leave, you will start again. Everything else works normally.</p>';
+  b.innerHTML = '<p class="kicker">Worth knowing</p><p class="sm" style="margin:0">We could not reach your account to save progress just now, so this journey needs to be completed in one sitting. If you leave, you will start again. Everything else works normally.</p>';
   shadowRoot.getElementById("main").prepend(b);
 }
 /* The exit control tells the truth about what leaving will do. */
@@ -1215,11 +1260,11 @@ function paintExitControl(){
   const b = shadowRoot.getElementById("exitBtn");
   if (!b) return;
   if (storageOK){
-    b.textContent = "Save on this device and exit";
-    b.setAttribute("title", "Your progress is saved in this browser.");
+    b.textContent = "Save to my account and exit";
+    b.setAttribute("title", "Your progress is saved to your account.");
   } else {
     b.textContent = "Exit journey";
-    b.setAttribute("title", "Your progress cannot be saved in this browser. Leaving will mean starting again.");
+    b.setAttribute("title", "Your progress cannot be saved right now. Leaving will mean starting again.");
   }
 }
 
@@ -1512,7 +1557,7 @@ function renderDashboard(){
   const pctDone = CHAPTERS[app.screen] ? CHAPTERS[app.screen][1] : 0;
   if (app.completed){
     cp.innerHTML = '<div class="panel"><p class="kicker">Journey complete</p>'
-      + '<p class="sm">You completed Journey 1' + (storageOK ? ", and your report is saved in this browser." : ".") + '</p>'
+      + '<p class="sm">You completed Journey 1' + (storageOK ? ", and your report is saved to your account." : ".") + '</p>'
       + '<div class="actions"><button class="btn btn-primary" onclick="window.__wia1.go(\'report\')">View my report</button>'
       + '<button class="btn-link" style="font-size:15px" onclick="window.__wia1.restartJourney()">Start this journey again</button></div></div>';
   } else if (started){
@@ -1536,7 +1581,7 @@ function renderDashboard(){
     + (app.completed ? '<p class="sm" style="margin:0 0 8px">&#10003; Completed</p>'
         : (started ? '<p class="sm" style="margin:0 0 8px"><strong>In progress</strong></p>' : ''))
     + '<p class="sm">Learn what the categories are, allocate 10,000 in virtual money, and see what happens across two and a half simulated years.</p>'
-    + '<p class="cap">Approximately 20 to 30 minutes. You can leave and continue later on this device.</p>'
+    + '<p class="cap">Approximately 20 to 30 minutes. You can leave and continue later, on any device.</p>'
     + '<div class="actions"><button class="btn btn-primary" onclick="window.__wia1.go(\'' + (app.completed ? "report" : "welcome") + '\')">'
     + (app.completed ? "View my report" : (started ? "Continue" : "Start journey")) + '</button></div></div>';
 
@@ -2978,8 +3023,7 @@ function renderNext(){
   addArrows(shadowRoot.getElementById("s-next"));
 }
 
-/* The dashboard greeting is time-of-day only. This tool is public and
-   requires no sign-in, so it never has a name to greet anyone by. */
+/* The dashboard greeting is time-of-day only. */
 function paintGreeting(){
   const el = shadowRoot.getElementById("greeting");
   if (!el) return;
@@ -2990,34 +3034,49 @@ function paintGreeting(){
 /* ============================================================
    BOOT
    ============================================================ */
-load();
-paintExitControl();
-paintGreeting();
-renderAssets();
-renderAllocRows();
-buildDonut();
-renderAlloc();
-addArrows(shadowRoot);
-shadowRoot.getElementById("exitBtn").addEventListener("click", function(){
-  if (storageOK){
-    const ok = save();
-    openModal("Saved on this device",
-      ok ? '<p class="sm">Your progress is saved in this browser. It will not automatically appear on another device or browser, and clearing your browser data may remove it.</p>'
-         : '<p class="sm">Your progress could not be saved just now. If you leave this page, you will need to start the journey again.</p>',
-      "Return to the start", "Stay here");
-    modalConfirm = function(){ go("dashboard"); };
-  } else {
-    openModal("Exit journey",
-      '<p class="sm">Your browser is not allowing this page to save progress, so leaving will mean starting again. Nothing has been saved.</p>',
-      "Exit anyway", "Stay here");
-    modalConfirm = function(){ go("dashboard"); };
-  }
+load().then(function(){
+  paintExitControl();
+  paintGreeting();
+  renderAssets();
+  renderAllocRows();
+  buildDonut();
+  renderAlloc();
+  addArrows(shadowRoot);
+  shadowRoot.getElementById("exitBtn").addEventListener("click", function(){
+    flushSave().then(function(ok){
+      if (ok){
+        openModal("Saved to your account",
+          '<p class="sm">Your progress is saved to your account, so it will be here the next time you sign in, on any device.</p>',
+          "Return to the start", "Stay here");
+      } else {
+        openModal("Exit journey",
+          '<p class="sm">Your progress could not be saved just now. If you leave this page, you will need to start the journey again.</p>',
+          "Exit anyway", "Stay here");
+      }
+      modalConfirm = function(){ go("dashboard"); };
+    });
+  });
+  go(app.screen || "dashboard");
 });
-go(app.screen || "dashboard");
 
 window.__wia1 = window.__wia1 || {};
 window.__wia1.go = go;
 window.__wia1.restartJourney = restartJourney;
 
-  })(shadow);
+    })(shadow, wiaMember);
+  }
+
+  function checkAuthAndBoot(){
+    if (!window.$memberstackDom){ showSignedOut(); return; }
+    window.$memberstackDom.getCurrentMember().then(function(res){
+      var member = res && res.data;
+      if (member) bootTool(member); else showSignedOut();
+    }).catch(function(){ showSignedOut(); });
+  }
+
+  if (window.$memberstackReady) {
+    checkAuthAndBoot();
+  } else {
+    document.addEventListener('memberstack.ready', checkAuthAndBoot);
+  }
 })();
