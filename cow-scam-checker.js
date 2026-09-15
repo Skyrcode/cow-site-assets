@@ -4,23 +4,20 @@
    Logic module: configuration + deterministic evaluation
    + Memberstack sync layer (added for the members' area).
 
-   MEMBERSTACK SYNC — WHAT WAS ADDED
+   ACCOUNT-ONLY STORAGE
    ------------------------------------------------------------
-   The original tool saved a check in progress to this device's
-   localStorage only, and expired it after 24 hours. Since this
-   tool now lives in the members' area alongside Savings
-   Challenges, the same sync pattern has been added: when a
-   member is signed in, her in-progress check (category,
-   answers, position) is written to her own Memberstack member
-   record under its own namespace, so it is available if she
-   returns on another device or browser. The device copy is
-   always written first and immediately; the account copy
-   follows, debounced. If Memberstack is unavailable or she is
-   signed out, the tool behaves exactly as it did before: saved
-   to this device only.
+   Matches the storage pattern used in Wealth in Action. There is
+   no localStorage anywhere in this file. A signed-in member's
+   in-progress check (category, answers, position — never notes,
+   results or score) is written to her own Memberstack member
+   record under its own namespace, debounced, so it is available
+   if she signs in on another device or browser. If nobody is
+   signed in, or her account can't be reached, nothing is saved:
+   the check still works, but leaving the page means starting
+   again, and a short notice on the hero screen says so.
 
-   Nothing about the questions, scoring, results, PDF generator
-   or wording was changed. Only the storage layer was extended.
+   Nothing about the questions, scoring, results or PDF generator
+   was changed. Only the storage layer was rebuilt.
    ========================================================= */
 
 /* ---------- 1. CATEGORIES ---------- */
@@ -527,13 +524,19 @@ const state = {
 const $ = sel => document.querySelector(sel);
 
 /* ============================================================
-   STORAGE — device copy + Memberstack sync
+   STORAGE — account only (Memberstack member JSON)
    ------------------------------------------------------------
-   Device copy behaves exactly as the original tool: category,
-   answers and position only. Never notes, results or score.
-   Expires after 24 hours either way.
+   Matches the pattern used in Wealth in Action: no localStorage
+   at all. Progress (category, answers, position only — never
+   notes, results or score) lives in memory for this session and
+   is written to the signed-in member's own Memberstack record,
+   debounced, so it is available on any device on next sign-in.
+   Expires after 24 hours. If nobody is signed in, or the member
+   record can't be reached, nothing is saved anywhere: the check
+   still works, but leaving the page means starting again, and a
+   short notice says so rather than silently falling back to the
+   device.
    ============================================================ */
-const STORE_KEY = "cow-srfc-progress-v1";
 const STORE_TTL = 24 * 60 * 60 * 1000;
 
 const MEMBERSTACK = {
@@ -543,111 +546,107 @@ const MEMBERSTACK = {
   debounceMs: 800
 };
 
-function readLocal(){
+let msApi = null;
+let memberSignedIn = false;
+let memberJsonCache = {};
+let storageOK = false;      /* true only once a save/load has actually succeeded */
+let saveTimer = null;
+let lastLoadedRemote = null; /* in-memory copy of what's on the account, used by Resume */
+
+function findMemberstackApi(){
+  if (window.$memberstackDom) return window.$memberstackDom;
   try{
-    const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return null;
-    const d = JSON.parse(raw);
-    if (!d || !d.category || !CATEGORIES.some(c => c.id === d.category)) return null;
-    if (Date.now() - (d.t || 0) > STORE_TTL) return null;
-    return d;
-  } catch(e){ return null; }
-}
-function writeLocal(payload){
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify(payload)); } catch(e){ /* device storage unavailable */ }
-}
-function clearLocal(){
-  try{ localStorage.removeItem(STORE_KEY); } catch(e){}
+    if (window.parent && window.parent !== window && window.parent.$memberstackDom){
+      return window.parent.$memberstackDom;
+    }
+  } catch(e){ /* cross-origin frame, nothing to reach */ }
+  return null;
 }
 
-/* Memberstack member record. Reads and writes the namespace only,
-   merging into whatever else the member record already holds.
-   Same pattern already proven in the Savings Challenges tool. */
-const MS = {
-  api: null, available: false,
-  init(){
-    if (!MEMBERSTACK.enabled) return Promise.resolve(false);
-    return new Promise(resolve => {
-      let waited = 0; const step = 150;
-      function findApi(){
-        if (window.$memberstackDom) return window.$memberstackDom;
-        try{
-          if (window.parent && window.parent !== window && window.parent.$memberstackDom){
-            return window.parent.$memberstackDom;
-          }
-        } catch(e){ /* cross-origin frame, nothing to reach */ }
-        return null;
+function initMemberstack(){
+  if (!MEMBERSTACK.enabled) return Promise.resolve(false);
+  return new Promise(resolve => {
+    let waited = 0; const step = 150;
+    (function poll(){
+      const api = findMemberstackApi();
+      if (api && typeof api.getCurrentMember === "function"){
+        api.getCurrentMember().then(res => {
+          const m = res && res.data;
+          if (m && m.id){ msApi = api; memberSignedIn = true; }
+          resolve(memberSignedIn);
+        }).catch(() => resolve(false));
+        return;
       }
-      (function poll(){
-        const api = findApi();
-        if (api && typeof api.getCurrentMember === "function"){
-          api.getCurrentMember().then(res => {
-            const m = res && res.data;
-            if (m && m.id){ MS.api = api; MS.available = true; }
-            resolve(MS.available);
-          }).catch(() => resolve(false));
-          return;
-        }
-        waited += step;
-        if (waited >= MEMBERSTACK.waitMs) return resolve(false);
-        setTimeout(poll, step);
-      })();
-    });
-  },
-  load(){
-    if (!MS.available) return Promise.resolve(null);
-    return MS.api.getMemberJSON().then(res => {
-      const json = (res && res.data) || {};
-      return json[MEMBERSTACK.namespace] || null;
-    }).catch(() => null);
-  },
-  save(payload){
-    if (!MS.available) return Promise.resolve(false);
-    return MS.api.getMemberJSON().then(res => {
-      const json = (res && res.data) || {};
-      json[MEMBERSTACK.namespace] = payload;
-      return MS.api.updateMemberJSON({ json }).then(() => true);
-    }).catch(() => false);
-  }
-};
+      waited += step;
+      if (waited >= MEMBERSTACK.waitMs) return resolve(false);
+      setTimeout(poll, step);
+    })();
+  });
+}
 
-let syncReady = false;
-let remoteTimer = null;
+/* Reads the member's full JSON blob (which may hold data for other
+   tools too) and returns just this tool's namespace. */
+function loadRemote(){
+  if (!memberSignedIn || !msApi) return Promise.resolve(null);
+  return msApi.getMemberJSON().then(res => {
+    const full = (res && typeof res.data !== "undefined") ? res.data : res;
+    memberJsonCache = (full && typeof full === "object") ? full : {};
+    storageOK = true;
+    return memberJsonCache[MEMBERSTACK.namespace] || null;
+  }).catch(() => { storageOK = false; return null; });
+}
 
 function currentPayload(){
   if (!state.category) return null;
   return { v:"1.1", t:Date.now(), category:state.category, answers:state.answers, index:state.index };
 }
 
-function flushRemote(){
-  clearTimeout(remoteTimer);
-  remoteTimer = null;
-  if (!syncReady || !MS.available) return;
+/* Merges this tool's namespace into whatever else the member
+   record already holds, rather than overwriting the whole thing. */
+function flushSave(){
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  if (!memberSignedIn || !msApi) { storageOK = false; return Promise.resolve(false); }
   const payload = currentPayload();
-  if (!payload) return;
-  MS.save(payload);
-}
-function scheduleRemote(){
-  if (!MS.available) return;
-  clearTimeout(remoteTimer);
-  remoteTimer = setTimeout(flushRemote, MEMBERSTACK.debounceMs);
+  if (!payload) return Promise.resolve(false);
+  const full = Object.assign({}, memberJsonCache, { [MEMBERSTACK.namespace]: payload });
+  return msApi.updateMemberJSON({ json: full }).then(() => {
+    memberJsonCache = full;
+    storageOK = true;
+    return true;
+  }).catch(() => { storageOK = false; showStorageNotice(); return false; });
 }
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "hidden") flushRemote();
+  if (document.visibilityState === "hidden") flushSave();
 });
 
-/* Device copy is written immediately, same as before. The member
-   record follows, debounced, once the initial sync check has run. */
 function saveProgress(){
   if (!state.category) return;
-  const payload = currentPayload();
-  writeLocal(payload);
-  scheduleRemote();
+  if (!memberSignedIn){ showStorageNotice(); return; }
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushSave, MEMBERSTACK.debounceMs);
 }
 function clearProgress(){
-  clearLocal();
-  clearTimeout(remoteTimer);
-  if (syncReady && MS.available) MS.save(null);
+  clearTimeout(saveTimer);
+  lastLoadedRemote = null;
+  if (!memberSignedIn || !msApi) return;
+  const full = Object.assign({}, memberJsonCache);
+  delete full[MEMBERSTACK.namespace];
+  msApi.updateMemberJSON({ json: full }).then(() => { memberJsonCache = full; }).catch(() => {});
+}
+
+/* Tells the truth about what leaving the page will do, instead of
+   quietly falling back to the device. Shown once, on the hero
+   screen, only when saving to the account isn't currently possible. */
+function showStorageNotice(){
+  if (document.getElementById("srfcStoreNotice")) return;
+  const hero = document.querySelector("#screen-hero .wrap");
+  if (!hero) return;
+  const b = document.createElement("div");
+  b.id = "srfcStoreNotice";
+  b.className = "resume";
+  b.innerHTML = "<p><strong>Sign in to save your progress.</strong> This check saves to your Choice of Wealth account, on any device. If you are not signed in, your answers will not be saved if you leave.</p>";
+  hero.prepend(b);
 }
 
 const screens = {
@@ -1022,7 +1021,7 @@ $("#resumeClearBtn").addEventListener("click", () => {
   $("#resumeBar").hidden = true;
 });
 $("#resumeBtn").addEventListener("click", () => {
-  const p = readLocal();
+  const p = lastLoadedRemote;
   if (!p) { $("#resumeBar").hidden = true; return; }
   state.category = p.category;
   state.answers = p.answers || {};
@@ -1046,31 +1045,29 @@ renderActed();
 /* ============================================================
    BOOT
    ------------------------------------------------------------
-   Loads the device copy first and offers to resume immediately,
-   so nothing waits on the network. Then checks Memberstack: if
-   a signed-in member has a newer saved check on her account
-   than the one on this device, that one is offered instead.
+   Checks for a signed-in member and, if found, loads her saved
+   check from her account so it can be resumed on any device. If
+   nobody is signed in, or the account can't be reached, nothing
+   is offered and a short notice explains that progress won't be
+   saved this session.
    ============================================================ */
 function offerResumeFrom(payload){
-  if (payload) $("#resumeBar").hidden = false;
+  if (payload){
+    lastLoadedRemote = payload;
+    $("#resumeBar").hidden = false;
+  }
 }
 
-const localAtBoot = readLocal();
-offerResumeFrom(localAtBoot);
-
-MS.init().then(signedIn => {
+initMemberstack().then(signedIn => {
   if (!signedIn){
-    syncReady = true;
-    console.log("Scam Red-Flag Checker: saving on this device only. No signed-in member found.");
+    storageOK = false;
+    showStorageNotice();
+    console.log("Scam Red-Flag Checker: sign in to save your progress to your account.");
     return null;
   }
-  return MS.load().then(remote => {
-    syncReady = true;
-    if (!remote) { flushRemote(); return null; }
-    const remoteIsNewer = !localAtBoot || (remote.t || 0) > (localAtBoot.t || 0);
-    if (remoteIsNewer && remote.category && CATEGORIES.some(c => c.id === remote.category) &&
+  return loadRemote().then(remote => {
+    if (remote && remote.category && CATEGORIES.some(c => c.id === remote.category) &&
         (Date.now() - (remote.t || 0) <= STORE_TTL)){
-      writeLocal(remote);
       offerResumeFrom(remote);
       console.log("Scam Red-Flag Checker: a saved check was found on this member's account.");
     } else {
@@ -1079,8 +1076,9 @@ MS.init().then(signedIn => {
     return null;
   });
 }).catch(err => {
-  syncReady = true;
-  console.warn("Scam Red-Flag Checker: member storage unavailable, this device only.", err);
+  storageOK = false;
+  showStorageNotice();
+  console.warn("Scam Red-Flag Checker: member storage unavailable.", err);
 });
 
 /* =========================================================
