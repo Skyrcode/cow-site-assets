@@ -469,7 +469,7 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
 
     <p class="cap" style="margin-top:20px">
       <a href="#" id="discLink">Educational disclaimer</a> &nbsp;·&nbsp;
-      <a href="https://anas-choice-of-wealth-site.webflow.io/wealth-tools" rel="noopener" target="_top">More Wealth Tools</a> &nbsp;·&nbsp;
+      <a href="https://anas-choice-of-wealth-site.webflow.io/wealth-tool-page" rel="noopener" target="_top">More Wealth Tools</a> &nbsp;·&nbsp;
       <a href="https://anas-choice-of-wealth-site.webflow.io/" rel="noopener" target="_top">Choice of Wealth</a>
     </p>
     <p class="cap">Your progress is saved to your account, so it will be here the next time you sign in, on any device.</p>
