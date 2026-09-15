@@ -85,8 +85,8 @@ a{color:var(--charcoal)}
 .figure-md{font-size:24px;line-height:1.15}
 
 /* ---------- shell ---------- */
-.wia-wrap{max-width:660px;margin:0 auto;padding:0 20px}
-.wia-wrap-wide{max-width:1120px;margin:0 auto;padding:0 20px}
+.wia-wrap{margin:0 auto;padding:0 20px}
+.wia-wrap-wide{margin:0 auto;padding:0 20px}
 header.jh{position:sticky;top:0;z-index:30;background:rgba(250,247,242,.94);
   backdrop-filter:saturate(140%) blur(6px);border-bottom:1px solid var(--grey)}
 .jh-in{display:flex;align-items:center;gap:14px;justify-content:space-between;padding:10px 0}
@@ -186,7 +186,7 @@ section.screen.on{display:block;animation:riseIn .32s ease-out both}
 .footbar{position:fixed;left:0;right:0;bottom:0;background:rgba(250,247,242,.96);
   backdrop-filter:blur(6px);border-top:1px solid var(--grey);
   padding:10px 20px calc(10px + env(safe-area-inset-bottom));z-index:25}
-.footbar .inner{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+.footbar .inner{margin:0 auto;display:flex;flex-direction:column;gap:6px}
 .helper{font-size:14px;margin:0;color:var(--taupe-deep)}
 
 /* ---------- option cards ---------- */
@@ -386,7 +386,7 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
   .trans h1{font-size:64px}
   .footbar{position:static;border-top:none;background:none;backdrop-filter:none;padding:0}
   .footbar .inner{flex-direction:row-reverse;justify-content:flex-start;align-items:center;gap:16px;
-    margin-top:20px;padding:0 32px;max-width:1120px}
+    margin-top:20px;padding:0 32px}
   .footbar .inner .btn{width:auto}
   main{padding-bottom:56px}
   .actions{flex-direction:row}
@@ -397,9 +397,6 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
   .hero-donut,.hero-donut svg{width:300px;height:300px}
   .hero-total{font-size:46px}
   .bigmove{font-size:60px}
-}
-@media (min-width:1200px){
-  .wia-wrap{max-width:720px}
 }
 @media (max-width:374px){
   h1{font-size:34px}.wia-wrap,.wia-wrap-wide{padding:0 16px}
@@ -3028,7 +3025,12 @@ function paintGreeting(){
   const el = shadowRoot.getElementById("greeting");
   if (!el) return;
   const h = new Date().getHours();
-  el.textContent = h < 12 ? "Good morning." : h < 18 ? "Good afternoon." : "Good evening.";
+  const timeGreeting = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  let name = "";
+  if (wiaMember && wiaMember.customFields){
+    name = wiaMember.customFields["first-name"] || wiaMember.customFields["firstName"] || wiaMember.customFields["first_name"] || "";
+  }
+  el.textContent = name ? (timeGreeting + ", " + name + ".") : (timeGreeting + ".");
 }
 
 /* ============================================================
