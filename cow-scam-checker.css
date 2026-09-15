@@ -201,11 +201,11 @@
   display:flex;align-items:center;justify-content:space-between;gap:16px;
 }
 .cow-srfc .wordmark{
-  font-family:var(--srfc-display);font-size:21px;letter-spacing:.02em;color:var(--srfc-near-black);
+  font-family:var(--srfc-display);font-size:21px;letter-spacing:.02em;color:var(--srfc-near-black);text-decoration:none; 
 }
 .cow-srfc .wordmark sup{font-size:9px;top:-1em;position:relative;font-family:var(--srfc-ui)}
 .cow-srfc .masthead__tag{
-  font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--srfc-teal-mid);
+  font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;text-decoration:none;color:var(--srfc-teal-mid);
   border:1px solid var(--srfc-teal-light);background:var(--srfc-teal-light);padding:6px 12px;border-radius:2px;
   white-space:nowrap;
 }
