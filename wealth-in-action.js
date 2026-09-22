@@ -423,7 +423,10 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
   <div class="wia-wrap-wide jh-in">
     <span class="mark">Wealth in Action</span>
     <span class="chapter" id="chapterLabel"></span>
-    <button class="btn-link" id="exitBtn" style="font-size:15px">Save to my account and exit</button>
+    <span style="display:flex;align-items:center;gap:16px;flex:none">
+      <button class="btn-link" id="reviewMenuBtn" style="font-size:15px">Review journey</button>
+      <button class="btn-link" id="exitBtn" style="font-size:15px">Save to my account and exit</button>
+    </span>
   </div>
   <div class="progress"><span id="progFill" style="width:0%"></span></div>
   <div class="wia-wrap-wide"><div class="progress-label num" id="progLabel"></div></div>
@@ -960,6 +963,18 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
     </div>
   </div>
 </div>
+
+<!-- review journey menu -->
+<div class="mask" id="reviewMask" role="dialog" aria-modal="true" aria-labelledby="reviewMenuH">
+  <div class="modal">
+    <h3 id="reviewMenuH">Jump to a step you've completed</h3>
+    <p class="cap" style="margin:0 0 14px">You can revisit any step you have already reached in this journey. Steps you have not reached yet stay locked.</p>
+    <div id="reviewMenuList"></div>
+    <div class="actions">
+      <button class="btn btn-secondary" id="reviewMenuClose">Close</button>
+    </div>
+  </div>
+</div>
 </div>
 `;
 
@@ -1170,6 +1185,7 @@ function defaultApp(){
   return {
     schema: 1,
     screen: "dashboard",
+    furthest: 0,            /* highest step genuinely reached; only ever increases. Drives the Review journey menu. */
     currency: "GBP",
     disclaimerAccepted: false,
     goal: null,
@@ -1290,8 +1306,91 @@ const CHAPTERS = {
 };
 /* Progress inside chapter 3 reflects which of the three periods she has reached. */
 const EVENT_PROGRESS = { 1:52, 2:66, 3:80 };
+
+/* ============================================================
+   REVIEW JOURNEY MENU
+   Lets a member jump back to any step they have genuinely reached
+   in this journey. app.furthest only ever increases and is saved
+   like everything else, so unlocking survives leaving and returning.
+   Steps not yet reached stay locked; this never lets anyone skip
+   ahead of where they actually are.
+   ============================================================ */
+const SEQUENCE = ["dashboard","welcome","disclaimer","goal","horizon","react","capital","t1",
+  "assets","allocate","review","reasons","t2","event1","event2","event3","t3","complete","report","next"];
+const REVIEW_STEPS = [
+  { key:"dashboard", label:"Dashboard" },
+  { key:"welcome",   label:"Welcome and currency" },
+  { key:"disclaimer",label:"Educational disclaimer" },
+  { key:"goal",      label:"Your financial goal" },
+  { key:"horizon",   label:"Your time horizon" },
+  { key:"react",     label:"How you might react" },
+  { key:"capital",   label:"Your virtual money" },
+  { key:"t1",        label:"Chapter 1 complete" },
+  { key:"assets",    label:"The six categories" },
+  { key:"allocate",  label:"Your allocation" },
+  { key:"review",    label:"Review your portfolio" },
+  { key:"reasons",   label:"Why you chose this" },
+  { key:"t2",        label:"Chapter 2 complete" },
+  { key:"event1",    label:"Market period 1" },
+  { key:"event2",    label:"Market period 2" },
+  { key:"event3",    label:"Market period 3" },
+  { key:"t3",        label:"Chapter 3 complete" },
+  { key:"complete",  label:"Journey complete" },
+  { key:"report",    label:"Your learning report" },
+  { key:"next",      label:"What to explore next" }
+];
+function sequenceKey(name){ return name === "event" ? "event" + app.stage : name; }
+function sequenceIndex(name){ const i = SEQUENCE.indexOf(sequenceKey(name)); return i < 0 ? 0 : i; }
+function markReached(name){
+  const idx = sequenceIndex(name);
+  if (idx > (app.furthest || 0)) app.furthest = idx;
+}
+function reviewStepReached(key){ return SEQUENCE.indexOf(key) <= (app.furthest || 0); }
+function goToReviewStep(key){
+  closeReviewMenu();
+  if (key === "event1" || key === "event2" || key === "event3"){
+    app.stage = Number(key.slice(-1)); save(); go("event");
+  } else {
+    go(key);
+  }
+}
+function paintReviewMenu(){
+  const list = shadowRoot.getElementById("reviewMenuList");
+  if (!list) return;
+  list.innerHTML = REVIEW_STEPS.map(function(s){
+    const reached = reviewStepReached(s.key);
+    const current = sequenceKey(app.screen) === s.key;
+    return '<button class="opt" style="margin-top:10px" data-review="' + s.key + '"'
+      + (reached ? '' : ' aria-disabled="true" disabled')
+      + (current ? ' aria-current="step"' : '') + '>'
+      + '<span class="t" style="font-size:18px">' + s.label + (current ? ' <span class="cap" style="font-weight:600">(you are here)</span>' : '') + '</span>'
+      + (reached ? '' : '<span class="d">Not reached yet in this journey.</span>')
+      + '</button>';
+  }).join("");
+  list.querySelectorAll("[data-review]").forEach(function(b){
+    if (b.disabled) return;
+    b.addEventListener("click", function(){ goToReviewStep(b.dataset.review); });
+  });
+}
+function openReviewMenu(){
+  paintReviewMenu();
+  const m = shadowRoot.getElementById("reviewMask");
+  m.classList.add("on");
+  document.body.style.overflow = "hidden";
+  const first = shadowRoot.querySelector("#reviewMenuList [data-review]:not(:disabled)");
+  (first || shadowRoot.getElementById("reviewMenuClose")).focus();
+}
+function closeReviewMenu(){
+  const m = shadowRoot.getElementById("reviewMask");
+  if (!m) return;
+  m.classList.remove("on");
+  document.body.style.overflow = "";
+  const b = shadowRoot.getElementById("reviewMenuBtn");
+  if (b) b.focus();
+}
+
 function go(name){
-  app.screen = name; save();
+  app.screen = name; markReached(name); save();
   shadowRoot.querySelectorAll("section.screen").forEach(s => s.classList.remove("on"));
   shadowRoot.getElementById("s-" + name).classList.add("on");
   const c = CHAPTERS[name];
@@ -1306,6 +1405,8 @@ function go(name){
   else setTimeout(() => { pf.style.width = pctDone + "%"; }, 40);
   shadowRoot.getElementById("progLabel").textContent = name === "dashboard" ? "" : pctDone + " per cent complete";
   shadowRoot.getElementById("exitBtn").style.visibility = name === "dashboard" ? "hidden" : "visible";
+  const rmb = shadowRoot.getElementById("reviewMenuBtn");
+  if (rmb) rmb.style.visibility = (name === "dashboard" || (app.furthest || 0) === 0) ? "hidden" : "visible";
   if (name === "dashboard") renderDashboard();
   if (name === "welcome") renderCurrency();
   if (name === "disclaimer") renderDisclaimer();
@@ -1335,7 +1436,11 @@ function go(name){
 }
 
 function markComplete(){
-  if (!app.completed){ app.completed = true; app.dash = "done"; save(); }
+  if (!app.completed){
+    app.completed = true; app.dash = "done";
+    app.furthest = Math.max(app.furthest || 0, SEQUENCE.length - 1);
+    save();
+  }
 }
 function earnedBadges(){
   const e = [];
@@ -1501,6 +1606,19 @@ shadowRoot.addEventListener("keydown", e => {
   if (e.key === "Escape"){ e.preventDefault(); closeModal(); return; }
   if (e.key === "Tab"){
     const f = m.querySelectorAll("button");
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && wiaActiveEl() === first){ e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && wiaActiveEl() === last){ e.preventDefault(); first.focus(); }
+  }
+});
+shadowRoot.getElementById("reviewMenuBtn").addEventListener("click", openReviewMenu);
+shadowRoot.getElementById("reviewMenuClose").addEventListener("click", closeReviewMenu);
+shadowRoot.addEventListener("keydown", e => {
+  const rm = shadowRoot.getElementById("reviewMask");
+  if (!rm.classList.contains("on")) return;
+  if (e.key === "Escape"){ e.preventDefault(); closeReviewMenu(); return; }
+  if (e.key === "Tab"){
+    const f = rm.querySelectorAll("button:not(:disabled)");
     const first = f[0], last = f[f.length - 1];
     if (e.shiftKey && wiaActiveEl() === first){ e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && wiaActiveEl() === last){ e.preventDefault(); first.focus(); }
@@ -3016,6 +3134,7 @@ function restartJourney(){
     app.allocConfirmed = false; app.holdings = null; app.decisions = []; app.points = [];
     app.stage = 1; app.eventApplied = {}; app.contributions = "0"; app.completed = false;
     app.reasons = []; app.reasonNote = ""; app.holdReflection = null; app.currency = cur;
+    app.furthest = 0;
     save();
     renderAllocRows(); renderAlloc();
     go("welcome");
