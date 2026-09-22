@@ -856,7 +856,7 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
  <div class="band band-cream"><div class="wia-wrap">
   <p>You have completed your first Wealth in Action practice journey. Inside the Choice of Wealth Inner Circle, you can continue learning through guided lessons, Savings Challenges and the Company Investor Lab, all designed to help you understand financial decisions before making them with real money.</p>
   <div class="actions">
-    <a class="btn btn-primary" id="innerCircleLink" href="https://anas-choice-of-wealth-site.webflow.io/membership" rel="noopener" target="_top">Explore the Inner Circle</a>
+    <a class="btn btn-primary" id="innerCircleLink" href="https://anas-choice-of-wealth-site.webflow.io/members-page" rel="noopener" target="_top">Explore the Inner Circle</a>
     <a class="btn btn-secondary" id="toolsLink" href="https://anas-choice-of-wealth-site.webflow.io/wealth-tool-page" rel="noopener" target="_top">Back to Wealth Tools</a>
   </div>
   <p class="cap" style="margin-top:18px">Your journey and your report are already complete. Nothing here is required.</p>
