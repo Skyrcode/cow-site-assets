@@ -772,7 +772,7 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
   <div class="wia-wrap-wide" style="position:relative">
    <p class="kicker">Chapter 2 · Build your portfolio · Step 3 of 4</p>
    <h1 id="revH">Your portfolio</h1>
-   <p class="lede" style="max-width:34ch;margin-top:10px">Take a moment to look at it before you confirm.</p>
+   <p class="lede" style="max-width:34ch;margin-top:10px">Take a moment to look at it before you continue.</p>
   </div>
  </div>
  <div class="band band-cream tight"><div class="wia-wrap-wide">
@@ -789,7 +789,7 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
   </div>
   <div id="reviewObs"></div>
   <div class="actions">
-    <button class="btn btn-primary" id="revConfirm">Confirm my portfolio</button>
+    <button class="btn btn-primary" id="revConfirm">Continue to Experience the Market</button>
     <button class="btn btn-secondary" onclick="window.__wia1.go('allocate')">Edit amounts</button>
   </div>
   <p class="disc">Virtual money. Simulated scenario. Not investment advice.</p>
@@ -857,7 +857,7 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
   <p>You have completed your first Wealth in Action practice journey. Inside the Choice of Wealth Inner Circle, you can continue learning through guided lessons, Savings Challenges and the Company Investor Lab, all designed to help you understand financial decisions before making them with real money.</p>
   <div class="actions">
     <a class="btn btn-primary" id="innerCircleLink" href="https://anas-choice-of-wealth-site.webflow.io/membership" rel="noopener" target="_top">Explore the Inner Circle</a>
-    <a class="btn btn-secondary" id="toolsLink" href="https://anas-choice-of-wealth-site.webflow.io/wealth-tools" rel="noopener" target="_top">Back to Wealth Tools</a>
+    <a class="btn btn-secondary" id="toolsLink" href="https://anas-choice-of-wealth-site.webflow.io/wealth-tool-page" rel="noopener" target="_top">Back to Wealth Tools</a>
   </div>
   <p class="cap" style="margin-top:18px">Your journey and your report are already complete. Nothing here is required.</p>
   <div style="margin-top:22px">
@@ -1436,7 +1436,7 @@ function reduced(){
 }
 function animateIn(root){
   if (!root) return;
-  const holder = root.querySelector(".wrap, .wrap-wide");
+  const holder = root.querySelector(".wia-wrap, .wia-wrap-wide");
   if (!holder) return;
   const kids = Array.prototype.slice.call(holder.children);
   const targets = kids.length === 1 && kids[0].classList.contains("trans")
@@ -1855,7 +1855,7 @@ shadowRoot.getElementById("allocNext").addEventListener("click", function(){
     shadowRoot.getElementById("remainStatus").textContent = "You still have " + fmt(fromEuros(TARGET - allocTotal())) + " to allocate. Add it to any category, including Cash.";
     return;
   }
-  go("t2");
+  go("review");
 });
 
 /* ============================================================
@@ -2210,6 +2210,8 @@ function showFeedback(kind, cents, src, dst){
   app.decision = null;
   save();
 
+  const db = shadowRoot.getElementById("decisionBlock");
+  if (db) db.classList.add("hidden");
   const fb = shadowRoot.getElementById("feedbackBlock");
   fb.classList.remove("hidden");
   fb.innerHTML = feedbackShellHTML(parts);
@@ -2412,7 +2414,7 @@ function renderReview(){
     '<p class="sm" style="margin:0">This grouping exists only for this educational simulation. It is not a universal description of these categories, and the four higher-movement categories do not behave alike or perform the same function.</p>' +
     '</div></div>' +
     (big
-      ? '<p class="sm">' + big.c.name + ' makes up ' + pctStr(big.p) + ' of your portfolio. That means most of your result will follow what happens to that one category. Some people choose this deliberately. It is your decision, and you can change it before confirming.</p>'
+      ? '<p class="sm">' + big.c.name + ' makes up ' + pctStr(big.p) + ' of your portfolio. That means most of your result will follow what happens to that one category. Some people choose this deliberately. It is your decision, and you can change it before you continue.</p>'
       : (none ? '<p class="sm">No single category makes up more than a third of your portfolio. Spreading money across categories that behave differently is what diversification means in practice.</p>' : ''));
   addArrows(shadowRoot.getElementById("s-review"));
 }
@@ -2431,9 +2433,9 @@ function drawReviewDonut(ids, vals, pcts, tot){
   svg.innerHTML = out;
 }
 shadowRoot.getElementById("revConfirm").addEventListener("click", function(){
-  openModal("Confirm your portfolio",
-    '<p class="sm">This becomes your starting allocation for the simulation. You will still be able to make changes after the first two market periods.</p>',
-    "Yes, confirm", "Go back and edit");
+  openModal("Continue to Experience the Market",
+    '<p class="sm">This confirms your allocation as the starting point for the simulation and takes you into Chapter 3, Experience the Market, where you will see how your portfolio responds to three simulated market periods. You will still be able to make changes after the first two.</p>',
+    "Yes, continue", "Go back and edit");
   modalConfirm = function(){
     app.allocConfirmed = true;
     app.initialWeights = {};
@@ -2566,8 +2568,16 @@ let evBefore = null, evAfter = null, stageBeat = 1, pendingDecision = null;
 function renderEvent(){
   if (typeof app.stage !== "number" || app.stage < 1 || app.stage > DATA_PERIODS) app.stage = 1;
   const n = app.stage;
+  /* A saved record can be incomplete: an older version, a write interrupted
+     part way, or a member JSON edited by hand. Rather than failing on a blank
+     screen, rebuild the journey from the confirmed allocation, or send the
+     visitor back to a screen that makes sense. This only rebuilds when the
+     allocation itself is complete: the allocConfirmed flag is not treated as
+     a gate here, so a flag that is out of sync with the holdings can never
+     leave the journey stuck on this screen. */
   if (!app.holdings || !app.beforeStage){
-    if (app.allocConfirmed && allocTotal() === TARGET){
+    if (allocTotal() === TARGET){
+      app.allocConfirmed = true;
       if (!app.initialWeights){
         app.initialWeights = {};
         CATS.forEach(function(c){ app.initialWeights[c.id] = (app.alloc[c.id] || 0) / TARGET; });
@@ -2730,6 +2740,7 @@ function closingHTML(C){
 function decisionHTML(){
   const C = EVENT_COPY[app.stage - 1];
   return '<p class="hang" style="margin-top:0">' + C.pull + '</p>' +
+   '<div id="decisionBlock">' +
    '<h2>What would you like to do?</h2>' +
    '<p id="decIntro">Your portfolio is now worth <span class="num">' + fmt(totalOf(evAfter)) +
      '</span>. You can leave it as it is, or make a change. Nothing will be applied until you confirm.</p>' +
@@ -2738,6 +2749,7 @@ function decisionHTML(){
    '<div id="decDetail" style="margin-top:14px"></div>' +
    '<p class="errline" id="decErr" role="alert"></p>' +
    '<div class="actions"><button class="btn btn-primary" id="decReview" aria-disabled="true">Review my decision</button></div>' +
+   '</div>' +
    '<div id="feedbackBlock" class="hidden" style="margin-top:36px"></div>' +
    '<p class="disc">Virtual money. Simulated scenario. Not investment advice.</p>';
 }
@@ -2853,7 +2865,7 @@ function liveRecord(){
 }
 function renderReport(){
   if (!app.holdings || !app.points || app.points.length < 2){
-    go(app.allocConfirmed && allocTotal() === TARGET ? "event" : (allocTotal() > 0 ? "allocate" : "welcome"));
+    go(allocTotal() === TARGET ? "event" : (allocTotal() > 0 ? "allocate" : "welcome"));
     return;
   }
   const r = liveRecord();
