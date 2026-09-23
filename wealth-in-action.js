@@ -398,6 +398,29 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
   .hero-total{font-size:46px}
   .bigmove{font-size:60px}
 }
+
+/* ---------- review journey menu: floating pill, bottom-left ---------- */
+#reviewNav{position:fixed;left:16px;bottom:16px;z-index:70;font-size:13px;display:none}
+#reviewNavToggle{background:var(--charcoal);color:var(--white);border:none;border-radius:999px;
+  padding:11px 16px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;
+  min-height:44px;box-shadow:0 6px 28px rgba(37,35,38,.18);
+  transition:transform .16s var(--ease),box-shadow .2s ease-out}
+#reviewNavToggle:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(37,35,38,.24)}
+#reviewNavToggle[aria-expanded="true"]{background:var(--pink);color:var(--charcoal)}
+#reviewNavPanel{display:none;background:var(--white);border:1px solid var(--grey);border-radius:18px;
+  padding:16px;box-shadow:0 6px 28px rgba(37,35,38,.18);margin-bottom:8px;max-width:300px;
+  max-height:70vh;overflow:auto}
+#reviewNavPanel.on{display:block}
+.rn-row{display:block;width:100%;text-align:left;background:var(--cream);border:1px solid var(--grey);
+  border-radius:12px;padding:10px 12px;margin-bottom:8px;font-family:var(--sans);font-size:14px;
+  color:var(--charcoal);cursor:pointer;position:relative;overflow:hidden;
+  transition:border-color .16s ease-out,background .16s ease-out,padding-left .18s ease-out}
+.rn-row:hover:not(:disabled){background:var(--blush);border-color:var(--pink);padding-left:16px}
+.rn-row[aria-current="step"]{border:2px solid var(--pink);background:var(--blush);padding:9px 11px}
+.rn-row:disabled{opacity:.4;cursor:not-allowed;background:var(--cream)}
+.rn-row:disabled:hover{padding-left:12px}
+@media (max-width:767px){ #reviewNav{left:8px;bottom:8px} #reviewNavPanel{max-width:82vw} }
+
 @media (max-width:374px){
   h1{font-size:34px}.wia-wrap,.wia-wrap-wide{padding:0 16px}
   .hang{margin-left:-16px;padding-left:16px}
@@ -423,10 +446,7 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
   <div class="wia-wrap-wide jh-in">
     <span class="mark">Wealth in Action</span>
     <span class="chapter" id="chapterLabel"></span>
-    <span style="display:flex;align-items:center;gap:16px;flex:none">
-      <button class="btn-link" id="reviewMenuBtn" style="font-size:15px">Review journey</button>
-      <button class="btn-link" id="exitBtn" style="font-size:15px">Save to my account and exit</button>
-    </span>
+    <button class="btn-link" id="exitBtn" style="font-size:15px">Save to my account and exit</button>
   </div>
   <div class="progress"><span id="progFill" style="width:0%"></span></div>
   <div class="wia-wrap-wide"><div class="progress-label num" id="progLabel"></div></div>
@@ -964,16 +984,14 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
   </div>
 </div>
 
-<!-- review journey menu -->
-<div class="mask" id="reviewMask" role="dialog" aria-modal="true" aria-labelledby="reviewMenuH">
-  <div class="modal">
-    <h3 id="reviewMenuH">Jump to a step you've completed</h3>
-    <p class="cap" style="margin:0 0 14px">You can revisit any step you have already reached in this journey. Steps you have not reached yet stay locked.</p>
-    <div id="reviewMenuList"></div>
-    <div class="actions">
-      <button class="btn btn-secondary" id="reviewMenuClose">Close</button>
-    </div>
+<!-- review journey menu: a floating pill, fixed to the bottom-left, with a popover list above it -->
+<div id="reviewNav">
+  <div id="reviewNavPanel" role="dialog" aria-labelledby="reviewNavH">
+    <p id="reviewNavH" class="kicker" style="margin:0 0 4px">Your journey</p>
+    <p class="cap" style="margin:0 0 12px">Steps you've reached are listed below. Locked steps have not been reached yet in this journey.</p>
+    <div id="reviewNavList"></div>
   </div>
+  <button id="reviewNavToggle" aria-expanded="false">Review menu</button>
 </div>
 </div>
 `;
@@ -1321,22 +1339,22 @@ const REVIEW_STEPS = [
   { key:"dashboard", label:"Dashboard" },
   { key:"welcome",   label:"Welcome and currency" },
   { key:"disclaimer",label:"Educational disclaimer" },
-  { key:"goal",      label:"Your financial goal" },
-  { key:"horizon",   label:"Your time horizon" },
-  { key:"react",     label:"How you might react" },
+  { key:"goal",      label:"Financial goal" },
+  { key:"horizon",   label:"Time horizon" },
+  { key:"react",     label:"How might you react" },
   { key:"capital",   label:"Your virtual money" },
-  { key:"t1",        label:"Chapter 1 complete" },
-  { key:"assets",    label:"The six categories" },
-  { key:"allocate",  label:"Your allocation" },
-  { key:"review",    label:"Review your portfolio" },
-  { key:"reasons",   label:"Why you chose this" },
-  { key:"t2",        label:"Chapter 2 complete" },
-  { key:"event1",    label:"Market period 1" },
-  { key:"event2",    label:"Market period 2" },
-  { key:"event3",    label:"Market period 3" },
-  { key:"t3",        label:"Chapter 3 complete" },
+  { key:"t1",        label:"Chapter 1 transition" },
+  { key:"assets",    label:"Asset categories" },
+  { key:"allocate",  label:"Allocation" },
+  { key:"review",    label:"Review portfolio" },
+  { key:"reasons",   label:"Why did you choose this" },
+  { key:"t2",        label:"Chapter 2 transition" },
+  { key:"event1",    label:"Period 1" },
+  { key:"event2",    label:"Period 2" },
+  { key:"event3",    label:"Period 3" },
+  { key:"t3",        label:"Chapter 3 transition" },
   { key:"complete",  label:"Journey complete" },
-  { key:"report",    label:"Your learning report" },
+  { key:"report",    label:"Learning report" },
   { key:"next",      label:"What to explore next" }
 ];
 function sequenceKey(name){ return name === "event" ? "event" + app.stage : name; }
@@ -1355,39 +1373,39 @@ function goToReviewStep(key){
   }
 }
 function paintReviewMenu(){
-  const list = shadowRoot.getElementById("reviewMenuList");
+  const list = shadowRoot.getElementById("reviewNavList");
   if (!list) return;
-  list.innerHTML = REVIEW_STEPS.map(function(s){
+  list.innerHTML = REVIEW_STEPS.map(function(s, i){
     const reached = reviewStepReached(s.key);
     const current = sequenceKey(app.screen) === s.key;
-    return '<button class="opt" style="margin-top:10px" data-review="' + s.key + '"'
+    const num = String(i + 1).padStart(2, "0");
+    return '<button class="rn-row" data-review="' + s.key + '"'
       + (reached ? '' : ' aria-disabled="true" disabled')
       + (current ? ' aria-current="step"' : '') + '>'
-      + '<span class="t" style="font-size:18px">' + s.label + (current ? ' <span class="cap" style="font-weight:600">(you are here)</span>' : '') + '</span>'
-      + (reached ? '' : '<span class="d">Not reached yet in this journey.</span>')
-      + '</button>';
+      + num + ' ' + s.label + '</button>';
   }).join("");
   list.querySelectorAll("[data-review]").forEach(function(b){
     if (b.disabled) return;
     b.addEventListener("click", function(){ goToReviewStep(b.dataset.review); });
   });
 }
+function isReviewNavOpen(){
+  const p = shadowRoot.getElementById("reviewNavPanel");
+  return !!p && p.classList.contains("on");
+}
 function openReviewMenu(){
   paintReviewMenu();
-  const m = shadowRoot.getElementById("reviewMask");
-  m.classList.add("on");
-  document.body.style.overflow = "hidden";
-  const first = shadowRoot.querySelector("#reviewMenuList [data-review]:not(:disabled)");
-  (first || shadowRoot.getElementById("reviewMenuClose")).focus();
+  shadowRoot.getElementById("reviewNavPanel").classList.add("on");
+  shadowRoot.getElementById("reviewNavToggle").setAttribute("aria-expanded", "true");
 }
 function closeReviewMenu(){
-  const m = shadowRoot.getElementById("reviewMask");
-  if (!m) return;
-  m.classList.remove("on");
-  document.body.style.overflow = "";
-  const b = shadowRoot.getElementById("reviewMenuBtn");
-  if (b) b.focus();
+  const p = shadowRoot.getElementById("reviewNavPanel");
+  if (!p) return;
+  p.classList.remove("on");
+  const t = shadowRoot.getElementById("reviewNavToggle");
+  if (t) t.setAttribute("aria-expanded", "false");
 }
+function toggleReviewMenu(){ isReviewNavOpen() ? closeReviewMenu() : openReviewMenu(); }
 
 function go(name){
   app.screen = name; markReached(name); save();
@@ -1405,8 +1423,12 @@ function go(name){
   else setTimeout(() => { pf.style.width = pctDone + "%"; }, 40);
   shadowRoot.getElementById("progLabel").textContent = name === "dashboard" ? "" : pctDone + " per cent complete";
   shadowRoot.getElementById("exitBtn").style.visibility = name === "dashboard" ? "hidden" : "visible";
-  const rmb = shadowRoot.getElementById("reviewMenuBtn");
-  if (rmb) rmb.style.visibility = (name === "dashboard" || (app.furthest || 0) === 0) ? "hidden" : "visible";
+  const rn = shadowRoot.getElementById("reviewNav");
+  if (rn){
+    const rnHidden = name === "dashboard" || (app.furthest || 0) === 0;
+    rn.style.display = rnHidden ? "none" : "block";
+    if (rnHidden) closeReviewMenu();
+  }
   if (name === "dashboard") renderDashboard();
   if (name === "welcome") renderCurrency();
   if (name === "disclaimer") renderDisclaimer();
@@ -1611,18 +1633,15 @@ shadowRoot.addEventListener("keydown", e => {
     else if (!e.shiftKey && wiaActiveEl() === last){ e.preventDefault(); first.focus(); }
   }
 });
-shadowRoot.getElementById("reviewMenuBtn").addEventListener("click", openReviewMenu);
-shadowRoot.getElementById("reviewMenuClose").addEventListener("click", closeReviewMenu);
+shadowRoot.getElementById("reviewNavToggle").addEventListener("click", toggleReviewMenu);
 shadowRoot.addEventListener("keydown", e => {
-  const rm = shadowRoot.getElementById("reviewMask");
-  if (!rm.classList.contains("on")) return;
-  if (e.key === "Escape"){ e.preventDefault(); closeReviewMenu(); return; }
-  if (e.key === "Tab"){
-    const f = rm.querySelectorAll("button:not(:disabled)");
-    const first = f[0], last = f[f.length - 1];
-    if (e.shiftKey && wiaActiveEl() === first){ e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && wiaActiveEl() === last){ e.preventDefault(); first.focus(); }
-  }
+  if (e.key !== "Escape") return;
+  if (isReviewNavOpen()) closeReviewMenu();
+});
+shadowRoot.addEventListener("click", e => {
+  if (!isReviewNavOpen()) return;
+  const nav = shadowRoot.getElementById("reviewNav");
+  if (nav && !nav.contains(e.target)) closeReviewMenu();
 });
 
 const DISCLAIMER = [
