@@ -11,6 +11,11 @@
   var host = document.getElementById('wia-app-root');
   if (!host) return;
 
+  var FOUNDER_PLAN_ID = "pln_founder-access-tsr04lz";
+  var ANNUAL_PLAN_ID  = "pln_annual-ktjz0r2v";
+  var MONTHLY_PLAN_ID = "pln_monthly-lh1bj0jcx";
+  var UPGRADE_URL = "/membership-upgrade"; // ← replace with your real upgrade page path
+
   var SIGNED_OUT_HTML = '<div style="font-family:-apple-system,system-ui,sans-serif;'
     + 'max-width:520px;margin:40px auto;padding:28px;text-align:center;'
     + 'border:1px solid #E8E4E1;border-radius:18px;background:#FAF7F2;color:#252326">'
@@ -19,11 +24,34 @@
     + 'min-height:48px;padding:0 22px;border-radius:12px;border:1px solid transparent;'
     + 'background:#FF4F9A;color:#252326;cursor:pointer">Sign in</button></div>';
 
+  var LOCKED_HTML = '<div style="font-family:-apple-system,system-ui,sans-serif;'
+    + 'max-width:520px;margin:40px auto;padding:28px;text-align:center;'
+    + 'border:1px solid #E8E4E1;border-radius:18px;background:#FAF7F2;color:#252326">'
+    + '<p style="font-size:17px;line-height:1.5;margin:0 0 16px">Wealth in Action is available with Annual Membership.</p>'
+    + '<button id="wia-upgrade-btn" style="font-family:inherit;font-size:16px;font-weight:500;'
+    + 'min-height:48px;padding:0 22px;border-radius:12px;border:1px solid transparent;'
+    + 'background:#FF4F9A;color:#252326;cursor:pointer">Upgrade to Annual</button></div>';
+
   function showSignedOut(){
     host.innerHTML = SIGNED_OUT_HTML;
     var btn = document.getElementById('wia-signin-btn');
     if (btn) btn.addEventListener('click', function(){
       if (window.$memberstackDom) window.$memberstackDom.openModal('LOGIN');
+    });
+  }
+
+  function showLocked(){
+    host.innerHTML = LOCKED_HTML;
+    var btn = document.getElementById('wia-upgrade-btn');
+    if (btn) btn.addEventListener('click', function(){
+      window.location.href = UPGRADE_URL;
+    });
+  }
+
+  function hasPremiumAccess(member){
+    var conns = (member && member.planConnections) || [];
+    return conns.some(function(c){
+      return c.active && (c.planId === FOUNDER_PLAN_ID || c.planId === ANNUAL_PLAN_ID);
     });
   }
 
@@ -3222,7 +3250,9 @@ window.__wia1.restartJourney = restartJourney;
     if (!window.$memberstackDom){ showSignedOut(); return; }
     window.$memberstackDom.getCurrentMember().then(function(res){
       var member = res && res.data;
-      if (member) bootTool(member); else showSignedOut();
+      if (!member){ showSignedOut(); return; }
+      if (hasPremiumAccess(member)) bootTool(member);
+      else showLocked();
     }).catch(function(){ showSignedOut(); });
   }
 
