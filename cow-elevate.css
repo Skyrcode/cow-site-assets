@@ -88,14 +88,44 @@
 }
 .briefing:hover h4::after{ width: 100%; }
 .cw-ticker-wrap{
-  overflow: hidden; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
-  margin: 20px 0 32px; padding: 10px 0;
+  --cw-gap: 56px;
+  --cw-edge: 28px;
+  position: relative; overflow: hidden;
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  margin: 20px 0 32px; padding: 12px 0;
+  /* soft fade at both ends so text never looks chopped off */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--cw-edge), #000 calc(100% - var(--cw-edge)), transparent 100%);
+          mask-image: linear-gradient(to right, transparent 0, #000 var(--cw-edge), #000 calc(100% - var(--cw-edge)), transparent 100%);
 }
-.cw-ticker{ display: flex; gap: 48px; white-space: nowrap; width: max-content; animation: cwTickerScroll 32s linear infinite; }
-.cw-ticker span{ font-size: 12px; letter-spacing: .05em; color: var(--teal-deep); font-weight: 600; }
-.cw-ticker span em{ color: var(--pink-deep); font-style: normal; margin-right: 6px; }
-@keyframes cwTickerScroll{ from{ transform: translateX(0); } to{ transform: translateX(-50%); } }
-@media (prefers-reduced-motion: reduce){ .cw-ticker{ animation: none; } }
+/* lead-in equals the fade width, so the first title starts fully visible */
+.cw-ticker{
+  display: flex; flex-wrap: nowrap; width: max-content;
+  padding-left: var(--cw-edge);
+  animation: cwTickerScroll var(--cw-duration, 30s) linear infinite;
+  will-change: transform;
+}
+.cw-ticker-wrap:hover .cw-ticker{ animation-play-state: paused; }
+.cw-ticker-set{ display: flex; flex: 0 0 auto; }
+/* spacing is padding, not gap, so one set is an exact loop distance */
+.cw-ticker span{
+  flex: 0 0 auto; white-space: nowrap; padding-right: var(--cw-gap);
+  font-size: 12px; letter-spacing: .05em; color: var(--teal-deep); font-weight: 600; line-height: 1.6;
+}
+.cw-ticker span em{ color: var(--pink-deep); font-style: normal; margin-right: 10px; font-size: 9px; vertical-align: 1px; }
+/* moves by exactly one set, then repeats: seamless */
+@keyframes cwTickerScroll{
+  from{ transform: translate3d(0, 0, 0); }
+  to{ transform: translate3d(calc(var(--cw-shift, 50%) * -1), 0, 0); }
+}
+@media (max-width: 767px){
+  .cw-ticker-wrap{ --cw-gap: 40px; --cw-edge: 18px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .cw-ticker{ animation: none; width: auto; flex-wrap: wrap; padding-left: 0; }
+  .cw-ticker-set{ flex-wrap: wrap; }
+  .cw-ticker-set[aria-hidden="true"]{ display: none; }
+  .cw-ticker-wrap{ -webkit-mask-image: none; mask-image: none; padding: 12px 18px; }
+}
 
 /* ---------- 7. NAV / FOOTER — color-only, no motion ---------- */
 .member-tools{ transition: color .25s ease; }
