@@ -86,23 +86,73 @@ document.addEventListener('DOMContentLoaded', function(){
     rt.textContent = mins + ' min read';
     meta.insertAdjacentElement('afterend', rt);
   });
+  /* Scrolling headline strip.
+     Fixes: (1) each title appears once per set, no duplicate titles;
+     (2) the set is repeated only as many times as needed to fill the strip,
+         then the animation moves by exactly one set, so the loop is seamless
+         and never leaves a blank gap on wide screens;
+     (3) spacing is padding on every item (not flex gap), so the loop distance
+         is exact and there is no half-gap jump when it restarts;
+     (4) it starts with the first title fully visible (small lead-in) and the
+         edges fade instead of cutting text off. */
   var headlineEls = document.querySelectorAll('#briefings h4.heading-51');
-  if(headlineEls.length > 1){
-    var items = [];
-    headlineEls.forEach(function(h){ items.push(h.textContent.trim()); });
-    var loopItems = items.concat(items);
-    var track = document.createElement('div');
-    track.className = 'cw-ticker';
-    loopItems.forEach(function(text){
-      var span = document.createElement('span');
-      span.innerHTML = '<em>&#9679;</em>' + text;
-      track.appendChild(span);
+  var briefingsList = document.querySelector('.briefings-list');
+  if(headlineEls.length > 1 && briefingsList && !document.querySelector('.cw-ticker-wrap')){
+    var seen = {}, items = [];
+    headlineEls.forEach(function(h){
+      var t = h.textContent.trim();
+      if(t && !seen[t]){ seen[t] = true; items.push(t); }
     });
-    var wrap = document.createElement('div');
-    wrap.className = 'cw-ticker-wrap';
-    wrap.appendChild(track);
-    var briefingsList = document.querySelector('.briefings-list');
-    if(briefingsList) briefingsList.insertAdjacentElement('afterend', wrap);
+    if(items.length > 1){
+      var wrap = document.createElement('div');
+      wrap.className = 'cw-ticker-wrap';
+      wrap.setAttribute('role', 'region');
+      wrap.setAttribute('aria-label', 'Latest dispatch headlines');
+      var track = document.createElement('div');
+      track.className = 'cw-ticker';
+      wrap.appendChild(track);
+      briefingsList.insertAdjacentElement('afterend', wrap);
+
+      var makeSet = function(hidden){
+        var set = document.createElement('div');
+        set.className = 'cw-ticker-set';
+        if(hidden) set.setAttribute('aria-hidden', 'true');
+        items.forEach(function(text){
+          var span = document.createElement('span');
+          var dot = document.createElement('em');
+          dot.innerHTML = '&#9679;';
+          span.appendChild(dot);
+          span.appendChild(document.createTextNode(text));
+          set.appendChild(span);
+        });
+        return set;
+      };
+
+      var lastWidth = 0;
+      var buildTicker = function(){
+        track.innerHTML = '';
+        var first = makeSet(false);
+        track.appendChild(first);
+        var setW = first.getBoundingClientRect().width;
+        var wrapW = wrap.clientWidth;
+        if(!setW || !wrapW) return;
+        lastWidth = wrapW;
+        // enough copies to fill the strip plus one spare, never fewer than two
+        var copies = Math.max(2, Math.ceil(wrapW / setW) + 1);
+        for(var i = 1; i < copies; i++) track.appendChild(makeSet(true));
+        track.style.setProperty('--cw-shift', setW + 'px');
+        track.style.setProperty('--cw-duration', Math.max(16, setW / 40) + 's'); // about 40px per second
+      };
+      buildTicker();
+      if(document.fonts && document.fonts.ready) document.fonts.ready.then(buildTicker);
+      var tickerTimer;
+      window.addEventListener('resize', function(){
+        clearTimeout(tickerTimer);
+        tickerTimer = setTimeout(function(){
+          if(Math.abs(wrap.clientWidth - lastWidth) > 4) buildTicker();
+        }, 200);
+      });
+    }
   }
 
   /* ---------- 6. HERO NUMBERS — count up from 0 the first time they're seen ---------- */
