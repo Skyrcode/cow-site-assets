@@ -1,13 +1,131 @@
 /* COW Members Page — Site-wide footer
-   Sections: 1 Memberstack · 2 Avatar CSS · 3 Stories · 4 Tools Modal · 5 Audio Player · 6 Scroll Fix */
+   Sections: 0 Fonts + Wealth-in-Action CSS · 1 Memberstack · 2 Avatar CSS · 3 Stories · 4 Tools Modal · 5 Audio Player · 6 Scroll Fix · 7 Wealth-in-Action preview sync · 8 Modules button */
 document.addEventListener('DOMContentLoaded',function(){
+
+/* ═══════════════════════════════════════════════════
+   0. FONTS + WEALTH IN ACTION CSS (injected, so no Webflow CSS edits needed)
+═══════════════════════════════════════════════════ */
+(function(){
+  /* Load Cormorant Garamond (it was referenced everywhere but never loaded) */
+  if(!document.getElementById('cow-cormorant-font')){
+    var fl=document.createElement('link');
+    fl.id='cow-cormorant-font';
+    fl.rel='stylesheet';
+    fl.href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap';
+    document.head.appendChild(fl);
+  }
+
+  var wiaCss = `
+/* ═══ WEALTH IN ACTION: card + preview, equal split ═══ */
+.div-block-34{
+  grid-column:1 / -1 !important; grid-row:auto !important;
+  display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:28px; align-items:stretch; width:100%;
+}
+.div-block-34 > *{ min-width:0; }
+.div-block-34 > div:last-child{ display:flex; }
+@media (max-width:900px){ .div-block-34{ grid-template-columns:1fr; gap:20px; } }
+
+.div-block-34 .toool-card-copy{
+  position:relative; overflow:hidden; display:flex; flex-direction:column; gap:14px;
+  padding:36px 32px; background:var(--white); color:var(--near-black);
+  border:1px solid var(--line); border-radius:10px; text-decoration:none;
+  box-shadow:0 12px 28px -18px rgba(22,79,92,.25);
+  transition:transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s ease;
+}
+.div-block-34 .toool-card-copy::before{
+  content:''; position:absolute; inset:0 0 auto 0; height:3px;
+  background:linear-gradient(90deg,var(--pink-hot),var(--pink-deep),var(--gold));
+}
+.div-block-34 .toool-card-copy:hover{ transform:translateY(-4px); box-shadow:0 18px 36px -16px rgba(22,79,92,.28); }
+.div-block-34 .tool-card-icon{
+  width:44px; height:44px; border-radius:50%; display:grid; place-items:center;
+  background:var(--teal-light); color:var(--teal-deep);
+  font-family:'Cormorant Garamond','Playfair Display',serif; font-style:italic; font-size:22px;
+}
+.div-block-34 .div-block-33{ display:flex; flex-direction:column; gap:6px; }
+.div-block-34 .text-block-50{ font-size:10px; letter-spacing:.2em; text-transform:uppercase; font-weight:600; color:var(--pink-deep); }
+.div-block-34 .heading-40{ font-family:'Cormorant Garamond','Playfair Display',serif; font-weight:500; font-size:30px; line-height:1.1; color:var(--near-black); margin:0; }
+.div-block-34 .toool-card-copy .text-block-23{ font-size:15px; font-weight:600; color:var(--teal-deep); }
+.div-block-34 .toool-card-copy .paragraph-28{ font-size:13.5px; line-height:1.6; color:var(--body-gray); margin:0; }
+.div-block-34 .tool-card-open{
+  margin-top:auto; padding-top:10px; display:flex; align-items:center; gap:8px;
+  font-size:12px; letter-spacing:.12em; text-transform:uppercase; font-weight:600; color:var(--pink-deep);
+}
+
+.div-block-34 .fv-panel{
+  position:relative; overflow:hidden; width:100%; height:100%;
+  display:flex; flex-direction:column; justify-content:space-between; gap:28px;
+  padding:36px 32px; border-radius:10px;
+  background:var(--teal-deep); color:var(--cream);
+  box-shadow:0 12px 28px -14px rgba(22,79,92,.45);
+}
+.div-block-34 .fv-panel::before{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(ellipse 100% 70% at 50% 0%, rgba(255,79,154,.2), transparent 60%);
+}
+.div-block-34 .fv-panel > div{ position:relative; }
+.div-block-34 .fv-panel > div:last-child{ border-top:1px solid rgba(248,187,217,.18); padding-top:22px; }
+.div-block-34 .fv-row{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:18px; font-size:12px; color:rgba(250,247,244,.7); }
+.div-block-34 .text-block-48{ font-size:10px; letter-spacing:.25em; text-transform:uppercase; font-weight:600; color:var(--pink-soft); }
+
+.fv-alloc > div:nth-child(1), .fv-legend > div:nth-child(1){ --c:#FF4F9A; --w:30%; }
+.fv-alloc > div:nth-child(2), .fv-legend > div:nth-child(2){ --c:#C9974A; --w:20%; }
+.fv-alloc > div:nth-child(3), .fv-legend > div:nth-child(3){ --c:#7CC4D4; --w:15%; }
+.fv-alloc > div:nth-child(4), .fv-legend > div:nth-child(4){ --c:#F8BBD9; --w:15%; }
+.fv-alloc > div:nth-child(5), .fv-legend > div:nth-child(5){ --c:#E9D9B4; --w:10%; }
+.fv-alloc > div:nth-child(6), .fv-legend > div:nth-child(6){ --c:#FAF7F4; --w:10%; }
+
+.div-block-34 .fv-alloc{ display:flex; gap:2px; height:14px; border-radius:999px; overflow:hidden; background:rgba(250,247,244,.12); }
+.div-block-34 .fv-alloc > div{
+  flex:0 0 auto !important; width:var(--w) !important; height:100% !important;
+  background:var(--c) !important; margin:0; transition:width 1s cubic-bezier(.16,1,.3,1);
+}
+.div-block-34 .fv-panel.is-empty .fv-alloc{
+  background:repeating-linear-gradient(135deg,rgba(250,247,244,.10) 0 6px,rgba(250,247,244,.04) 6px 12px);
+}
+.div-block-34 .fv-legend{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 20px; margin-top:22px; }
+.div-block-34 .fv-legend > div{ display:flex; align-items:flex-start; gap:10px; font-size:12px; line-height:1.4; color:rgba(250,247,244,.72); }
+.div-block-34 .fv-swatch{ width:10px; height:10px; margin-top:5px; border-radius:50%; flex-shrink:0; background:var(--c) !important; }
+.div-block-34 .text-span-80{ font-family:'Cormorant Garamond','Playfair Display',serif; font-size:20px; font-weight:500; line-height:1.1; color:var(--cream); }
+.div-block-34 .fv-balance{ font-family:'Cormorant Garamond','Playfair Display',serif; font-size:44px; line-height:1; color:var(--pink-soft); }
+.div-block-34 .fv-sub{ margin-top:8px; font-size:12px; letter-spacing:.06em; color:rgba(250,247,244,.7); }
+@media (max-width:480px){
+  .div-block-34 .toool-card-copy, .div-block-34 .fv-panel{ padding:26px 20px; }
+  .div-block-34 .fv-balance{ font-size:36px; }
+}
+`;
+  var wiaStyle=document.createElement('style');
+  wiaStyle.id='cow-wia-css';
+  wiaStyle.textContent=wiaCss;
+  document.head.appendChild(wiaStyle);
+
+  /* Small data fixes for the Webflow markup */
+  // Typo in CMS: "quoe" -> "quote" (otherwise that slide is dropped from the quote story)
+  document.querySelectorAll('[data-slide-story="quoe"]').forEach(function(el){
+    el.setAttribute('data-slide-story','quote');
+  });
+  // Budget Tracker card had no id, so its modal never opened
+  document.querySelectorAll('.tools-grid .toool-card').forEach(function(card){
+    var h=card.querySelector('.heading-40');
+    if(h&&/budget tracker/i.test(h.textContent)&&!card.id){card.id='budget';}
+  });
+})();
 
 /* ═══════════════════════════════════════════════════
    1. MEMBERSTACK — FIRST NAME
 ═══════════════════════════════════════════════════ */
+/* Memberstack loads asynchronously, so wait for it instead of giving up */
+function whenMemberstack(cb){
+  if(window.$memberstackDom){cb(window.$memberstackDom);return;}
+  var done=false,tries=0;
+  function fire(){if(done||!window.$memberstackDom)return false;done=true;cb(window.$memberstackDom);return true;}
+  document.addEventListener('memberstack.ready',fire);
+  var iv=setInterval(function(){tries++;if(fire()||tries>40)clearInterval(iv);},250);
+}
 function initMemberName(){
-  if(!window.$memberstackDom)return;
-  window.$memberstackDom.getCurrentMember().then(function(res){
+  whenMemberstack(function(ms){
+  ms.getCurrentMember().then(function(res){
     if(!res||!res.data)return;
     var m=res.data;
     var first=(m.customFields&&(m.customFields['first-name']||m.customFields['firstName']))||
@@ -22,6 +140,7 @@ function initMemberName(){
     var heroName=document.querySelector('.member-eyebrow .text-block-19');
     if(heroName)heroName.textContent='Welcome back, '+first;
   }).catch(function(e){console.warn('[COW] member error',e);});
+  });
 }
 initMemberName();
 
@@ -539,9 +658,11 @@ function buildNetWorth(body){
       var row=document.createElement('div');
       row.style.cssText='display:grid;grid-template-columns:1fr 110px 30px;gap:8px;margin-bottom:8px;align-items:center;';
       row.innerHTML=
-        '<input type="text" value="'+arr[i].name+'" style="padding:8px 10px;border:1px solid var(--line);background:var(--white);font-size:13px;border-radius:3px;color:var(--near-black);font-family:inherit;width:100%;min-width:0;" />'+
+        '<input type="text" style="padding:8px 10px;border:1px solid var(--line);background:var(--white);font-size:13px;border-radius:3px;color:var(--near-black);font-family:inherit;width:100%;min-width:0;" />'+
         '<input type="number" value="'+arr[i].value+'" style="padding:8px 10px;border:1px solid var(--line);background:var(--white);font-size:13px;border-radius:3px;color:var(--near-black);font-family:inherit;width:100%;min-width:0;" />'+
         '<button style="width:30px;height:30px;border:1px solid var(--line);background:var(--white);cursor:pointer;color:var(--pink-deep);font-size:16px;border-radius:3px;display:grid;place-items:center;">\xd7</button>';
+      // set the name via .value so quotes / special characters can't break the markup
+      row.querySelectorAll('input')[0].value=arr[i].name;
       row.querySelectorAll('input')[0].addEventListener('input',function(e){arr[i].name=e.target.value;updateTotals();});
       row.querySelectorAll('input')[1].addEventListener('input',function(e){arr[i].value=parseFloat(e.target.value)||0;updateTotals();});
       row.querySelector('button').addEventListener('click',function(){arr.splice(i,1);render();});
@@ -849,6 +970,167 @@ fixScroll(document.querySelector('[data-sheet-module]'));
 fixScroll(document.querySelector('.bottom-sheet'));
 fixScroll(document.getElementById('mem-sheet'));
 fixScroll(toolsModal);
-  
+
+/* ═══════════════════════════════════════════════════
+   7. WEALTH IN ACTION — PREVIEW PANEL SYNC (real member data)
+   Reads the member's saved Journey 1 progress from Memberstack member JSON
+   (key 'cow.wealthInAction.journey1.v1', written by wealth-in-action.js) and
+   mirrors it in the preview panel: allocation bars, percentages, current
+   balance, status line and currency. Shows the untouched state (10,000,
+   "Not started yet", empty bars, 0%) until the member starts.
+═══════════════════════════════════════════════════ */
+(function(){
+  var panel=document.querySelector('.div-block-34 .fv-panel');
+  if(!panel)return;
+  var MS_KEY='cow.wealthInAction.journey1.v1';
+  var START=10000,LABEL='Build Your First Portfolio';
+  var SYMS={GBP:'\u00A3',EUR:'\u20AC'};
+  /* the panel lists categories in this order (see the legend in Webflow) */
+  var ORDER=['global','cash','bonds','property','gold','tech'];
+
+  var bars=panel.querySelectorAll('.fv-alloc > div');
+  var pcts=panel.querySelectorAll('.fv-legend .text-span-80');
+  var startEl=panel.querySelector('.fv-row > div:last-child');
+  var balEl=panel.querySelector('.fv-balance');
+  var subEl=panel.querySelector('.fv-sub');
+
+  function money(n,sym){return sym+Math.round(n).toLocaleString('en-US');}
+  function pctText(v){var r=Math.round(v*10)/10;return(r%1===0?r.toFixed(0):r.toFixed(1))+'%';}
+  function holdingsTotal(h){
+    try{
+      var t=0n;
+      Object.keys(h).forEach(function(k){t+=BigInt(h[k]||'0');});
+      return Number(t/10000000000n)/100;   // picoeuros -> currency units
+    }catch(e){return null;}
+  }
+
+  function paint(app){
+    var sym=(app&&SYMS[app.currency])||'\u20AC';
+    var alloc=[0,0,0,0,0,0],allocSum=0;
+    if(app&&app.alloc){
+      ORDER.forEach(function(id,i){
+        var v=Number(app.alloc[id])||0;
+        alloc[i]=v>0?v:0;allocSum+=alloc[i];
+      });
+    }
+    var bal=START,sub='Not started yet \u00B7 '+LABEL;
+    if(app){
+      var pts=Array.isArray(app.points)?app.points:[];
+      var hasHoldings=app.holdings&&typeof app.holdings==='object';
+      if(app.allocConfirmed&&hasHoldings){
+        var t=holdingsTotal(app.holdings);
+        if(t!==null&&isFinite(t))bal=t;
+      }
+      if(app.completed){
+        sub='Journey 1 \u00B7 Completed';
+      }else if(app.allocConfirmed){
+        var last=pts[pts.length-1];
+        var m=last&&/Period\s+(\d)/.exec(String(last.label||''));
+        sub=m?'Journey 1 \u00B7 After period '+m[1]:'Journey 1 \u00B7 Portfolio built';
+      }else if(allocSum>0){
+        sub='Journey 1 \u00B7 Building your portfolio';
+      }else if(app.disclaimerAccepted||(app.furthest||0)>0){
+        sub='Journey 1 \u00B7 Just started';
+      }
+    }
+    panel.classList.toggle('is-empty',allocSum===0);
+    if(startEl)startEl.textContent=money(START,sym)+' starting';
+    if(balEl)balEl.textContent=money(bal,sym);
+    if(subEl)subEl.textContent=sub;
+    for(var i=0;i<bars.length;i++){
+      var share=alloc[i]/START*100;          // share of the 10,000, same basis as the tool's chart
+      bars[i].style.setProperty('--w',share+'%');
+      if(pcts[i])pcts[i].textContent=pctText(share);
+    }
+  }
+
+  var lastFetch=0;
+  function refresh(){
+    lastFetch=Date.now();
+    whenMemberstack(function(ms){
+      ms.getMemberJSON().then(function(res){
+        var data=(res&&typeof res.data!=='undefined')?res.data:res;
+        var app=(data&&typeof data==='object')?data[MS_KEY]:null;
+        paint(app&&app.schema===1?app:null);
+      }).catch(function(){paint(null);});
+    });
+  }
+
+  paint(null);   // untouched state immediately, so nothing flashes wrong numbers
+  refresh();
+  // when the member comes back to this tab after playing, pick up the new progress
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden&&Date.now()-lastFetch>15000)refresh();
+  });
+})();
+
+/* ═══════════════════════════════════════════════════
+   8. MODULES BUTTON — REFLECTS MEMBER PROGRESS
+   Continue Learning / Resume Your Journey / Review Your Modules
+   (Begin Your Journey if nothing has been started yet)
+═══════════════════════════════════════════════════ */
+(function(){
+  var cta=document.querySelector('#lessons .button-6');
+  if(!cta)return;
+
+  function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  function isDone(id){return lsGet('completed-'+id)==='true';}
+  function lessonProg(id){return parseInt(lsGet('progress-'+id))||0;}
+
+  function parseModules(html){
+    var doc=new DOMParser().parseFromString(html,'text/html');
+    var moduleCards=Array.from(doc.querySelectorAll('[data-module-id]:not([data-lesson-id])'));
+    moduleCards.sort(function(a,b){return parseInt(a.getAttribute('data-module-order')||0)-parseInt(b.getAttribute('data-module-order')||0);});
+    return moduleCards.map(function(card){
+      var mid=card.getAttribute('data-module-id');
+      var raw=Array.from(doc.querySelectorAll('[data-lesson-id][data-module-id="'+mid+'"]'));
+      raw.sort(function(a,b){return parseInt(a.getAttribute('data-lesson-order')||0)-parseInt(b.getAttribute('data-lesson-order')||0);});
+      return{
+        id:mid,
+        order:card.getAttribute('data-module-order')||'',
+        lessons:raw.map(function(row){return{id:row.getAttribute('data-lesson-id'),url:row.getAttribute('data-lesson-url')||'#'};})
+      };
+    });
+  }
+
+  function apply(modules){
+    if(!modules||!modules.length)return;
+    var sorted=modules.slice().sort(function(a,b){return parseInt(a.order,10)-parseInt(b.order,10);});
+    var total=0,done=0,anyProgress=false,next=null,nextMod=null;
+    sorted.forEach(function(m){
+      m.lessons.forEach(function(l){
+        total++;
+        if(isDone(l.id))done++;
+        else{
+          if(lessonProg(l.id)>0)anyProgress=true;
+          if(!next){next=l;nextMod=m;}
+        }
+      });
+    });
+    var label,url='/dashboard';
+    if(total>0&&done===total){
+      label='Review Your Modules';
+    }else{
+      var doneInNext=nextMod?nextMod.lessons.filter(function(l){return isDone(l.id);}).length:0;
+      if(doneInNext>0||anyProgress)label='Continue Learning';   // mid-module
+      else if(done>0)label='Resume Your Journey';              // between modules
+      else label='Begin Your Journey';                         // nothing started
+      if(next&&next.url&&next.url!=='#')url=next.url;
+    }
+    cta.textContent=label;
+    cta.setAttribute('href',url);
+  }
+
+  // instant paint from the cache the page script already keeps, then refresh from /dashboard
+  try{
+    var raw=sessionStorage.getItem('cow-dashboard-modules-v1');
+    if(raw)apply(JSON.parse(raw));
+  }catch(e){}
+
+  fetch('/dashboard')
+    .then(function(r){return r.text();})
+    .then(function(html){apply(parseModules(html));})
+    .catch(function(e){console.warn('[COW] modules button could not load progress:',e);});
+})();
 
 });/* end DOMContentLoaded */
