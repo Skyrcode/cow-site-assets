@@ -467,6 +467,51 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
   .wia-root:not(.force-motion) .track i,.wia-root:not(.force-motion) .meter span,
   .wia-root:not(.force-motion) .mtrack i,.wia-root:not(.force-motion) .bartrack i{transition:none !important}
 }
+#ribbon{display:flex;align-items:center;gap:12px;background:var(--charcoal);color:var(--cream);font-size:13px;padding:8px 20px;overflow:hidden}
+.rlabel{white-space:nowrap;color:var(--grey);display:flex;gap:8px;align-items:center}
+.rlabel-short,.demo{display:none}
+.rtrack{flex:1;min-width:0;overflow-x:auto;overflow-y:hidden}
+.rlane{display:flex;gap:22px;width:max-content;transition:opacity .22s}
+.rctl{display:flex;gap:12px}
+.rctl button{background:none;border:0;color:var(--cream);font:inherit;text-decoration:underline;cursor:pointer;min-height:32px}
+#ribbonWhyPanel{background:var(--blush);padding:12px 20px;font-size:14px}
+.item{background:none;border:0;color:inherit;font:inherit;display:flex;gap:8px;align-items:baseline;cursor:pointer;white-space:nowrap;min-height:32px}
+.item .tk{font-weight:600}.item .nm{color:var(--grey)}.item .sep{opacity:.4}
+.ch.up{color:var(--green-dk)}.ch.dn{color:var(--rose-dk)}
+@media (pointer:fine) and (min-width:768px) and (prefers-reduced-motion:no-preference){
+  .rtrack{overflow:hidden}
+  .rlane{animation:rscroll 40s linear infinite}
+  #ribbon.paused .rlane{animation-play-state:paused}
+}
+@keyframes rscroll{to{transform:translateX(-50%)}}
+@media (max-width:767px){.rlabel-full{display:none}.rlabel-short{display:inline}}
+.field{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;color:var(--taupe-deep)}
+.ccard{display:block;width:100%;text-align:left;background:var(--white);border:1px solid var(--grey);border-radius:18px;padding:18px;cursor:pointer;font:inherit;color:inherit;transition:border-color .16s ease-out}
+.ccard:hover{border-color:var(--pink)}
+.ccard.opened{border-color:#FFC7DF;background:var(--blush)}
+.ccard .top{display:flex;gap:14px;align-items:center}
+.ccard .nm{font-family:var(--serif);font-size:22px;line-height:1.2;display:block}
+.ccard .tick{font-size:13px;color:var(--taupe-deep);display:block}
+.pillrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.pill{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--cream);border:1px solid var(--grey)}
+.segbtns,.lparts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.segbtns button,.lparts button{min-height:44px;padding:0 16px;border-radius:12px;font:inherit;font-size:15px;cursor:pointer;background:transparent;color:var(--cream);border:1px solid rgba(250,247,242,.45)}
+.segbtns button[aria-pressed="true"],.lparts button[aria-pressed="true"]{background:var(--pink);color:var(--charcoal);border-color:var(--pink)}
+.lesson-candle{display:block;margin:20px 0;max-width:100%;height:auto}
+.chartwrap,.tblscroll{overflow-x:auto}
+svg.chart{display:block;width:100%;min-width:560px;height:auto}
+svg.chart:focus-visible{outline:3px solid var(--cream);outline-offset:2px}
+.axis{stroke:rgba(250,247,242,.5);stroke-width:1}
+.axlab{fill:#E8E4E1;font:11px Inter,sans-serif}
+.wick{stroke-width:1.5}.wick-up{stroke:#8FD3B4}.wick-dn{stroke:#F5A3AE}
+.candle-up{fill:none;stroke:#8FD3B4;stroke-width:1.5}
+.candle-dn{fill:#F5A3AE;stroke:#F5A3AE;stroke-width:1.5}
+rect.sel{fill:none;stroke:var(--pink);stroke-width:1.5}
+line.sel{stroke:var(--pink);stroke-width:1}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;margin-top:12px}
+.readout .k{font-size:12px;color:var(--grey)}
+.readout .v{font-variant-numeric:tabular-nums}
+.chartmeta{font-size:13px;color:var(--grey);margin-top:12px}
 </style><div class="wia-root">
 <a class="skip" href="#main">Skip to main content</a>
 
@@ -1336,7 +1381,11 @@ function defaultApp(){
     completed: false,
     divers: false,
     moveOpened: false,
-    rebalOpened: false
+    rebalOpened: false,
+    opened: [],
+    lessonParts: [],
+    chartAlt: {},
+    currentCo: null
   };
 }
 let app = defaultApp();
@@ -3274,7 +3323,7 @@ function restartJourney(){
     app.allocConfirmed = false; app.holdings = null; app.decisions = []; app.points = [];
     app.stage = 1; app.eventApplied = {}; app.contributions = "0"; app.completed = false;
     app.reasons = []; app.reasonNote = ""; app.holdReflection = null; app.currency = cur;
-    app.furthest = 0;
+   app.furthest = 0; app.opened = []; app.lessonParts = [];
     save();
     renderAllocRows(); renderAlloc();
     go("welcome");
@@ -3681,9 +3730,7 @@ function paintLesson(active){
       '<text x="' + (px - 6) + '" y="' + (py + 4) + '" text-anchor="end" fill="' + (on ? "#FF4F9A" : "#E8E4E1") +
       '" font-family="Inter,sans-serif" font-size="12">' + txt + '</text>';
   }
-  s = '<g>' + s +
-      tag(248, hi, "High", "high").replace(/x1="248"/, 'x1="248"') +
-      '</g>';
+  s = '<g>' + s + '</g>';
   var svg = shadowRoot.getElementById("lessonSvg");
   var labels = '' +
     '<text x="248" y="' + (hi + 4) + '" text-anchor="end" fill="' + (active==="high"?"#FF4F9A":"#E8E4E1") + '" font-family="Inter,sans-serif" font-size="12">Highest</text>' +
