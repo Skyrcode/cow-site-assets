@@ -1605,6 +1605,7 @@ function go(name){
   if (name === "capital") renderCapital();
   if (name === "library") renderLibrary();
   if (name === "lesson") renderLesson();
+     if (name === "profile"){ if (!app.currentCo) app.currentCo = DATA.companies[0].id; renderProfile(); }
   if (name === "review") renderReview();
   if (name === "reasons") renderReasons();
   if (name === "complete") renderComplete();
