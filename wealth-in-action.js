@@ -67,7 +67,7 @@
       document.head.appendChild(fl);
     }
 
-    var shadow = host.attachShadow({mode:'open'});
+        var shadow = host.attachShadow({mode:'open'});
     shadow.innerHTML = `<style>:root{
   --pink:#FF4F9A; --pink-hover:#FF63A6; --cream:#FAF7F2; --blush:#FFF0F6; --white:#FFFFFF;
   --charcoal:#252326; --taupe:#8F7A6A; --taupe-deep:#6F5C4E; --grey:#E8E4E1;
@@ -467,8 +467,67 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
   .wia-root:not(.force-motion) .track i,.wia-root:not(.force-motion) .meter span,
   .wia-root:not(.force-motion) .mtrack i,.wia-root:not(.force-motion) .bartrack i{transition:none !important}
 }
+#ribbon{display:flex;align-items:center;gap:12px;background:var(--charcoal);color:var(--cream);font-size:13px;padding:8px 20px;overflow:hidden}
+.rlabel{white-space:nowrap;color:var(--grey);display:flex;gap:8px;align-items:center}
+.rlabel-short,.demo{display:none}
+.rtrack{flex:1;min-width:0;overflow-x:auto;overflow-y:hidden}
+.rlane{display:flex;gap:22px;width:max-content;transition:opacity .22s}
+.rctl{display:flex;gap:12px}
+.rctl button{background:none;border:0;color:var(--cream);font:inherit;text-decoration:underline;cursor:pointer;min-height:32px}
+#ribbonWhyPanel{background:var(--blush);padding:12px 20px;font-size:14px}
+.item{background:none;border:0;color:inherit;font:inherit;display:flex;gap:8px;align-items:baseline;cursor:pointer;white-space:nowrap;min-height:32px}
+.item .tk{font-weight:600}.item .nm{color:var(--grey)}.item .sep{opacity:.4}
+.ch.up{color:var(--green-dk)}.ch.dn{color:var(--rose-dk)}
+@media (pointer:fine) and (min-width:768px) and (prefers-reduced-motion:no-preference){
+  .rtrack{overflow:hidden}
+  .rlane{animation:rscroll 40s linear infinite}
+  #ribbon.paused .rlane{animation-play-state:paused}
+}
+@keyframes rscroll{to{transform:translateX(-50%)}}
+@media (max-width:767px){.rlabel-full{display:none}.rlabel-short{display:inline}}
+.field{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;margin:0 0 10px;color:var(--taupe-deep)}
+.ccard{display:block;width:100%;text-align:left;background:var(--white);border:1px solid var(--grey);border-radius:18px;padding:18px;cursor:pointer;font:inherit;color:inherit;transition:border-color .16s ease-out}
+.ccard:hover{border-color:var(--pink)}
+.ccard.opened{border-color:#FFC7DF;background:var(--blush)}
+.ccard .top{display:flex;gap:14px;align-items:center}
+.ccard .nm{font-family:var(--serif);font-size:22px;line-height:1.2;display:block}
+.ccard .tick{font-size:13px;color:var(--taupe-deep);display:block}
+.pillrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.pill{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--cream);border:1px solid var(--grey)}
+.segbtns,.lparts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.segbtns button,.lparts button{min-height:44px;padding:0 16px;border-radius:12px;font:inherit;font-size:15px;cursor:pointer;background:transparent;color:var(--cream);border:1px solid rgba(250,247,242,.45)}
+.segbtns button[aria-pressed="true"],.lparts button[aria-pressed="true"]{background:var(--pink);color:var(--charcoal);border-color:var(--pink)}
+.lesson-candle{display:block;margin:20px 0;max-width:100%;height:auto}
+.chartwrap,.tblscroll{overflow-x:auto}
+svg.chart{display:block;width:100%;min-width:560px;height:auto}
+svg.chart:focus-visible{outline:3px solid var(--cream);outline-offset:2px}
+.axis{stroke:rgba(250,247,242,.5);stroke-width:1}
+.axlab{fill:#E8E4E1;font:11px Inter,sans-serif}
+.wick{stroke-width:1.5}.wick-up{stroke:#8FD3B4}.wick-dn{stroke:#F5A3AE}
+.candle-up{fill:none;stroke:#8FD3B4;stroke-width:1.5}
+.candle-dn{fill:#F5A3AE;stroke:#F5A3AE;stroke-width:1.5}
+rect.sel{fill:none;stroke:var(--pink);stroke-width:1.5}
+line.sel{stroke:var(--pink);stroke-width:1}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;margin-top:12px}
+.readout .k{font-size:12px;color:var(--grey)}
+.readout .v{font-variant-numeric:tabular-nums}
+.chartmeta{font-size:13px;color:var(--grey);margin-top:12px}
 </style><div class="wia-root">
 <a class="skip" href="#main">Skip to main content</a>
+
+<div id="ribbon" role="region" aria-label="Fictional market ribbon">
+  <span class="rlabel"><span class="rlabel-full">A practice market. Fictional companies, synthetic prices</span><span class="rlabel-short">Practice market</span><span class="demo" aria-hidden="true">Practice</span></span>
+  <div class="rtrack"><div class="rlane" id="rlane"></div></div>
+  <div class="rctl">
+    <button id="ribbonToggle" aria-pressed="false" class="hidden">Pause ticker</button>
+    <button id="ribbonWhy" aria-expanded="false" aria-controls="ribbonWhyPanel">About this ribbon</button>
+  </div>
+</div>
+<div id="ribbonWhyPanel" class="hidden">
+  <strong>Why is this moving?</strong> This ribbon shows fictional companies and synthetic prices from the period you have reached. It is here so that market information becomes familiar to read. It is not live market data, and nothing can be bought here.
+</div>
+<p class="vh" id="ribbonSummary" role="status"></p>
+<div id="fbanner"><span id="bannerText"></span></div>
 
 <header class="jh">
   <div class="wia-wrap-wide jh-in">
@@ -604,6 +663,75 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
    <p class="helper" id="assetHelper">You have opened 0 of six detailed explanations.</p>
  </div></div>
 </section>
+
+<!-- 2. RESEARCH LIBRARY -->
+<section class="screen" id="s-library">
+ <div class="band band-blush tight"><div class="blob blob-1"></div>
+  <div class="wia-wrap" style="position:relative">
+   <p class="kicker">Chapter 1 · Meet the companies</p>
+   <h1>Six businesses to research</h1>
+   <p class="lede" style="max-width:34ch;margin-top:10px">Open each one and read how it earns its money before you decide anything.</p>
+  </div>
+ </div>
+ <div class="band band-cream tight"><div class="wia-wrap">
+   <div class="layer"><div class="panel">
+     <p class="field">What owning a share means</p>
+     <p class="sm">A share is an equity interest in a company. It is not a bet on a number, and it is not a debt the company owes you.</p>
+     <p class="sm">Owning shares does not mean you own a slice of the company's buildings, its stock or its bank balance directly. The company owns those. What you hold is an interest in the company itself: a claim on what is left after everyone else has been paid, a share of any profits the company chooses to distribute as dividends, and normally a vote on certain decisions.</p>
+     <p class="sm" style="margin:0">Lenders, suppliers, employees and tax authorities are paid before shareholders. Shareholders come last, which is why the interest can be worth a great deal and can also be worth very little.</p>
+   </div></div>
+   <p class="sm" id="libIntro"></p>
+   <div class="grid2" id="libCards"></div>
+   <div class="layer"><div class="panel">
+     <p class="field">Also available to you</p>
+     <p class="sm" style="margin:0 0 8px"><strong>Virtual cash.</strong> Any part of your €10,000 may stay as cash, including all of it.</p>
+     <p class="sm" style="margin:0"><strong>The Equal-Weighted Company Basket.</strong> One holding that places an equal amount into each of the companies in this library at the virtual decision date. The weights then drift with the prices and nothing is rebalanced, so a company that rises becomes a larger part of the basket. It is not an index, a fund, a benchmark or a broadly diversified investment: it is these companies, equally allocated once and then left alone. Shown separately from the individual companies throughout, and nothing here compares your portfolio with it.</p>
+   </div></div>
+   <div class="nextup"><span class="dot"></span><span>Next: learn to read a price chart.</span></div>
+   <p class="disc" id="libDisc"></p>
+ </div></div>
+ <div class="wia-wrap"><div class="actions" style="padding-bottom:20px">
+   <button class="btn btn-primary" id="libNext" aria-disabled="true">How to read a candlestick</button>
+   <p class="cap" id="libHelper" style="margin:0"></p>
+ </div></div>
+</section>
+
+<!-- 3. CANDLESTICK LESSON -->
+<section class="screen" id="s-lesson">
+ <div class="band band-dark"><div class="blob blob-1"></div>
+  <div class="wia-wrap" style="position:relative">
+   <p class="kicker">Chapter 2 · Research before you choose</p>
+   <h1 style="max-width:16ch">Every candle tells us what happened. Not what happens next.</h1>
+   <p class="lede" style="max-width:38ch;margin-top:14px">One candle summarises how a price moved during one period. Select each part to see what it means.</p>
+
+   <svg class="lesson-candle" id="lessonSvg" width="260" height="330" viewBox="0 0 260 330" aria-hidden="true"></svg>
+
+   <div class="lparts" id="lessonParts"></div>
+   <div class="panel" id="lessonCopy" style="min-height:96px"><p class="sm" style="margin:0">Select a part above to read what it means.</p></div>
+
+   <div class="panel" style="margin-top:16px">
+     <p class="kicker">Two periods side by side</p>
+     <svg id="lessonPair" width="100%" height="180" viewBox="0 0 260 180" aria-hidden="true"></svg>
+     <p class="cap" style="margin:0" id="pairCopy"></p>
+   </div>
+
+   <div class="callout"><p class="sm" style="margin:0">A candlestick summarises how a price moved during a particular period. It does not tell us what the price will do next.</p></div>
+   <p class="disc" id="lessonDisc"></p>
+  </div>
+ </div>
+ <div class="wia-wrap"><div class="actions" style="padding:20px 0">
+   <button class="btn btn-primary" id="lessonNext" aria-disabled="true">Open a company profile</button>
+   <p class="cap" id="lessonHelper" style="margin:0"></p>
+ </div></div>
+</section>
+
+<!-- 4. COMPANY PROFILE -->
+<section class="screen" id="s-profile">
+ <div class="band band-cream tight"><div class="wia-wrap-wide" id="profHead"></div></div>
+ <div class="band band-dark"><div class="wia-wrap-wide" id="profChart"></div></div>
+ <div class="band band-cream"><div class="wia-wrap-wide" id="profBody"></div></div>
+</section>
+
 
 <!-- ================= 4. ALLOCATION ================= -->
 <section class="screen" id="s-allocate" aria-labelledby="allH">
@@ -1034,6 +1162,7 @@ svg.icon{width:28px;height:28px;flex:none;stroke:currentColor;stroke-width:1.5;f
     function wiaActiveEl(){ return shadow.activeElement || document.activeElement; }
 
     (function(shadowRoot, wiaMember){
+
 /* ============================================================
    WEALTH IN ACTION — APP LOGIC (production build, unmodified)
    See README-webflow-integration.md before pasting this anywhere.
@@ -1252,7 +1381,11 @@ function defaultApp(){
     completed: false,
     divers: false,
     moveOpened: false,
-    rebalOpened: false
+    rebalOpened: false,
+    opened: [],
+    lessonParts: [],
+    chartAlt: {},
+    currentCo: null
   };
 }
 let app = defaultApp();
@@ -1340,6 +1473,9 @@ const CHAPTERS = {
   capital:   ["Chapter 1, Prepare. Step 6 of 6", 24],
   t1:        ["Chapter 1 complete", 26],
   assets:    ["Chapter 2, Build your portfolio. Step 1 of 4", 30],
+  library:   ["Chapter 2, Meet the companies", 31],
+  lesson:    ["Chapter 2, Research before you choose", 32],
+  profile:   ["Chapter 2, Company profile", 33],
   allocate:  ["Chapter 2, Build your portfolio. Step 2 of 4", 35],
   review:    ["Chapter 2, Build your portfolio. Step 3 of 4", 40],
   reasons:   ["Chapter 2, Build your portfolio. Step 4 of 4", 44],
@@ -1362,7 +1498,7 @@ const EVENT_PROGRESS = { 1:52, 2:66, 3:80 };
    ahead of where they actually are.
    ============================================================ */
 const SEQUENCE = ["dashboard","welcome","disclaimer","goal","horizon","react","capital","t1",
-  "assets","allocate","review","reasons","t2","event1","event2","event3","t3","complete","report","next"];
+  "assets","library","lesson","profile","allocate","review","reasons","t2","event1","event2","event3","t3","complete","report","next"];
 const REVIEW_STEPS = [
   { key:"dashboard", label:"Dashboard" },
   { key:"welcome",   label:"Welcome and currency" },
@@ -1373,6 +1509,9 @@ const REVIEW_STEPS = [
   { key:"capital",   label:"Your virtual money" },
   { key:"t1",        label:"Chapter 1 transition" },
   { key:"assets",    label:"Asset categories" },
+  { key:"library",   label:"Meet the companies" },
+  { key:"lesson",    label:"Research before you choose" },
+  { key:"profile",   label:"Company profile" },
   { key:"allocate",  label:"Allocation" },
   { key:"review",    label:"Review portfolio" },
   { key:"reasons",   label:"Why did you choose this" },
@@ -1464,6 +1603,9 @@ function go(name){
   if (name === "horizon") renderChoice("horizon");
   if (name === "react") renderChoice("react");
   if (name === "capital") renderCapital();
+  if (name === "library") renderLibrary();
+  if (name === "lesson") renderLesson();
+     if (name === "profile"){ if (!app.currentCo) app.currentCo = DATA.companies[0].id; renderProfile(); }
   if (name === "review") renderReview();
   if (name === "reasons") renderReasons();
   if (name === "complete") renderComplete();
@@ -1483,6 +1625,7 @@ function go(name){
   window.scrollTo(0, 0);
   const h = shadowRoot.querySelector("#s-" + name + " h1");
   if (h){ h.setAttribute("tabindex", "-1"); h.focus({ preventScroll:true }); }
+  renderRibbon(false);
 }
 
 function markComplete(){
@@ -1808,7 +1951,7 @@ function checkAssetGate(){
     ? "You have opened the detailed explanation for all six categories. That earns the Asset Explorer badge."
     : "You have opened " + n + " of six detailed explanations. Opening all six earns the Asset Explorer badge, and you can come back to them at any time.";
 }
-shadowRoot.getElementById("assetNext").addEventListener("click", function(){ go("allocate"); });
+shadowRoot.getElementById("assetNext").addEventListener("click", function(){ go("library"); });
 shadowRoot.getElementById("tableToggle").addEventListener("click", function(){
   const t = shadowRoot.getElementById("assetTable");
   const open = t.classList.toggle("hidden") === false;
@@ -3181,7 +3324,7 @@ function restartJourney(){
     app.allocConfirmed = false; app.holdings = null; app.decisions = []; app.points = [];
     app.stage = 1; app.eventApplied = {}; app.contributions = "0"; app.completed = false;
     app.reasons = []; app.reasonNote = ""; app.holdReflection = null; app.currency = cur;
-    app.furthest = 0;
+   app.furthest = 0; app.opened = []; app.lessonParts = [];
     save();
     renderAllocRows(); renderAlloc();
     go("welcome");
@@ -3210,6 +3353,497 @@ function paintGreeting(){
   }
   el.textContent = name ? (timeGreeting + ", " + name.toUpperCase() + ".") : (timeGreeting + ".");
 }
+
+
+/* ============================================================
+   COMPANY INVESTOR LAB — integrated additions (ribbon, candlestick
+   lesson, company profiles). Inserted into WIA's own Chapter 2 flow
+   between "assets" (meet the six categories) and "allocate" (where
+   the member builds her portfolio). The portfolio builder, the
+   five-year market stages and the separate report from the original
+   Company Investor Lab are NOT included here — Wealth in Action
+   already has its own portfolio builder, market events and report,
+   and this keeps the two from running two different money engines
+   side by side. Company figures are fictional throughout.
+   ============================================================ */
+var DATA = {"meta":{"fictional":true,"datasetVersion":"synthetic-demo-1","currency":"EUR","currencySymbol":"\u20ac","locale":"en-GB","exchange":"Fictional Exchange","mic":"XFIC","interval":"Monthly","priceBasis":"Synthetic prices, written for teaching. No adjustment has been applied because no corporate action exists in this dataset.","periodLabel":"A fictional eight-year window: three years of research history, then a five-year virtual exercise","months":96,"banner":"A safe space to practise with fictional companies and virtual money, and build your confidence.","startingCapital":10000,"contributionCap":2000,"maxHoldings":5,"stages":[{"n":1,"label":"Exercise year 1","from":36,"to":48},{"n":2,"label":"Exercise year 2","from":48,"to":60},{"n":3,"label":"Exercise year 3","from":60,"to":72},{"n":4,"label":"Exercise year 4","from":72,"to":84},{"n":5,"label":"Exercise year 5","from":84,"to":95}],"researchMonths":36,"exerciseStart":36,"decisionIndex":35,"researchLabel":"Research history","exerciseLabel":"Virtual exercise","decisionDateLabel":"The virtual decision date, at the start of the exercise","disclaimerKey":"fictional","disclaimers":{"fictional":"A safe space to practise with fictional companies and virtual money, and build your confidence.","production":"Real company names and historical information are used for education. Virtual money only. Inclusion is not a recommendation or endorsement."},"basketName":"Equal-Weighted Company Basket"},"companies":[{"id":"lum","name":"Lumina Technologies PLC","ticker":"LUM","sector":"Technology","country":"Fictional","desc":"Lumina designs and licenses the optical components used inside other companies' manufacturing equipment. It sells to a small number of very large customers, on long contracts, and earns most of its money from licensing rather than from making things itself.","support":["Its components appear in equipment made by several of the largest manufacturers in its field.","Licensing income arrives on multi-year contracts rather than order by order.","It spends a high proportion of revenue on research, which it reports each year."],"risks":["A small number of customers account for most of its revenue.","Its equipment is bought in cycles, so orders can stop abruptly.","Its research spending continues whether or not orders arrive."],"fin":[["Revenue","1,240","1,410","1,180","1,690","1,940"],["Operating profit","238","291","162","402","471"],["Net profit","181","224","118","310","362"],["Total debt","410","390","455","370","320"],["Cash","260","305","240","420","560"],["Free cash flow","152","198","86","341","408"],["Shares outstanding","64.0m","64.0m","64.0m","63.5m","63.5m"]],"div":[["Year 1","0.42"],["Year 2","0.48"],["Year 3","0.48"],["Year 4","0.58"],["Year 5","0.66"]],"icon":"<circle cx=\"16\" cy=\"16\" r=\"7\"/><path d=\"M16 3v4M16 25v4M3 16h4M25 16h4M7 7l3 3M22 22l3 3M25 7l-3 3M10 22l-3 3\"/>","colour":"#FF4F9A","candles":[{"t":0,"o":35.97,"h":36.64,"l":35.17,"c":35.59},{"t":1,"o":35.59,"h":39.78,"l":33.88,"c":38.74},{"t":2,"o":38.74,"h":40.6,"l":37.77,"c":40.04},{"t":3,"o":40.04,"h":44.91,"l":39.01,"c":43.71},{"t":4,"o":43.71,"h":44.48,"l":38.78,"c":40.04},{"t":5,"o":40.04,"h":40.4,"l":39.93,"c":40.11},{"t":6,"o":40.11,"h":41.06,"l":33.22,"c":34.82},{"t":7,"o":34.82,"h":38.58,"l":33.34,"c":37.55},{"t":8,"o":37.55,"h":37.93,"l":36.76,"c":37.13},{"t":9,"o":37.13,"h":37.82,"l":31.13,"c":32.99},{"t":10,"o":32.99,"h":36.6,"l":32.17,"c":34.75},{"t":11,"o":34.75,"h":38.14,"l":33.3,"c":37.75},{"t":12,"o":37.75,"h":39.1,"l":37.43,"c":38.71},{"t":13,"o":38.71,"h":40.04,"l":38.39,"c":39.61},{"t":14,"o":39.61,"h":41.24,"l":34.74,"c":36.41},{"t":15,"o":36.41,"h":36.76,"l":35.67,"c":36.28},{"t":16,"o":36.28,"h":37.64,"l":35.57,"c":36.91},{"t":17,"o":36.91,"h":39.11,"l":36.23,"c":38.72},{"t":18,"o":38.72,"h":43.56,"l":37.96,"c":41.73},{"t":19,"o":41.73,"h":46.42,"l":39.9,"c":45.27},{"t":20,"o":45.27,"h":45.3,"l":45.23,"c":45.26},{"t":21,"o":45.26,"h":46.55,"l":44.82,"c":45.97},{"t":22,"o":45.97,"h":46.46,"l":41.52,"c":42.85},{"t":23,"o":42.85,"h":45.45,"l":39.63,"c":41.84},{"t":24,"o":41.84,"h":48.03,"l":40.45,"c":46.35},{"t":25,"o":46.35,"h":48.25,"l":45.97,"c":47.8},{"t":26,"o":47.8,"h":50.32,"l":47.14,"c":49.89},{"t":27,"o":49.89,"h":51.0,"l":47.26,"c":47.92},{"t":28,"o":47.92,"h":52.15,"l":46.55,"c":50.87},{"t":29,"o":50.87,"h":51.39,"l":50.45,"c":50.98},{"t":30,"o":50.98,"h":51.03,"l":50.8,"c":50.86},{"t":31,"o":50.86,"h":51.06,"l":50.18,"c":50.34},{"t":32,"o":50.34,"h":54.19,"l":49.65,"c":52.68},{"t":33,"o":52.68,"h":54.05,"l":46.4,"c":47.05},{"t":34,"o":47.05,"h":52.26,"l":44.75,"c":50.53},{"t":35,"o":50.53,"h":52.14,"l":47.0,"c":48.2},{"t":36,"o":48.2,"h":55.56,"l":45.84,"c":52.31},{"t":37,"o":52.31,"h":60.24,"l":50.74,"c":57.27},{"t":38,"o":57.27,"h":64.63,"l":55.4,"c":62.71},{"t":39,"o":62.71,"h":73.47,"l":61.45,"c":69.05},{"t":40,"o":69.05,"h":82.54,"l":67.24,"c":77.51},{"t":41,"o":77.51,"h":78.54,"l":75.67,"c":77.75},{"t":42,"o":77.75,"h":86.39,"l":75.5,"c":83.61},{"t":43,"o":83.61,"h":84.12,"l":82.67,"c":83.3},{"t":44,"o":83.3,"h":84.95,"l":79.19,"c":80.51},{"t":45,"o":80.51,"h":92.16,"l":76.32,"c":90.14},{"t":46,"o":90.14,"h":98.86,"l":84.76,"c":95.12},{"t":47,"o":95.12,"h":96.48,"l":94.68,"c":95.96},{"t":48,"o":95.96,"h":102.77,"l":94.36,"c":100.62},{"t":49,"o":100.62,"h":102.63,"l":100.11,"c":101.83},{"t":50,"o":101.83,"h":103.61,"l":93.34,"c":95.32},{"t":51,"o":95.32,"h":103.22,"l":93.43,"c":100.66},{"t":52,"o":100.66,"h":105.26,"l":98.9,"c":104.05},{"t":53,"o":104.05,"h":104.6,"l":103.1,"c":103.43},{"t":54,"o":103.43,"h":108.94,"l":101.25,"c":108.13},{"t":55,"o":108.13,"h":113.5,"l":106.34,"c":111.77},{"t":56,"o":111.77,"h":117.42,"l":100.85,"c":103.61},{"t":57,"o":103.61,"h":110.22,"l":102.58,"c":107.98},{"t":58,"o":107.98,"h":108.76,"l":107.17,"c":107.93},{"t":59,"o":107.93,"h":113.16,"l":89.37,"c":97.28},{"t":60,"o":97.28,"h":98.22,"l":96.9,"c":97.7},{"t":61,"o":97.7,"h":99.29,"l":97.13,"c":97.8},{"t":62,"o":97.8,"h":102.04,"l":87.54,"c":91.35},{"t":63,"o":91.35,"h":91.94,"l":89.45,"c":89.84},{"t":64,"o":89.84,"h":112.41,"l":85.37,"c":105.45},{"t":65,"o":105.45,"h":123.55,"l":103.02,"c":119.88},{"t":66,"o":119.88,"h":120.44,"l":119.81,"c":120.26},{"t":67,"o":120.26,"h":121.27,"l":115.17,"c":116.32},{"t":68,"o":116.32,"h":123.89,"l":100.76,"c":103.81},{"t":69,"o":103.81,"h":126.38,"l":95.96,"c":118.24},{"t":70,"o":118.24,"h":120.61,"l":114.33,"c":115.88},{"t":71,"o":115.88,"h":117.37,"l":105.57,"c":107.84},{"t":72,"o":107.84,"h":112.48,"l":106.6,"c":111.49},{"t":73,"o":111.49,"h":113.56,"l":104.37,"c":107.23},{"t":74,"o":107.23,"h":109.48,"l":96.59,"c":98.83},{"t":75,"o":98.83,"h":99.77,"l":98.09,"c":98.75},{"t":76,"o":98.75,"h":99.05,"l":97.48,"c":97.91},{"t":77,"o":97.91,"h":99.48,"l":95.24,"c":96.8},{"t":78,"o":96.8,"h":107.75,"l":93.87,"c":103.38},{"t":79,"o":103.38,"h":105.75,"l":90.41,"c":92.08},{"t":80,"o":92.08,"h":94.22,"l":87.23,"c":88.8},{"t":81,"o":88.8,"h":103.59,"l":86.01,"c":98.77},{"t":82,"o":98.77,"h":102.83,"l":90.72,"c":91.99},{"t":83,"o":91.99,"h":98.05,"l":90.58,"c":97.22},{"t":84,"o":97.22,"h":98.51,"l":96.98,"c":98.08},{"t":85,"o":98.08,"h":104.43,"l":97.21,"c":101.31},{"t":86,"o":101.31,"h":104.17,"l":88.14,"c":91.36},{"t":87,"o":91.36,"h":92.78,"l":90.5,"c":91.55},{"t":88,"o":91.55,"h":93.49,"l":81.79,"c":85.31},{"t":89,"o":85.31,"h":87.61,"l":68.24,"c":73.39},{"t":90,"o":73.39,"h":74.11,"l":72.13,"c":72.44},{"t":91,"o":72.44,"h":73.33,"l":72.16,"c":73.11},{"t":92,"o":73.11,"h":74.53,"l":65.1,"c":67.76},{"t":93,"o":67.76,"h":69.48,"l":66.68,"c":68.53},{"t":94,"o":68.53,"h":79.96,"l":63.65,"c":77.55},{"t":95,"o":77.55,"h":78.85,"l":75.02,"c":76.16}],"fictional":true},{"id":"vrd","name":"Verdant Foods NV","ticker":"VRD","sector":"Consumer goods","country":"Fictional","desc":"Verdant makes packaged foods sold through supermarkets under brands most households recognise. Demand changes slowly, and its profit depends heavily on what its ingredients cost.","support":["Its products are bought regularly rather than occasionally.","It sells through several large retail chains rather than one.","It has raised its dividend in each year of this period."],"risks":["Ingredient costs move independently of what it can charge.","Retailers' own-label products compete directly with its brands.","Growth depends on entering new categories, which it has to fund."],"fin":[["Revenue","3,860","3,940","4,120","4,310","4,480"],["Operating profit","521","512","548","573","602"],["Net profit","372","364","392","410","431"],["Total debt","1,180","1,140","1,090","1,020","960"],["Cash","310","330","360","390","420"],["Free cash flow","348","341","372","395","418"],["Shares outstanding","240m","240m","239m","238m","238m"]],"div":[["Year 1","1.02"],["Year 2","1.06"],["Year 3","1.10"],["Year 4","1.14"],["Year 5","1.20"]],"icon":"<path d=\"M16 27C9 27 5 22 5 15c6 0 11 4 11 12z\"/><path d=\"M16 27c7 0 11-5 11-12-6 0-11 4-11 12z\"/><path d=\"M16 27V13\"/>","colour":"#8F7A6A","candles":[{"t":0,"o":28.21,"h":30.27,"l":27.86,"c":30.03},{"t":1,"o":30.03,"h":30.31,"l":28.67,"c":28.95},{"t":2,"o":28.95,"h":30.63,"l":28.49,"c":30.14},{"t":3,"o":30.14,"h":30.24,"l":29.91,"c":29.96},{"t":4,"o":29.96,"h":30.01,"l":29.72,"c":29.75},{"t":5,"o":29.75,"h":29.79,"l":29.41,"c":29.6},{"t":6,"o":29.6,"h":29.69,"l":29.03,"c":29.14},{"t":7,"o":29.14,"h":29.16,"l":28.97,"c":29.03},{"t":8,"o":29.03,"h":29.97,"l":28.48,"c":29.71},{"t":9,"o":29.71,"h":30.14,"l":29.48,"c":30.05},{"t":10,"o":30.05,"h":30.21,"l":28.75,"c":29.15},{"t":11,"o":29.15,"h":29.26,"l":28.93,"c":29.05},{"t":12,"o":29.05,"h":29.36,"l":28.82,"c":29.26},{"t":13,"o":29.26,"h":31.34,"l":28.66,"c":30.64},{"t":14,"o":30.64,"h":31.06,"l":29.05,"c":29.62},{"t":15,"o":29.62,"h":30.53,"l":29.47,"c":30.21},{"t":16,"o":30.21,"h":31.25,"l":29.98,"c":30.91},{"t":17,"o":30.91,"h":30.96,"l":30.63,"c":30.83},{"t":18,"o":30.83,"h":30.98,"l":30.78,"c":30.95},{"t":19,"o":30.95,"h":31.61,"l":30.51,"c":31.49},{"t":20,"o":31.49,"h":32.14,"l":30.92,"c":31.79},{"t":21,"o":31.79,"h":31.88,"l":31.76,"c":31.83},{"t":22,"o":31.83,"h":32.16,"l":31.19,"c":31.38},{"t":23,"o":31.38,"h":31.93,"l":31.11,"c":31.77},{"t":24,"o":31.77,"h":32.93,"l":31.47,"c":32.56},{"t":25,"o":32.56,"h":32.78,"l":32.09,"c":32.15},{"t":26,"o":32.15,"h":34.65,"l":31.92,"c":34.08},{"t":27,"o":34.08,"h":34.27,"l":33.22,"c":33.56},{"t":28,"o":33.56,"h":34.45,"l":30.95,"c":31.31},{"t":29,"o":31.31,"h":31.43,"l":30.87,"c":31.17},{"t":30,"o":31.17,"h":32.86,"l":30.96,"c":32.42},{"t":31,"o":32.42,"h":32.65,"l":32.12,"c":32.38},{"t":32,"o":32.38,"h":32.76,"l":31.55,"c":31.94},{"t":33,"o":31.94,"h":32.71,"l":31.66,"c":32.52},{"t":34,"o":32.52,"h":32.56,"l":32.43,"c":32.45},{"t":35,"o":32.45,"h":32.62,"l":31.36,"c":31.6},{"t":36,"o":31.6,"h":32.1,"l":30.58,"c":30.69},{"t":37,"o":30.69,"h":30.98,"l":29.6,"c":30.05},{"t":38,"o":30.05,"h":30.93,"l":29.91,"c":30.66},{"t":39,"o":30.66,"h":30.88,"l":30.22,"c":30.31},{"t":40,"o":30.31,"h":30.37,"l":29.76,"c":29.95},{"t":41,"o":29.95,"h":31.94,"l":29.51,"c":31.46},{"t":42,"o":31.46,"h":31.91,"l":31.37,"c":31.83},{"t":43,"o":31.83,"h":32.82,"l":31.66,"c":32.51},{"t":44,"o":32.51,"h":33.04,"l":32.34,"c":32.93},{"t":45,"o":32.93,"h":33.04,"l":32.3,"c":32.48},{"t":46,"o":32.48,"h":32.84,"l":31.72,"c":31.95},{"t":47,"o":31.95,"h":32.78,"l":31.52,"c":32.66},{"t":48,"o":32.66,"h":33.95,"l":32.23,"c":33.78},{"t":49,"o":33.78,"h":34.44,"l":32.29,"c":32.64},{"t":50,"o":32.64,"h":32.91,"l":31.76,"c":32.12},{"t":51,"o":32.12,"h":32.26,"l":31.88,"c":31.99},{"t":52,"o":31.99,"h":32.01,"l":31.87,"c":31.92},{"t":53,"o":31.92,"h":32.4,"l":30.14,"c":30.94},{"t":54,"o":30.94,"h":31.34,"l":29.36,"c":29.87},{"t":55,"o":29.87,"h":30.07,"l":29.74,"c":29.96},{"t":56,"o":29.96,"h":31.57,"l":29.59,"c":31.28},{"t":57,"o":31.28,"h":32.21,"l":30.93,"c":32.08},{"t":58,"o":32.08,"h":33.86,"l":31.49,"c":33.5},{"t":59,"o":33.5,"h":33.7,"l":33.42,"c":33.57},{"t":60,"o":33.57,"h":35.39,"l":32.79,"c":34.93},{"t":61,"o":34.93,"h":35.7,"l":34.35,"c":35.3},{"t":62,"o":35.3,"h":36.01,"l":32.5,"c":33.29},{"t":63,"o":33.29,"h":33.41,"l":32.69,"c":32.81},{"t":64,"o":32.81,"h":36.49,"l":32.34,"c":35.51},{"t":65,"o":35.51,"h":36.77,"l":35.09,"c":36.51},{"t":66,"o":36.51,"h":36.58,"l":36.28,"c":36.41},{"t":67,"o":36.41,"h":36.79,"l":35.57,"c":35.89},{"t":68,"o":35.89,"h":36.97,"l":35.7,"c":36.67},{"t":69,"o":36.67,"h":37.39,"l":36.45,"c":37.21},{"t":70,"o":37.21,"h":37.54,"l":37.13,"c":37.44},{"t":71,"o":37.44,"h":38.48,"l":35.44,"c":35.81},{"t":72,"o":35.81,"h":36.41,"l":35.59,"c":36.14},{"t":73,"o":36.14,"h":38.12,"l":35.11,"c":37.2},{"t":74,"o":37.2,"h":41.49,"l":36.13,"c":40.15},{"t":75,"o":40.15,"h":40.92,"l":37.24,"c":38.21},{"t":76,"o":38.21,"h":40.32,"l":37.89,"c":39.89},{"t":77,"o":39.89,"h":40.28,"l":38.23,"c":38.65},{"t":78,"o":38.65,"h":39.56,"l":37.97,"c":39.34},{"t":79,"o":39.34,"h":39.66,"l":38.5,"c":38.78},{"t":80,"o":38.78,"h":39.68,"l":38.6,"c":39.37},{"t":81,"o":39.37,"h":40.02,"l":39.14,"c":39.76},{"t":82,"o":39.76,"h":40.86,"l":39.34,"c":40.51},{"t":83,"o":40.51,"h":44.28,"l":39.94,"c":43.72},{"t":84,"o":43.72,"h":44.27,"l":42.63,"c":43.13},{"t":85,"o":43.13,"h":44.77,"l":42.58,"c":44.17},{"t":86,"o":44.17,"h":44.63,"l":41.74,"c":42.28},{"t":87,"o":42.28,"h":43.5,"l":39.24,"c":39.91},{"t":88,"o":39.91,"h":41.3,"l":35.26,"c":37.23},{"t":89,"o":37.23,"h":39.39,"l":36.76,"c":38.72},{"t":90,"o":38.72,"h":39.03,"l":38.64,"c":38.93},{"t":91,"o":38.93,"h":40.06,"l":38.77,"c":39.59},{"t":92,"o":39.59,"h":40.25,"l":38.14,"c":38.32},{"t":93,"o":38.32,"h":38.47,"l":37.04,"c":37.23},{"t":94,"o":37.23,"h":37.43,"l":36.47,"c":36.69},{"t":95,"o":36.69,"h":37.37,"l":36.5,"c":37.29}],"fictional":true},{"id":"mrd","name":"Meridian Retail Group SA","ticker":"MRD","sector":"Retail","country":"Fictional","desc":"Meridian runs grocery and general retail stores, and a growing home-delivery business. It sells a great deal at a very small margin on each item, so small changes in cost or volume matter a lot.","support":["Customers shop with it weekly rather than occasionally.","Its delivery business has grown in every year of this period.","It owns a proportion of its store property outright."],"risks":["Margins are thin, so a small cost increase removes a large share of profit.","Delivery is expensive to run and has required continuing investment.","Competition is direct and local."],"fin":[["Revenue","28,400","29,100","31,600","32,200","33,400"],["Operating profit","1,020","1,060","1,290","1,180","1,140"],["Net profit","612","640","801","702","668"],["Total debt","4,300","4,150","3,900","3,850","3,780"],["Cash","1,120","1,240","1,680","1,410","1,320"],["Free cash flow","740","790","1,190","830","760"],["Shares outstanding","980m","975m","968m","960m","952m"]],"div":[["Year 1","0.61"],["Year 2","0.64"],["Year 3","0.72"],["Year 4","0.74"],["Year 5","0.76"]],"icon":"<path d=\"M5 11h22l-2 15H7z\"/><path d=\"M11 11V7a5 5 0 0 1 10 0v4\"/>","colour":"#4F8068","candles":[{"t":0,"o":20.96,"h":21.91,"l":20.47,"c":21.69},{"t":1,"o":21.69,"h":22.01,"l":20.97,"c":21.23},{"t":2,"o":21.23,"h":21.37,"l":20.01,"c":20.37},{"t":3,"o":20.37,"h":22.43,"l":19.77,"c":21.99},{"t":4,"o":21.99,"h":23.53,"l":21.62,"c":23.12},{"t":5,"o":23.12,"h":23.91,"l":21.26,"c":21.54},{"t":6,"o":21.54,"h":21.69,"l":20.58,"c":20.99},{"t":7,"o":20.99,"h":21.31,"l":19.99,"c":20.41},{"t":8,"o":20.41,"h":21.03,"l":20.13,"c":20.96},{"t":9,"o":20.96,"h":21.31,"l":20.19,"c":20.38},{"t":10,"o":20.38,"h":21.1,"l":20.21,"c":20.87},{"t":11,"o":20.87,"h":22.97,"l":20.47,"c":22.29},{"t":12,"o":22.29,"h":22.36,"l":22.14,"c":22.2},{"t":13,"o":22.2,"h":24.34,"l":21.36,"c":24.02},{"t":14,"o":24.02,"h":24.75,"l":23.51,"c":24.3},{"t":15,"o":24.3,"h":24.63,"l":22.51,"c":22.72},{"t":16,"o":22.72,"h":22.97,"l":22.52,"c":22.92},{"t":17,"o":22.92,"h":25.11,"l":22.33,"c":24.22},{"t":18,"o":24.22,"h":24.32,"l":24.21,"c":24.3},{"t":19,"o":24.3,"h":25.73,"l":23.65,"c":25.51},{"t":20,"o":25.51,"h":25.6,"l":24.82,"c":24.97},{"t":21,"o":24.97,"h":25.21,"l":24.04,"c":24.23},{"t":22,"o":24.23,"h":25.19,"l":24.05,"c":24.96},{"t":23,"o":24.96,"h":26.13,"l":24.58,"c":25.93},{"t":24,"o":25.93,"h":26.28,"l":25.87,"c":26.15},{"t":25,"o":26.15,"h":26.29,"l":25.88,"c":26.08},{"t":26,"o":26.08,"h":27.68,"l":25.64,"c":27.49},{"t":27,"o":27.49,"h":27.8,"l":26.66,"c":26.8},{"t":28,"o":26.8,"h":26.93,"l":25.79,"c":26.13},{"t":29,"o":26.13,"h":26.88,"l":25.71,"c":26.52},{"t":30,"o":26.52,"h":26.68,"l":26.02,"c":26.17},{"t":31,"o":26.17,"h":26.6,"l":25.22,"c":25.56},{"t":32,"o":25.56,"h":25.59,"l":25.2,"c":25.35},{"t":33,"o":25.35,"h":25.78,"l":23.96,"c":24.11},{"t":34,"o":24.11,"h":24.46,"l":23.14,"c":23.62},{"t":35,"o":23.62,"h":23.91,"l":22.55,"c":22.85},{"t":36,"o":22.85,"h":23.15,"l":21.85,"c":22.19},{"t":37,"o":22.19,"h":24.66,"l":21.17,"c":23.8},{"t":38,"o":23.8,"h":24.37,"l":19.78,"c":20.61},{"t":39,"o":20.61,"h":20.76,"l":19.28,"c":19.65},{"t":40,"o":19.65,"h":20.18,"l":19.42,"c":20.01},{"t":41,"o":20.01,"h":20.88,"l":17.31,"c":17.97},{"t":42,"o":17.97,"h":19.11,"l":17.28,"c":18.74},{"t":43,"o":18.74,"h":19.12,"l":17.86,"c":18.12},{"t":44,"o":18.12,"h":18.13,"l":18.06,"c":18.07},{"t":45,"o":18.07,"h":18.15,"l":17.34,"c":17.57},{"t":46,"o":17.57,"h":19.32,"l":16.91,"c":19.12},{"t":47,"o":19.12,"h":21.58,"l":18.13,"c":20.65},{"t":48,"o":20.65,"h":20.74,"l":20.51,"c":20.66},{"t":49,"o":20.66,"h":20.85,"l":19.93,"c":20.48},{"t":50,"o":20.48,"h":21.07,"l":20.35,"c":20.69},{"t":51,"o":20.69,"h":21.19,"l":19.19,"c":19.5},{"t":52,"o":19.5,"h":20.29,"l":19.26,"c":20.07},{"t":53,"o":20.07,"h":21.15,"l":19.61,"c":20.82},{"t":54,"o":20.82,"h":21.04,"l":20.64,"c":20.89},{"t":55,"o":20.89,"h":21.12,"l":20.28,"c":20.43},{"t":56,"o":20.43,"h":21.3,"l":20.21,"c":21.01},{"t":57,"o":21.01,"h":21.53,"l":18.88,"c":19.52},{"t":58,"o":19.52,"h":20.58,"l":19.17,"c":20.42},{"t":59,"o":20.42,"h":20.6,"l":19.6,"c":19.93},{"t":60,"o":19.93,"h":21.78,"l":19.75,"c":21.36},{"t":61,"o":21.36,"h":22.08,"l":20.92,"c":21.74},{"t":62,"o":21.74,"h":23.21,"l":17.95,"c":18.97},{"t":63,"o":18.97,"h":19.19,"l":17.37,"c":17.97},{"t":64,"o":17.97,"h":20.03,"l":17.32,"c":19.52},{"t":65,"o":19.52,"h":22.84,"l":18.23,"c":21.69},{"t":66,"o":21.69,"h":23.84,"l":21.29,"c":23.17},{"t":67,"o":23.17,"h":26.34,"l":22.65,"c":25.33},{"t":68,"o":25.33,"h":25.66,"l":23.14,"c":23.8},{"t":69,"o":23.8,"h":26.42,"l":22.71,"c":26.17},{"t":70,"o":26.17,"h":26.29,"l":26.12,"c":26.18},{"t":71,"o":26.18,"h":26.34,"l":25.75,"c":25.95},{"t":72,"o":25.95,"h":26.86,"l":25.54,"c":26.56},{"t":73,"o":26.56,"h":27.77,"l":26.31,"c":27.45},{"t":74,"o":27.45,"h":27.67,"l":26.79,"c":26.87},{"t":75,"o":26.87,"h":29.29,"l":26.48,"c":28.69},{"t":76,"o":28.69,"h":29.33,"l":27.51,"c":27.84},{"t":77,"o":27.84,"h":29.06,"l":27.46,"c":28.8},{"t":78,"o":28.8,"h":28.98,"l":28.42,"c":28.47},{"t":79,"o":28.47,"h":30.33,"l":27.82,"c":29.66},{"t":80,"o":29.66,"h":30.24,"l":29.39,"c":30.18},{"t":81,"o":30.18,"h":30.48,"l":29.25,"c":29.45},{"t":82,"o":29.45,"h":29.7,"l":27.95,"c":28.56},{"t":83,"o":28.56,"h":28.85,"l":26.86,"c":27.54},{"t":84,"o":27.54,"h":29.19,"l":26.95,"c":28.69},{"t":85,"o":28.69,"h":28.88,"l":27.31,"c":27.85},{"t":86,"o":27.85,"h":28.58,"l":27.09,"c":27.51},{"t":87,"o":27.51,"h":27.76,"l":25.24,"c":26.09},{"t":88,"o":26.09,"h":26.5,"l":25.86,"c":26.39},{"t":89,"o":26.39,"h":26.56,"l":25.85,"c":25.97},{"t":90,"o":25.97,"h":28.62,"l":25.19,"c":28.14},{"t":91,"o":28.14,"h":28.32,"l":26.93,"c":27.36},{"t":92,"o":27.36,"h":28.42,"l":23.62,"c":24.8},{"t":93,"o":24.8,"h":25.73,"l":24.43,"c":25.42},{"t":94,"o":25.42,"h":25.97,"l":23.32,"c":23.65},{"t":95,"o":23.65,"h":24.48,"l":23.54,"c":24.22}],"fictional":true},{"id":"axl","name":"Axle Motors SA","ticker":"AXL","sector":"Automotive","country":"Fictional","desc":"Axle makes cars and light commercial vehicles. It owns large factories, sells through dealers, and is part-way through changing what it builds.","support":["It has an established dealer network and a recognised name.","It has announced new models in each year of this period.","It holds more cash than debt at the end of the period."],"risks":["Car buying rises and falls with the wider economy.","Its factories cost the same to run whether they are busy or not.","Changing what it builds requires spending before it earns."],"fin":[["Revenue","44,200","41,800","33,900","39,600","42,100"],["Operating profit","2,140","1,620","-480","1,510","1,240"],["Net profit","1,480","1,010","-820","1,020","760"],["Total debt","9,800","10,200","12,400","10,900","9,600"],["Cash","8,900","8,100","6,400","9,200","10,100"],["Free cash flow","1,620","840","-2,100","1,880","1,140"],["Shares outstanding","1.24bn","1.24bn","1.24bn","1.23bn","1.22bn"]],"div":[["Year 1","0.34"],["Year 2","0.20"],["Year 3","0.00"],["Year 4","0.26"],["Year 5","0.30"]],"icon":"<path d=\"M4 19l2-6h20l2 6\"/><path d=\"M4 19h24v4H4z\"/><circle cx=\"9\" cy=\"24\" r=\"2.5\"/><circle cx=\"23\" cy=\"24\" r=\"2.5\"/>","colour":"#252326","candles":[{"t":0,"o":13.71,"h":14.79,"l":13.38,"c":14.48},{"t":1,"o":14.48,"h":15.26,"l":14.17,"c":15.09},{"t":2,"o":15.09,"h":15.23,"l":15.04,"c":15.11},{"t":3,"o":15.11,"h":16.19,"l":14.81,"c":15.92},{"t":4,"o":15.92,"h":18.01,"l":15.1,"c":17.53},{"t":5,"o":17.53,"h":19.12,"l":12.84,"c":14.19},{"t":6,"o":14.19,"h":14.64,"l":12.99,"c":13.47},{"t":7,"o":13.47,"h":13.88,"l":12.61,"c":12.8},{"t":8,"o":12.8,"h":12.97,"l":11.5,"c":11.99},{"t":9,"o":11.99,"h":12.25,"l":10.92,"c":11.1},{"t":10,"o":11.1,"h":11.17,"l":10.98,"c":11.06},{"t":11,"o":11.06,"h":11.49,"l":10.93,"c":11.27},{"t":12,"o":11.27,"h":12.72,"l":10.83,"c":12.09},{"t":13,"o":12.09,"h":12.24,"l":11.74,"c":11.84},{"t":14,"o":11.84,"h":13.02,"l":11.46,"c":12.76},{"t":15,"o":12.76,"h":12.98,"l":12.32,"c":12.45},{"t":16,"o":12.45,"h":13.64,"l":12.31,"c":13.26},{"t":17,"o":13.26,"h":13.55,"l":13.12,"c":13.22},{"t":18,"o":13.22,"h":13.66,"l":12.37,"c":12.81},{"t":19,"o":12.81,"h":14.09,"l":12.25,"c":13.54},{"t":20,"o":13.54,"h":14.74,"l":13.4,"c":14.21},{"t":21,"o":14.21,"h":14.46,"l":14.13,"c":14.34},{"t":22,"o":14.34,"h":14.37,"l":14.01,"c":14.15},{"t":23,"o":14.15,"h":15.53,"l":13.99,"c":15.18},{"t":24,"o":15.18,"h":15.3,"l":15.03,"c":15.07},{"t":25,"o":15.07,"h":15.35,"l":14.84,"c":15.27},{"t":26,"o":15.27,"h":15.46,"l":15.24,"c":15.4},{"t":27,"o":15.4,"h":15.66,"l":15.22,"c":15.5},{"t":28,"o":15.5,"h":15.71,"l":15.15,"c":15.37},{"t":29,"o":15.37,"h":15.92,"l":12.77,"c":13.13},{"t":30,"o":13.13,"h":13.18,"l":13.11,"c":13.17},{"t":31,"o":13.17,"h":13.74,"l":13.04,"c":13.61},{"t":32,"o":13.61,"h":14.6,"l":13.35,"c":14.18},{"t":33,"o":14.18,"h":14.77,"l":13.47,"c":13.97},{"t":34,"o":13.97,"h":14.47,"l":13.65,"c":14.27},{"t":35,"o":14.27,"h":14.47,"l":14.18,"c":14.4},{"t":36,"o":14.4,"h":15.95,"l":13.93,"c":15.46},{"t":37,"o":15.46,"h":16.38,"l":12.91,"c":13.48},{"t":38,"o":13.48,"h":14.16,"l":11.69,"c":12.15},{"t":39,"o":12.15,"h":12.44,"l":11.94,"c":12.39},{"t":40,"o":12.39,"h":13.04,"l":10.89,"c":11.26},{"t":41,"o":11.26,"h":11.96,"l":11.18,"c":11.69},{"t":42,"o":11.69,"h":12.15,"l":10.62,"c":10.9},{"t":43,"o":10.9,"h":12.72,"l":10.74,"c":12.09},{"t":44,"o":12.09,"h":12.42,"l":11.01,"c":11.4},{"t":45,"o":11.4,"h":11.64,"l":10.81,"c":11.04},{"t":46,"o":11.04,"h":11.74,"l":9.06,"c":9.8},{"t":47,"o":9.8,"h":10.79,"l":9.46,"c":10.39},{"t":48,"o":10.39,"h":10.91,"l":9.31,"c":9.43},{"t":49,"o":9.43,"h":10.76,"l":8.9,"c":10.32},{"t":50,"o":10.32,"h":10.4,"l":9.96,"c":10.19},{"t":51,"o":10.19,"h":10.52,"l":8.98,"c":9.35},{"t":52,"o":9.35,"h":9.99,"l":7.04,"c":7.82},{"t":53,"o":7.82,"h":7.96,"l":7.69,"c":7.91},{"t":54,"o":7.91,"h":8.67,"l":7.82,"c":8.48},{"t":55,"o":8.48,"h":8.79,"l":7.67,"c":8.06},{"t":56,"o":8.06,"h":8.83,"l":7.66,"c":8.7},{"t":57,"o":8.7,"h":9.63,"l":8.58,"c":9.33},{"t":58,"o":9.33,"h":9.47,"l":9.05,"c":9.17},{"t":59,"o":9.17,"h":10.48,"l":8.75,"c":10.22},{"t":60,"o":10.22,"h":10.91,"l":9.99,"c":10.59},{"t":61,"o":10.59,"h":11.52,"l":10.38,"c":11.36},{"t":62,"o":11.36,"h":11.68,"l":8.86,"c":9.42},{"t":63,"o":9.42,"h":9.7,"l":9.34,"c":9.58},{"t":64,"o":9.58,"h":10.25,"l":9.49,"c":10.12},{"t":65,"o":10.12,"h":11.68,"l":9.86,"c":11.42},{"t":66,"o":11.42,"h":12.71,"l":11.13,"c":12.26},{"t":67,"o":12.26,"h":12.71,"l":10.65,"c":10.9},{"t":68,"o":10.9,"h":10.96,"l":10.68,"c":10.76},{"t":69,"o":10.76,"h":13.11,"l":9.66,"c":12.33},{"t":70,"o":12.33,"h":13.59,"l":12.07,"c":13.29},{"t":71,"o":13.29,"h":13.42,"l":12.95,"c":13.05},{"t":72,"o":13.05,"h":13.28,"l":12.52,"c":12.67},{"t":73,"o":12.67,"h":12.84,"l":11.83,"c":12.09},{"t":74,"o":12.09,"h":13.55,"l":11.52,"c":12.96},{"t":75,"o":12.96,"h":13.57,"l":12.68,"c":13.43},{"t":76,"o":13.43,"h":13.91,"l":12.21,"c":12.76},{"t":77,"o":12.76,"h":12.86,"l":12.62,"c":12.72},{"t":78,"o":12.72,"h":14.01,"l":12.45,"c":13.68},{"t":79,"o":13.68,"h":14.72,"l":13.03,"c":14.55},{"t":80,"o":14.55,"h":15.47,"l":12.24,"c":13.11},{"t":81,"o":13.11,"h":13.19,"l":13.03,"c":13.15},{"t":82,"o":13.15,"h":13.25,"l":12.87,"c":13.0},{"t":83,"o":13.0,"h":13.71,"l":12.82,"c":13.37},{"t":84,"o":13.37,"h":14.73,"l":12.89,"c":14.38},{"t":85,"o":14.38,"h":14.98,"l":14.26,"c":14.82},{"t":86,"o":14.82,"h":14.85,"l":14.78,"c":14.8},{"t":87,"o":14.8,"h":15.07,"l":14.17,"c":14.29},{"t":88,"o":14.29,"h":14.36,"l":13.95,"c":14.14},{"t":89,"o":14.14,"h":14.39,"l":14.07,"c":14.35},{"t":90,"o":14.35,"h":14.76,"l":13.3,"c":13.5},{"t":91,"o":13.5,"h":13.94,"l":11.92,"c":12.27},{"t":92,"o":12.27,"h":12.79,"l":12.16,"c":12.68},{"t":93,"o":12.68,"h":13.24,"l":10.82,"c":11.3},{"t":94,"o":11.3,"h":11.81,"l":11.23,"c":11.67},{"t":95,"o":11.67,"h":11.83,"l":10.84,"c":11.23}],"fictional":true},{"id":"mai","name":"Maison Aurelle SA","ticker":"MAI","sector":"Luxury","country":"Fictional","desc":"Maison Aurelle designs and sells luxury leather goods, fragrance and watches through its own stores. Customers choose to buy rather than need to, and the company sets its own prices.","support":["It sells through its own stores rather than through wholesalers.","Its brands have been in continuous use for decades.","It reports the highest operating margin of any company in this library."],"risks":["Spending on luxury falls when confidence falls.","A large share of sales comes from a small number of regions.","Its stores are expensive to run and are committed on long leases."],"fin":[["Revenue","9,400","10,100","8,200","12,600","14,300"],["Operating profit","2,350","2,580","1,480","3,650","4,190"],["Net profit","1,690","1,860","1,020","2,640","3,050"],["Total debt","2,100","2,000","2,400","1,900","1,700"],["Cash","1,800","2,100","1,600","3,200","4,100"],["Free cash flow","1,540","1,720","760","2,910","3,340"],["Shares outstanding","106m","106m","106m","105m","105m"]],"div":[["Year 1","4.20"],["Year 2","4.60"],["Year 3","3.80"],["Year 4","6.40"],["Year 5","7.20"]],"icon":"<path d=\"M6 12h20l-2 15H8z\"/><path d=\"M12 12V9a4 4 0 0 1 8 0v3\"/><path d=\"M13 18h6\"/>","colour":"#D89B45","candles":[{"t":0,"o":75.39,"h":88.86,"l":71.92,"c":84.78},{"t":1,"o":84.78,"h":94.0,"l":83.11,"c":90.88},{"t":2,"o":90.88,"h":96.52,"l":89.67,"c":94.77},{"t":3,"o":94.77,"h":97.04,"l":93.42,"c":96.45},{"t":4,"o":96.45,"h":99.73,"l":94.43,"c":96.86},{"t":5,"o":96.86,"h":98.03,"l":89.87,"c":90.82},{"t":6,"o":90.82,"h":92.02,"l":82.59,"c":85.14},{"t":7,"o":85.14,"h":91.32,"l":84.15,"c":89.71},{"t":8,"o":89.71,"h":94.25,"l":88.98,"c":91.95},{"t":9,"o":91.95,"h":95.26,"l":91.42,"c":94.33},{"t":10,"o":94.33,"h":95.06,"l":93.16,"c":93.67},{"t":11,"o":93.67,"h":95.24,"l":90.64,"c":92.16},{"t":12,"o":92.16,"h":96.91,"l":90.38,"c":94.97},{"t":13,"o":94.97,"h":97.67,"l":90.06,"c":90.72},{"t":14,"o":90.72,"h":96.28,"l":88.68,"c":94.42},{"t":15,"o":94.42,"h":96.5,"l":90.05,"c":91.51},{"t":16,"o":91.51,"h":92.27,"l":91.09,"c":92.09},{"t":17,"o":92.09,"h":92.83,"l":91.12,"c":91.71},{"t":18,"o":91.71,"h":94.31,"l":86.66,"c":88.15},{"t":19,"o":88.15,"h":95.07,"l":87.51,"c":93.34},{"t":20,"o":93.34,"h":95.22,"l":88.74,"c":90.46},{"t":21,"o":90.46,"h":92.71,"l":90.05,"c":92.3},{"t":22,"o":92.3,"h":92.77,"l":91.14,"c":92.18},{"t":23,"o":92.18,"h":95.43,"l":91.12,"c":94.55},{"t":24,"o":94.55,"h":94.73,"l":94.22,"c":94.52},{"t":25,"o":94.52,"h":96.62,"l":88.59,"c":90.36},{"t":26,"o":90.36,"h":96.31,"l":88.6,"c":94.08},{"t":27,"o":94.08,"h":95.7,"l":93.01,"c":94.81},{"t":28,"o":94.81,"h":97.06,"l":89.12,"c":92.27},{"t":29,"o":92.27,"h":92.66,"l":90.97,"c":91.22},{"t":30,"o":91.22,"h":91.75,"l":89.19,"c":89.69},{"t":31,"o":89.69,"h":95.53,"l":89.08,"c":93.49},{"t":32,"o":93.49,"h":98.12,"l":91.91,"c":97.12},{"t":33,"o":97.12,"h":100.51,"l":96.43,"c":99.81},{"t":34,"o":99.81,"h":100.12,"l":99.09,"c":99.86},{"t":35,"o":99.86,"h":100.33,"l":94.88,"c":96.5},{"t":36,"o":96.5,"h":101.79,"l":95.64,"c":100.86},{"t":37,"o":100.86,"h":102.26,"l":98.87,"c":100.39},{"t":38,"o":100.39,"h":111.2,"l":97.54,"c":107.79},{"t":39,"o":107.79,"h":108.34,"l":107.03,"c":107.61},{"t":40,"o":107.61,"h":112.4,"l":105.3,"c":109.71},{"t":41,"o":109.71,"h":111.99,"l":108.16,"c":111.58},{"t":42,"o":111.58,"h":116.11,"l":100.62,"c":102.03},{"t":43,"o":102.03,"h":104.62,"l":101.01,"c":103.53},{"t":44,"o":103.53,"h":109.66,"l":100.82,"c":106.9},{"t":45,"o":106.9,"h":120.67,"l":102.84,"c":115.59},{"t":46,"o":115.59,"h":116.79,"l":111.23,"c":112.32},{"t":47,"o":112.32,"h":112.83,"l":110.16,"c":110.74},{"t":48,"o":110.74,"h":113.66,"l":109.55,"c":112.46},{"t":49,"o":112.46,"h":115.16,"l":101.32,"c":104.03},{"t":50,"o":104.03,"h":105.57,"l":97.58,"c":98.71},{"t":51,"o":98.71,"h":107.23,"l":95.8,"c":104.05},{"t":52,"o":104.05,"h":107.14,"l":102.86,"c":106.64},{"t":53,"o":106.64,"h":118.56,"l":103.46,"c":114.51},{"t":54,"o":114.51,"h":117.47,"l":105.96,"c":108.72},{"t":55,"o":108.72,"h":111.09,"l":102.21,"c":103.92},{"t":56,"o":103.92,"h":112.51,"l":102.58,"c":109.45},{"t":57,"o":109.45,"h":116.65,"l":108.85,"c":114.83},{"t":58,"o":114.83,"h":118.71,"l":114.22,"c":117.62},{"t":59,"o":117.62,"h":128.98,"l":113.97,"c":124.51},{"t":60,"o":124.51,"h":130.73,"l":123.11,"c":128.82},{"t":61,"o":128.82,"h":137.99,"l":127.94,"c":133.68},{"t":62,"o":133.68,"h":143.65,"l":112.57,"c":115.58},{"t":63,"o":115.58,"h":116.56,"l":114.69,"c":114.97},{"t":64,"o":114.97,"h":116.92,"l":111.37,"c":112.41},{"t":65,"o":112.41,"h":129.36,"l":110.79,"c":125.93},{"t":66,"o":125.93,"h":133.72,"l":124.22,"c":132.09},{"t":67,"o":132.09,"h":137.08,"l":129.06,"c":134.71},{"t":68,"o":134.71,"h":135.9,"l":132.4,"c":134.05},{"t":69,"o":134.05,"h":137.27,"l":131.56,"c":136.18},{"t":70,"o":136.18,"h":142.25,"l":135.15,"c":140.06},{"t":71,"o":140.06,"h":141.0,"l":135.05,"c":136.54},{"t":72,"o":136.54,"h":145.3,"l":135.64,"c":142.45},{"t":73,"o":142.45,"h":147.22,"l":140.12,"c":146.29},{"t":74,"o":146.29,"h":148.22,"l":140.58,"c":142.38},{"t":75,"o":142.38,"h":159.08,"l":139.84,"c":156.96},{"t":76,"o":156.96,"h":158.3,"l":156.11,"c":158.05},{"t":77,"o":158.05,"h":163.15,"l":157.45,"c":161.72},{"t":78,"o":161.72,"h":167.03,"l":160.73,"c":163.96},{"t":79,"o":163.96,"h":172.69,"l":162.09,"c":170.03},{"t":80,"o":170.03,"h":171.31,"l":163.41,"c":165.26},{"t":81,"o":165.26,"h":177.06,"l":162.67,"c":172.97},{"t":82,"o":172.97,"h":173.42,"l":170.79,"c":171.21},{"t":83,"o":171.21,"h":173.71,"l":165.36,"c":166.5},{"t":84,"o":166.5,"h":173.73,"l":165.53,"c":171.76},{"t":85,"o":171.76,"h":174.24,"l":165.83,"c":166.84},{"t":86,"o":166.84,"h":169.12,"l":164.53,"c":166.12},{"t":87,"o":166.12,"h":172.62,"l":150.55,"c":154.11},{"t":88,"o":154.11,"h":160.38,"l":140.02,"c":141.69},{"t":89,"o":141.69,"h":142.58,"l":137.55,"c":139.69},{"t":90,"o":139.69,"h":145.12,"l":138.93,"c":143.09},{"t":91,"o":143.09,"h":146.74,"l":128.66,"c":132.02},{"t":92,"o":132.02,"h":134.32,"l":125.67,"c":127.36},{"t":93,"o":127.36,"h":132.67,"l":126.52,"c":131.12},{"t":94,"o":131.12,"h":140.64,"l":129.89,"c":136.71},{"t":95,"o":136.71,"h":138.56,"l":132.68,"c":136.06}],"fictional":true},{"id":"hlx","name":"Helixa Health NV","ticker":"HLX","sector":"Healthcare","country":"Fictional","desc":"Helixa develops and sells prescription medicines. Its products take years to develop and are protected for a fixed period, after which other companies may copy them.","support":["Demand for its products does not follow the economy.","It reports several products in late-stage development each year.","Its cash generation has been positive in every year of this period."],"risks":["Protection on its largest product expires within a decade.","Development can fail at a late stage after years of spending.","Prices are set or constrained by health systems rather than freely."],"fin":[["Revenue","12,800","13,200","13,900","14,400","15,100"],["Operating profit","3,180","3,290","3,510","3,620","3,840"],["Net profit","2,410","2,490","2,660","2,740","2,910"],["Total debt","5,600","5,300","5,000","4,700","4,400"],["Cash","2,900","3,200","3,600","4,000","4,500"],["Free cash flow","2,280","2,360","2,540","2,610","2,780"],["Shares outstanding","1.26bn","1.26bn","1.25bn","1.25bn","1.24bn"]],"div":[["Year 1","1.44"],["Year 2","1.50"],["Year 3","1.56"],["Year 4","1.62"],["Year 5","1.68"]],"icon":"<path d=\"M10 4c0 8 12 8 12 16M22 4c0 8-12 8-12 16M10 28c0-4 12-4 12-8\"/>","colour":"#7A9BB5","candles":[{"t":0,"o":48.15,"h":48.31,"l":47.73,"c":48.17},{"t":1,"o":48.17,"h":49.43,"l":45.76,"c":46.11},{"t":2,"o":46.11,"h":46.16,"l":45.87,"c":45.94},{"t":3,"o":45.94,"h":47.01,"l":45.61,"c":46.77},{"t":4,"o":46.77,"h":48.0,"l":46.54,"c":47.32},{"t":5,"o":47.32,"h":47.7,"l":45.86,"c":46.65},{"t":6,"o":46.65,"h":49.09,"l":46.22,"c":48.53},{"t":7,"o":48.53,"h":49.8,"l":48.04,"c":49.58},{"t":8,"o":49.58,"h":49.66,"l":49.49,"c":49.56},{"t":9,"o":49.56,"h":49.58,"l":49.42,"c":49.46},{"t":10,"o":49.46,"h":50.44,"l":47.69,"c":48.1},{"t":11,"o":48.1,"h":48.52,"l":45.53,"c":46.31},{"t":12,"o":46.31,"h":47.0,"l":45.73,"c":46.64},{"t":13,"o":46.64,"h":47.41,"l":42.89,"c":44.33},{"t":14,"o":44.33,"h":44.43,"l":44.14,"c":44.19},{"t":15,"o":44.19,"h":45.4,"l":43.67,"c":45.12},{"t":16,"o":45.12,"h":45.19,"l":44.94,"c":45.02},{"t":17,"o":45.02,"h":45.3,"l":44.94,"c":45.08},{"t":18,"o":45.08,"h":50.31,"l":44.58,"c":48.48},{"t":19,"o":48.48,"h":50.95,"l":47.87,"c":50.1},{"t":20,"o":50.1,"h":52.0,"l":49.52,"c":51.7},{"t":21,"o":51.7,"h":52.83,"l":51.44,"c":52.57},{"t":22,"o":52.57,"h":53.5,"l":52.19,"c":53.18},{"t":23,"o":53.18,"h":57.07,"l":52.68,"c":55.92},{"t":24,"o":55.92,"h":56.52,"l":53.05,"c":53.81},{"t":25,"o":53.81,"h":54.1,"l":53.13,"c":53.31},{"t":26,"o":53.31,"h":56.29,"l":52.86,"c":55.58},{"t":27,"o":55.58,"h":56.77,"l":53.04,"c":54.15},{"t":28,"o":54.15,"h":55.49,"l":53.93,"c":55.21},{"t":29,"o":55.21,"h":57.73,"l":54.39,"c":57.25},{"t":30,"o":57.25,"h":58.37,"l":56.92,"c":58.09},{"t":31,"o":58.09,"h":59.61,"l":54.9,"c":55.88},{"t":32,"o":55.88,"h":56.05,"l":55.4,"c":55.56},{"t":33,"o":55.56,"h":57.99,"l":55.31,"c":57.44},{"t":34,"o":57.44,"h":58.03,"l":57.01,"c":57.78},{"t":35,"o":57.78,"h":57.96,"l":57.2,"c":57.3},{"t":36,"o":57.3,"h":58.24,"l":55.24,"c":55.81},{"t":37,"o":55.81,"h":56.84,"l":55.61,"c":56.47},{"t":38,"o":56.47,"h":57.52,"l":55.61,"c":57.05},{"t":39,"o":57.05,"h":60.2,"l":56.65,"c":59.25},{"t":40,"o":59.25,"h":59.66,"l":58.79,"c":59.07},{"t":41,"o":59.07,"h":59.75,"l":57.45,"c":58.06},{"t":42,"o":58.06,"h":60.63,"l":57.33,"c":59.93},{"t":43,"o":59.93,"h":60.68,"l":59.81,"c":60.48},{"t":44,"o":60.48,"h":60.55,"l":60.31,"c":60.38},{"t":45,"o":60.38,"h":61.61,"l":56.49,"c":58.02},{"t":46,"o":58.02,"h":64.21,"l":55.11,"c":62.21},{"t":47,"o":62.21,"h":63.82,"l":61.91,"c":63.28},{"t":48,"o":63.28,"h":64.21,"l":62.66,"c":63.92},{"t":49,"o":63.92,"h":65.77,"l":63.62,"c":65.2},{"t":50,"o":65.2,"h":66.37,"l":62.15,"c":63.05},{"t":51,"o":63.05,"h":63.38,"l":62.77,"c":63.16},{"t":52,"o":63.16,"h":67.28,"l":62.46,"c":65.98},{"t":53,"o":65.98,"h":67.61,"l":65.49,"c":67.17},{"t":54,"o":67.17,"h":68.76,"l":63.41,"c":64.44},{"t":55,"o":64.44,"h":69.99,"l":62.62,"c":68.54},{"t":56,"o":68.54,"h":72.98,"l":67.72,"c":71.86},{"t":57,"o":71.86,"h":72.44,"l":71.64,"c":72.24},{"t":58,"o":72.24,"h":74.55,"l":71.35,"c":74.03},{"t":59,"o":74.03,"h":75.05,"l":73.75,"c":74.88},{"t":60,"o":74.88,"h":78.6,"l":73.64,"c":77.64},{"t":61,"o":77.64,"h":81.0,"l":76.22,"c":79.44},{"t":62,"o":79.44,"h":79.96,"l":76.99,"c":77.85},{"t":63,"o":77.85,"h":78.34,"l":77.58,"c":78.05},{"t":64,"o":78.05,"h":79.92,"l":77.26,"c":79.11},{"t":65,"o":79.11,"h":79.67,"l":77.25,"c":77.75},{"t":66,"o":77.75,"h":77.83,"l":77.5,"c":77.56},{"t":67,"o":77.56,"h":79.78,"l":77.09,"c":79.32},{"t":68,"o":79.32,"h":83.7,"l":77.73,"c":82.07},{"t":69,"o":82.07,"h":83.81,"l":81.37,"c":82.67},{"t":70,"o":82.67,"h":83.7,"l":78.45,"c":80.32},{"t":71,"o":80.32,"h":81.04,"l":79.29,"c":79.61},{"t":72,"o":79.61,"h":81.6,"l":78.63,"c":81.0},{"t":73,"o":81.0,"h":83.52,"l":80.03,"c":82.98},{"t":74,"o":82.98,"h":84.53,"l":81.86,"c":83.84},{"t":75,"o":83.84,"h":93.88,"l":81.83,"c":90.28},{"t":76,"o":90.28,"h":92.12,"l":89.48,"c":90.81},{"t":77,"o":90.81,"h":91.86,"l":88.12,"c":89.52},{"t":78,"o":89.52,"h":90.91,"l":86.05,"c":86.79},{"t":79,"o":86.79,"h":87.53,"l":84.83,"c":85.38},{"t":80,"o":85.38,"h":88.68,"l":84.87,"c":88.06},{"t":81,"o":88.06,"h":89.75,"l":87.3,"c":89.24},{"t":82,"o":89.24,"h":90.45,"l":87.68,"c":88.77},{"t":83,"o":88.77,"h":90.13,"l":86.11,"c":87.34},{"t":84,"o":87.34,"h":90.15,"l":79.66,"c":81.88},{"t":85,"o":81.88,"h":87.83,"l":81.36,"c":85.61},{"t":86,"o":85.61,"h":87.9,"l":85.3,"c":86.82},{"t":87,"o":86.82,"h":89.39,"l":85.96,"c":88.42},{"t":88,"o":88.42,"h":90.37,"l":82.91,"c":84.56},{"t":89,"o":84.56,"h":85.22,"l":80.85,"c":81.35},{"t":90,"o":81.35,"h":82.23,"l":79.26,"c":79.5},{"t":91,"o":79.5,"h":80.69,"l":71.14,"c":72.38},{"t":92,"o":72.38,"h":72.6,"l":72.28,"c":72.54},{"t":93,"o":72.54,"h":73.43,"l":71.94,"c":73.18},{"t":94,"o":73.18,"h":73.97,"l":71.46,"c":72.16},{"t":95,"o":72.16,"h":72.96,"l":71.71,"c":72.77}],"fictional":true}],"events":[{"stage":1,"items":[{"co":"LUM","label":"Results","text":"Lumina reported higher licensing income and said orders from its two largest customers had increased."},{"co":"AXL","label":"Results","text":"Axle reported lower vehicle sales and said it would spend more on new models over the following three years."},{"co":"","label":"Economy","text":"Borrowing costs rose across the fictional economy for the first time in several years."}]},{"stage":2,"items":[{"co":"MRD","label":"Results","text":"Meridian reported higher sales and lower profit, and said delivery had cost more to run than expected."},{"co":"MAI","label":"Dividend","text":"Maison Aurelle increased its dividend and opened stores in two new regions."},{"co":"","label":"Economy","text":"Confidence weakened and several fictional companies withdrew their guidance for the year."}]},{"stage":3,"items":[{"co":"","label":"Economy","text":"A sharp and sudden fall affected almost every company in the library within the same two months."},{"co":"AXL","label":"Results","text":"Axle reported a loss for the year and suspended its dividend."},{"co":"HLX","label":"Results","text":"Helixa reported results in line with the previous year and continued to pay its dividend."}]},{"stage":4,"items":[{"co":"LUM","label":"Results","text":"Lumina reported its highest revenue in the period and said its order book had lengthened."},{"co":"MAI","label":"Results","text":"Maison Aurelle reported a sharp recovery in sales and restored its dividend to above its earlier level."},{"co":"MRD","label":"Results","text":"Meridian reported lower profit than the previous year despite higher sales."}]},{"stage":5,"items":[{"co":"","label":"Economy","text":"Borrowing costs rose sharply and companies whose value rested on future growth were affected most."},{"co":"VRD","label":"Results","text":"Verdant reported higher revenue and said ingredient costs had risen faster than its prices."},{"co":"HLX","label":"Results","text":"Helixa raised its dividend for the fifth consecutive year."}]}]};
+var COCUR = DATA.meta.currencySymbol;
+var CO = {}; DATA.companies.forEach(function(c){ CO[c.id] = c; });
+var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var EX_START = DATA.meta.exerciseStart, DECISION_T = DATA.meta.decisionIndex;
+function periodLabel(t){
+  return t < EX_START
+    ? "Research Y" + (Math.floor(t / 12) + 1) + " " + MONTHS[t % 12]
+    : "Exercise Y" + (Math.floor((t - EX_START) / 12) + 1) + " " + MONTHS[(t - EX_START) % 12];
+}
+/* Wealth in Action has no company-exercise period of its own, so research
+   history is all that is ever shown here: revealedTo() always stops at the
+   virtual decision date. */
+function exerciseStarted(){ return false; }
+function revealedTo(){ return DECISION_T; }
+var COMPANY_DISCLAIMER = "A safe space to practise with fictional companies and virtual money, and build your confidence.";
+
+var RIBBON_SCREENS = ["library","lesson","profile","allocate","review","reasons","event"];
+var ribbonPaused = false, ribbonStageShown = null;
+try { ribbonPaused = sessionStorage.getItem("cil.ribbonPaused") === "1"; } catch(e){}
+
+/* the period the ribbon is showing: stage 0 before the market chapter, otherwise the stage end */
+function ribbonT(){
+  if (!exerciseStarted()) return DECISION_T;
+  return app.screen === "stage" ? stageEnd(app.stage)
+                                : (app.stage > 1 ? stageEnd(app.stage - 1) : DECISION_T);
+}
+function ribbonPrevT(){
+  var t = ribbonT();
+  if (t === DECISION_T) return DECISION_T;
+  var stages = DATA.meta.stages;
+  for (var i = stages.length - 1; i >= 0; i--) if (stages[i].to === t) return stages[i].from;
+  return DECISION_T;
+}
+function ribbonRow(c){
+  var t = ribbonT(), p = ribbonPrevT();
+  var px = c.candles[t].c;
+  /* Before the market chapter begins there is no previous stage, so the change
+     shown is within the opening period itself, from its open to its close.
+     Nothing from a later period is used. */
+  var base = (t === p) ? c.candles[t].o : c.candles[p].c;
+  var ch = px - base;
+  var pc = base === 0 ? 0 : (ch / base) * 100;
+  var dir = ch > 0.0049 ? "up" : (ch < -0.0049 ? "down" : "flat");
+  return { id:c.id, ticker:c.ticker, name:c.name, price:px, change:ch, pct:pc, dir:dir, t:t };
+}
+function ribbonItemHTML(r){
+  var arrow = r.dir === "up" ? "\u2191" : r.dir === "down" ? "\u2193" : "\u2192";
+  var cls = r.dir === "up" ? "up" : r.dir === "down" ? "dn" : "fl";
+  var word = r.dir === "up" ? "up" : r.dir === "down" ? "down" : "unchanged";
+  var sign = r.change > 0 ? "+" : r.change < 0 ? "\u2212" : "";
+  var label = CO[r.id].name + ", fictional company. Synthetic price " + COCUR + r.price.toFixed(2) + ", " +
+    (r.dir === "flat" ? "unchanged" : word + " " + Math.abs(r.pct).toFixed(2) + " per cent") +
+    " in the current simulated period. Opens this company's fictional profile.";
+  return '<button class="item" data-ribbon="' + r.id + '" aria-label="' + label + '">' +
+    '<span class="tk">' + r.ticker + '</span>' +
+    '<span class="nm">' + r.name.split(" ")[0] + '</span>' +
+    '<span class="sep" aria-hidden="true">|</span>' +
+    '<span class="px">' + COCUR + r.price.toFixed(2) + '</span>' +
+    '<span class="sep" aria-hidden="true">|</span>' +
+    '<span class="ch ' + cls + '"><span aria-hidden="true">' + arrow + '</span> ' + sign +
+      Math.abs(r.pct).toFixed(2) + '%</span></button>';
+}
+/* Whether the ribbon runs as a continuous marquee. One pure function, so the
+   behaviour can be asserted for every environment without needing that device.
+   Touch and narrow viewports are ALWAYS a manual swipe lane, including while the
+   review override is on, because auto-scrolling under a thumb is exactly what the
+   mobile corrections removed. */
+function laneMovesFor(env){
+  if (env.coarse || env.narrow) return false;
+  if (env.override) return true;
+  return !env.systemReduced;
+}
+function currentEnv(){
+  var mm = window.matchMedia;
+  return {
+    coarse: !!(mm && mm("(pointer: coarse)").matches),
+    narrow: !!(mm && mm("(max-width: 767px)").matches),
+    systemReduced: systemReduced(),
+    override: FORCE_MOTION
+  };
+}
+function laneMoves(){ return laneMovesFor(currentEnv()); }
+function renderRibbon(force){
+  var el = shadowRoot.getElementById("ribbon"), why = shadowRoot.getElementById("ribbonWhyPanel");
+  var show = RIBBON_SCREENS.indexOf(app.screen) >= 0;
+  el.classList.toggle("hidden", !show);
+  if (!show){ why.classList.add("hidden"); return; }
+  var t = ribbonT();
+  if (!force && ribbonStageShown === t) return;
+  var rows = DATA.companies.map(ribbonRow);
+  var lane = shadowRoot.getElementById("rlane");
+  var once = rows.map(ribbonItemHTML).join("");
+  var html = laneMoves() ? once + once : once;
+  /* the pause control exists only where something moves */
+  var tog = shadowRoot.getElementById("ribbonToggle");
+  tog.classList.toggle("hidden", !laneMoves());
+  if (ribbonStageShown !== null && !reduced()){
+    lane.style.opacity = "0";
+    setTimeout(function(){ lane.innerHTML = html; lane.style.opacity = "1"; wireRibbon(); }, 220);
+  } else {
+    lane.innerHTML = html;
+    wireRibbon();
+  }
+  ribbonStageShown = t;
+  shadowRoot.getElementById("ribbonSummary").textContent =
+    "Fictional market ribbon, synthetic prices for the current simulated period. " +
+    rows.map(function(r){
+      return CO[r.id].name + " " + COCUR + r.price.toFixed(2) + ", " +
+        (r.dir === "flat" ? "unchanged" : (r.dir === "up" ? "up " : "down ") + Math.abs(r.pct).toFixed(2) + " per cent");
+    }).join(". ") + ".";
+  el.classList.toggle("paused", ribbonPaused);
+}
+function wireRibbon(){
+  shadowRoot.querySelectorAll("[data-ribbon]").forEach(function(b){
+    b.addEventListener("click", function(){ openProfile(b.dataset.ribbon); });
+  });
+}
+window.addEventListener("resize", function(){ renderRibbon(true); }, { passive:true });
+shadowRoot.getElementById("ribbonToggle").addEventListener("click", function(){
+  ribbonPaused = !ribbonPaused;
+  try { sessionStorage.setItem("cil.ribbonPaused", ribbonPaused ? "1" : "0"); } catch(e){}
+  shadowRoot.getElementById("ribbon").classList.toggle("paused", ribbonPaused);
+  this.textContent = ribbonPaused ? "Play ticker" : "Pause ticker";
+  this.setAttribute("aria-pressed", ribbonPaused ? "true" : "false");
+});
+shadowRoot.getElementById("ribbonWhy").addEventListener("click", function(){
+  var p = shadowRoot.getElementById("ribbonWhyPanel");
+  var open = p.classList.toggle("hidden") === false;
+  this.setAttribute("aria-expanded", open ? "true" : "false");
+});
+
+function chartHTML(co, fromT, toT, idPrefix){
+  var mode = app.chartAlt[co.id] || "candles";
+  return '' +
+   '<div class="segbtns" role="group" aria-label="Chart view">' +
+     '<button data-view="candles" data-co="' + co.id + '" aria-pressed="' + (mode==="candles") + '">Candlesticks</button>' +
+     '<button data-view="line" data-co="' + co.id + '" aria-pressed="' + (mode==="line") + '">Line</button>' +
+     '<button data-view="table" data-co="' + co.id + '" aria-pressed="' + (mode==="table") + '">Table</button>' +
+   '</div>' +
+   '<div id="' + idPrefix + '-view"></div>' +
+   '<p class="chartmeta">' + co.name + ' (' + co.ticker + ') · ' + DATA.meta.exchange +
+     ' · quoted in ' + DATA.meta.currency + ' · ' + DATA.meta.interval + ' candles · ' +
+     periodLabel(fromT) + ' to ' + periodLabel(toT) + '<br>' + boundaryText(fromT, toT) +
+     '<br>' + DATA.meta.priceBasis + '</p>';
+}
+var chartState = {};
+/* Spoken and written description of the research and exercise boundary */
+function boundaryText(fromT, toT){
+  if (fromT >= EX_START) return "All periods shown are within the virtual exercise.";
+  if (toT < EX_START) return "All periods shown are research history, up to the virtual decision date.";
+  return "The chart is divided at the virtual decision date: periods up to " + periodLabel(DECISION_T) +
+    " are " + DATA.meta.researchLabel.toLowerCase() + ", and periods from " + periodLabel(EX_START) +
+    " onwards are the " + DATA.meta.exerciseLabel.toLowerCase() + ".";
+}
+function drawChart(co, fromT, toT, idPrefix){
+  var host = shadowRoot.getElementById(idPrefix + "-view");
+  if (!host) return;
+  var mode = app.chartAlt[co.id] || "candles";
+  var ks = co.candles.slice(fromT, toT + 1);
+  if (mode === "table"){ host.innerHTML = chartTable(co, ks); return; }
+  chartState[idPrefix] = { co:co, ks:ks, sel:ks.length - 1, idPrefix:idPrefix, mode:mode };
+  host.innerHTML =
+    '<div class="chartwrap"><svg class="chart" id="' + idPrefix + '-svg" viewBox="0 0 720 300" tabindex="0" role="img" ' +
+    'aria-label="' + (mode === "line" ? "Line chart of closing prices" : "Candlestick chart") + ' for ' + co.name +
+    ', ' + ks.length + ' ' + DATA.meta.interval.toLowerCase() + ' periods from ' + periodLabel(fromT) + ' to ' + periodLabel(toT) +
+    '. ' + boundaryText(fromT, toT) +
+    ' Use left and right arrow keys to move between periods." aria-describedby="' + idPrefix + '-readout"></svg></div>' +
+    '<div class="readout" id="' + idPrefix + '-readout" role="status" aria-live="polite"></div>';
+  paintChart(idPrefix);
+  var svg = shadowRoot.getElementById(idPrefix + "-svg");
+  svg.addEventListener("keydown", function(e){
+    var st = chartState[idPrefix], n = st.ks.length;
+    var k = e.key, moved = true;
+    if (k === "ArrowRight") st.sel = Math.min(n - 1, st.sel + 1);
+    else if (k === "ArrowLeft") st.sel = Math.max(0, st.sel - 1);
+    else if (k === "Home") st.sel = 0;
+    else if (k === "End") st.sel = n - 1;
+    else moved = false;
+    if (moved){ e.preventDefault(); paintChart(idPrefix); }
+  });
+  function pick(clientX){
+    var st = chartState[idPrefix], r = svg.getBoundingClientRect();
+    var x = (clientX - r.left) / r.width * 720;
+    var i = Math.round((x - 46) / ((720 - 66) / Math.max(1, st.ks.length - 1)));
+    st.sel = Math.max(0, Math.min(st.ks.length - 1, i));
+    paintChart(idPrefix);
+  }
+  svg.addEventListener("pointermove", function(e){ if (e.pointerType === "mouse") pick(e.clientX); });
+  svg.addEventListener("pointerdown", function(e){ pick(e.clientX); svg.focus(); });
+}
+function paintChart(idPrefix){
+  var st = chartState[idPrefix]; if (!st) return;
+  var ks = st.ks, W = 720, H = 300, padL = 46, padR = 20, padT = 16, padB = 32;
+  var lo = Math.min.apply(null, ks.map(function(k){ return k.l; }));
+  var hi = Math.max.apply(null, ks.map(function(k){ return k.h; }));
+  var pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+  var x = function(i){ return padL + i * (W - padL - padR) / Math.max(1, ks.length - 1); };
+  var y = function(v){ return H - padB - (v - lo) / (hi - lo) * (H - padT - padB); };
+  var s = '';
+  s += '<line class="axis" x1="' + padL + '" y1="' + (H - padB) + '" x2="' + (W - padR) + '" y2="' + (H - padB) + '"/>';
+  for (var g = 0; g <= 3; g++){
+    var v = lo + (hi - lo) * g / 3, yy = y(v);
+    s += '<line class="axis" x1="' + padL + '" y1="' + yy + '" x2="' + (W - padR) + '" y2="' + yy + '" style="opacity:.35"/>';
+    s += '<text class="axlab" x="4" y="' + (yy + 4) + '">' + COCUR + v.toFixed(0) + '</text>';
+  }
+  var step = (W - padL - padR) / Math.max(1, ks.length - 1);
+  var bw = Math.max(3, Math.min(14, step * 0.62));
+  if (st.mode === "line"){
+    s += '<polyline points="' + ks.map(function(k,i){ return x(i) + "," + y(k.c); }).join(" ") +
+         '" fill="none" stroke="#FF4F9A" stroke-width="2" stroke-linejoin="round"/>';
+  } else {
+    ks.forEach(function(k, i){
+      var up = k.c >= k.o, cx = x(i);
+      s += '<line class="wick ' + (up ? "wick-up" : "wick-dn") + '" x1="' + cx + '" y1="' + y(k.h) + '" x2="' + cx + '" y2="' + y(k.l) + '"/>';
+      var top = y(Math.max(k.o, k.c)), bot = y(Math.min(k.o, k.c));
+      var h = Math.max(1.5, bot - top);
+      s += '<rect class="' + (up ? "candle-up" : "candle-dn") + '" x="' + (cx - bw/2) + '" y="' + top + '" width="' + bw + '" height="' + h + '" rx="1"/>';
+    });
+  }
+  /* labelled boundary at the virtual decision date, drawn with a line and words, never colour alone */
+  var bIdx = -1;
+  for (var bi = 0; bi < ks.length; bi++) if (ks[bi].t === EX_START){ bIdx = bi; break; }
+  if (bIdx > 0){
+    var bx = x(bIdx) - step / 2;
+    s += '<line x1="' + bx + '" y1="' + padT + '" x2="' + bx + '" y2="' + (H - padB) + '" stroke="#FF4F9A" stroke-width="1.5" stroke-dasharray="5 4"/>';
+    s += '<text class="axlab" x="' + (bx - 6) + '" y="' + (padT + 11) + '" text-anchor="end" fill="#E8E4E1">' + DATA.meta.researchLabel + '</text>';
+    s += '<text class="axlab" x="' + (bx + 6) + '" y="' + (padT + 11) + '" fill="#FF4F9A">' + DATA.meta.exerciseLabel + '</text>';
+  }
+  var sk = ks[st.sel], sx = x(st.sel);
+  s += '<line class="sel" x1="' + sx + '" y1="' + padT + '" x2="' + sx + '" y2="' + (H - padB) + '" style="opacity:.5"/>';
+  s += '<rect class="sel" x="' + (sx - bw/2 - 3) + '" y="' + (y(sk.h) - 3) + '" width="' + (bw + 6) + '" height="' + (y(sk.l) - y(sk.h) + 6) + '" rx="3"/>';
+  var lab = [0, Math.floor(ks.length/2), ks.length - 1];
+  lab.forEach(function(i){
+    s += '<text class="axlab" x="' + x(i) + '" y="' + (H - 10) + '" text-anchor="middle">' + periodLabel(ks[i].t) + '</text>';
+  });
+  shadowRoot.getElementById(idPrefix + "-svg").innerHTML = s;
+  var ch = sk.c - sk.o, up2 = ch >= 0;
+  var pc = (ch / sk.o * 100).toFixed(1);
+  shadowRoot.getElementById(idPrefix + "-readout").innerHTML =
+    '<div><span class="k">Period</span><br><span class="v">' + periodLabel(sk.t) + '</span></div>' +
+    '<div><span class="k">Open</span><br><span class="v">' + COCUR + sk.o.toFixed(2) + '</span></div>' +
+    '<div><span class="k">High</span><br><span class="v">' + COCUR + sk.h.toFixed(2) + '</span></div>' +
+    '<div><span class="k">Low</span><br><span class="v">' + COCUR + sk.l.toFixed(2) + '</span></div>' +
+    '<div><span class="k">Close</span><br><span class="v">' + COCUR + sk.c.toFixed(2) + '</span></div>' +
+    '<div style="grid-column:1/-1"><span class="k">Change over this period</span><br><span class="v">' +
+      '<span aria-hidden="true">' + (up2 ? "\u2191" : "\u2193") + '</span> ' + (up2 ? "up " : "down ") +
+      Math.abs(ch).toFixed(2) + " " + DATA.meta.currency + ", " + (up2 ? "up " : "down ") + Math.abs(pc) + ' per cent</span></div>';
+}
+function chartTable(co, ks){
+  var spans = ks.length && ks[0].t < EX_START && ks[ks.length-1].t >= EX_START;
+  return '<div class="tblscroll"><table><caption>Every period for ' + co.name + ' (' + co.ticker + '), ' +
+   DATA.meta.interval.toLowerCase() + ' candles, prices in ' + DATA.meta.currency + '. ' +
+   boundaryText(ks[0].t, ks[ks.length-1].t) +
+   '</caption><thead><tr><th scope="col">Period</th><th scope="col">Part</th><th scope="col" class="n">Open</th><th scope="col" class="n">High</th>' +
+   '<th scope="col" class="n">Low</th><th scope="col" class="n">Close</th><th scope="col" class="n">Change</th></tr></thead><tbody>' +
+   ks.map(function(k){
+     var ch = k.c - k.o, up = ch >= 0;
+     var part = k.t < EX_START ? DATA.meta.researchLabel : DATA.meta.exerciseLabel;
+     var mark = (spans && k.t === EX_START)
+       ? ' style="border-top:2px solid var(--pink)"' : '';
+     return '<tr' + mark + '><th scope="row">' + periodLabel(k.t) + '</th><td>' + part + '</td><td class="n">' + k.o.toFixed(2) + '</td><td class="n">' +
+      k.h.toFixed(2) + '</td><td class="n">' + k.l.toFixed(2) + '</td><td class="n">' + k.c.toFixed(2) + '</td>' +
+      '<td class="n">' + (up ? "up " : "down ") + Math.abs(ch).toFixed(2) + '</td></tr>';
+   }).join("") + '</tbody></table></div>';
+}
+shadowRoot.addEventListener("click", function(e){
+  var b = e.target.closest && e.target.closest("[data-view]");
+  if (!b) return;
+  app.chartAlt[b.dataset.co] = b.dataset.view; save();
+  var wrap = b.parentNode;
+  wrap.querySelectorAll("[data-view]").forEach(function(x){ x.setAttribute("aria-pressed", x.dataset.view === b.dataset.view); });
+  var prefix = wrap.nextElementSibling.id.replace("-view","");
+  var st = chartRanges[prefix];
+  drawChart(CO[b.dataset.co], st.from, st.to, prefix);
+});
+var chartRanges = {};
+function mountChart(co, fromT, toT, prefix, host){
+  chartRanges[prefix] = { from:fromT, to:toT };
+  host.innerHTML = chartHTML(co, fromT, toT, prefix);
+  drawChart(co, fromT, toT, prefix);
+}
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+
+function orb(co, small){
+  return '<span class="orb' + (small ? " sm" : "") + '" style="background:' + co.colour + '22;color:' + co.colour +
+   '" aria-hidden="true"><svg viewBox="0 0 32 32">' + co.icon + '</svg></span>';
+}
+function coDisc(el){
+  shadowRoot.getElementById(el).innerHTML =
+    COMPANY_DISCLAIMER + "<br><br>Historical performance describes what happened in the past. Simulated performance shows what happened under an invented or modelled set of assumptions. Neither predicts future results.";
+}
+
+
+function renderLibrary(){
+  shadowRoot.getElementById("libIntro").textContent =
+    "Six fictional businesses, all quoted in the same currency so that nothing has to be converted. Each card opens a full profile.";
+  shadowRoot.getElementById("libCards").innerHTML = DATA.companies.map(function(c){
+    var op = app.opened.indexOf(c.id) >= 0;
+    var f = c.candles[0].c, l = c.candles[DECISION_T].c;
+    return '<button class="ccard' + (op ? " opened" : "") + '" onclick="window.__wia1.openProfile(\'' + c.id + '\')">' +
+      '<div class="top">' + orb(c) + '<div><span class="nm">' + c.name + '</span>' +
+      '<span class="tick">' + c.ticker + ' · ' + DATA.meta.exchange + ' · ' + DATA.meta.currency + '</span></div></div>' +
+      '<div class="pillrow"><span class="pill">' + c.sector + '</span>' +
+      '<span class="pill">' + (op ? "Opened" : "Not opened yet") + '</span></div>' +
+      '<p class="sm" style="margin:10px 0 0">' + c.desc.split(".")[0] + '.</p></button>';
+  }).join("");
+  var n = app.opened.length, all = n === DATA.companies.length;
+  var b = shadowRoot.getElementById("libNext");
+  b.setAttribute("aria-disabled", all ? "false" : "true");
+  shadowRoot.getElementById("libHelper").textContent = all
+    ? "You have opened all six profiles."
+    : "You have opened " + n + " of " + DATA.companies.length + " profiles. Open them all to continue.";
+  coDisc("libDisc");
+}
+shadowRoot.getElementById("libNext").addEventListener("click", function(){
+  if (this.getAttribute("aria-disabled") === "true") return;
+  go("lesson");
+});
+
+/* ---------- 3. candlestick lesson ---------- */
+var LESSON = [
+  ["open","Opening price","Where the price started at the beginning of this period."],
+  ["close","Closing price","Where it finished at the end of this period. These two form the body of the candle."],
+  ["body","The body","The distance between the opening and closing price. A tall body means the price finished a long way from where it started."],
+  ["high","Highest price","The highest the price reached at any point during the period, shown by the line above the body."],
+  ["low","Lowest price","The lowest it reached, shown by the line below. These two lines are called wicks."],
+  ["dir","Up or down period","If it finished higher than it started the candle is drawn hollow, and if it finished lower it is drawn solid. Both are ordinary. Neither is good or bad in itself."]
+];
+function renderLesson(){
+  shadowRoot.getElementById("lessonParts").innerHTML = LESSON.map(function(p){
+    return '<button data-part="' + p[0] + '" aria-pressed="' + (app.lessonParts.indexOf(p[0]) >= 0) + '">' + p[1] + '</button>';
+  }).join("");
+  shadowRoot.getElementById("lessonParts").querySelectorAll("[data-part]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var id = b.dataset.part;
+      if (app.lessonParts.indexOf(id) < 0) app.lessonParts.push(id);
+      save();
+      b.setAttribute("aria-pressed","true");
+      var p = LESSON.filter(function(x){ return x[0] === id; })[0];
+      shadowRoot.getElementById("lessonCopy").innerHTML =
+        '<p class="kicker" style="margin:0 0 6px">' + p[1] + '</p><p class="sm" style="margin:0">' + p[2] + '</p>';
+      paintLesson(id);
+      lessonGate();
+    });
+  });
+  paintLesson(null); paintPair(); lessonGate();
+}
+function paintLesson(active){
+  var o = 200, c = 110, hi = 70, lo = 250, x = 130, w = 54;
+  function hl(part, on){ return active === part ? "#FF4F9A" : on; }
+  var s = '';
+  s += '<line x1="' + x + '" y1="' + hi + '" x2="' + x + '" y2="' + o + '" stroke="' + hl("high","#8FD3B4") + '" stroke-width="3"/>';
+  s += '<line x1="' + x + '" y1="' + c + '" x2="' + x + '" y2="' + lo + '" stroke="' + hl("low","#8FD3B4") + '" stroke-width="3"/>';
+  s += '<rect x="' + (x - w/2) + '" y="' + c + '" width="' + w + '" height="' + (o - c) + '" fill="none" stroke="' +
+       hl("body", hl("dir","#8FD3B4")) + '" stroke-width="3" rx="2"/>';
+  function tag(px, py, txt, part){
+    var on = active === part;
+    return '<line x1="' + px + '" y1="' + py + '" x2="' + (x + w/2 + 6) + '" y2="' + py + '" stroke="' + (on ? "#FF4F9A" : "rgba(250,247,242,.4)") + '" stroke-width="1.5"/>' +
+      '<text x="' + (px - 6) + '" y="' + (py + 4) + '" text-anchor="end" fill="' + (on ? "#FF4F9A" : "#E8E4E1") +
+      '" font-family="Inter,sans-serif" font-size="12">' + txt + '</text>';
+  }
+  s = '<g>' + s + '</g>';
+  var svg = shadowRoot.getElementById("lessonSvg");
+  var labels = '' +
+    '<text x="248" y="' + (hi + 4) + '" text-anchor="end" fill="' + (active==="high"?"#FF4F9A":"#E8E4E1") + '" font-family="Inter,sans-serif" font-size="12">Highest</text>' +
+    '<text x="248" y="' + (c + 4) + '" text-anchor="end" fill="' + (active==="close"?"#FF4F9A":"#E8E4E1") + '" font-family="Inter,sans-serif" font-size="12">Close</text>' +
+    '<text x="248" y="' + (o + 4) + '" text-anchor="end" fill="' + (active==="open"?"#FF4F9A":"#E8E4E1") + '" font-family="Inter,sans-serif" font-size="12">Open</text>' +
+    '<text x="248" y="' + (lo + 4) + '" text-anchor="end" fill="' + (active==="low"?"#FF4F9A":"#E8E4E1") + '" font-family="Inter,sans-serif" font-size="12">Lowest</text>' +
+    '<text x="20" y="' + ((c + o)/2 + 4) + '" fill="' + (active==="body"?"#FF4F9A":"#E8E4E1") + '" font-family="Inter,sans-serif" font-size="12">Body</text>';
+  svg.innerHTML = s + labels;
+  if (!reduced() && active){ svg.style.animation = "none"; void svg.offsetWidth; svg.style.animation = "riseIn .3s ease-out both"; }
+}
+function paintPair(){
+  var s = '';
+  s += '<line x1="70" y1="20" x2="70" y2="160" stroke="#8FD3B4" stroke-width="2.5"/>';
+  s += '<rect x="52" y="50" width="36" height="80" fill="none" stroke="#8FD3B4" stroke-width="2.5" rx="2"/>';
+  s += '<text x="70" y="176" text-anchor="middle" fill="#8FD3B4" font-family="Inter,sans-serif" font-size="12">Finished higher</text>';
+  s += '<line x1="190" y1="20" x2="190" y2="160" stroke="#F5A3AE" stroke-width="2.5"/>';
+  s += '<rect x="172" y="50" width="36" height="80" fill="#F5A3AE" stroke="#F5A3AE" stroke-width="2.5" rx="2"/>';
+  s += '<text x="190" y="176" text-anchor="middle" fill="#F5A3AE" font-family="Inter,sans-serif" font-size="12">Finished lower</text>';
+  shadowRoot.getElementById("lessonPair").innerHTML = s;
+  shadowRoot.getElementById("pairCopy").textContent =
+    "Hollow means the period finished higher than it started. Solid means it finished lower. The shape tells you this without relying on colour.";
+}
+function lessonGate(){
+  var all = app.lessonParts.length >= LESSON.length;
+  var b = shadowRoot.getElementById("lessonNext");
+  b.setAttribute("aria-disabled", all ? "false" : "true");
+  shadowRoot.getElementById("lessonHelper").textContent = all
+    ? "You have read all six parts."
+    : "You have read " + app.lessonParts.length + " of six parts.";
+  coDisc("lessonDisc");
+}
+shadowRoot.getElementById("lessonNext").addEventListener("click", function(){
+  if (this.getAttribute("aria-disabled") === "true") return;
+  openProfile(DATA.companies[0].id);
+});
+
+/* ---------- 4. company profile ---------- */
+function openProfile(id){
+  app.currentCo = id;
+  if (app.opened.indexOf(id) < 0) app.opened.push(id);
+  save();
+  go("profile");
+  renderProfile();
+}
+function renderProfile(){
+  var c = CO[app.currentCo];
+  var upto = c.candles.slice(0, revealedTo() + 1);
+  var first = upto[0], last = upto[upto.length - 1];
+  var hiK = upto.reduce(function(a,b){ return b.h > a.h ? b : a; });
+  var loK = upto.reduce(function(a,b){ return b.l < a.l ? b : a; });
+  shadowRoot.getElementById("profHead").innerHTML =
+    '<p class="kicker">Chapter 2 · Company profile</p>' +
+    '<div style="display:flex;gap:14px;align-items:center;margin-bottom:8px">' + orb(c) +
+      '<div><h1 style="margin:0">' + c.name + '</h1>' +
+      '<span class="tick">' + c.ticker + ' · ' + DATA.meta.exchange + ' (' + DATA.meta.mic + ') · quoted in ' + DATA.meta.currency + ' · ' + c.sector + '</span></div></div>' +
+    '<p class="cap" style="margin-top:10px"><strong>Fictional company.</strong> Written for practice. Everything on this page behaves the way a real company profile behaves, so the reading you do here is the reading you would do anywhere.</p>';
+
+  var chartHost = shadowRoot.getElementById("profChart");
+  chartHost.innerHTML = '<p class="kicker">Price history</p><h2 style="margin-bottom:14px">' + DATA.meta.periodLabel + '</h2><div id="profChartHost"></div>' +
+    '<p class="cap" style="margin-top:12px">Every candle tells us what happened. Not what happens next. ' +
+    '<button class="btn-link" style="font-size:14px" onclick="window.__wia1.go(\'lesson\')">Read the candlestick lesson again</button></p>';
+  mountChart(c, 0, revealedTo(), "prof", shadowRoot.getElementById("profChartHost"));
+
+  var years = ["Year 1","Year 2","Year 3","Year 4","Year 5"];
+  shadowRoot.getElementById("profBody").innerHTML =
+    '<h2>How this company earns money</h2><p>' + c.desc + '</p>' +
+    '<div class="layer"><div class="panel"><p class="kicker">Selected financial information</p>' +
+      '<div style="overflow-x:auto"><table><caption>Synthetic figures, written for practice. They are laid out exactly as a real company reports them, so the shape is familiar when you meet one.</caption>' +
+      '<thead><tr><th scope="col">Line</th>' + years.map(function(y){ return '<th scope="col" class="n">' + y + '</th>'; }).join("") + '</tr></thead><tbody>' +
+      c.fin.map(function(r){ return '<tr><th scope="row">' + r[0] + '</th>' + r.slice(1).map(function(v){ return '<td class="n">' + v + '</td>'; }).join("") + '</tr>'; }).join("") +
+      '</tbody></table></div>' +
+      '<p class="cap" style="margin-top:10px">' + (exerciseStarted() ? "" :
+        "Only information available up to the virtual decision date is shown. Nothing from the exercise period appears on this screen. ") +
+        'Amounts in millions of ' + DATA.meta.currency + ' unless stated. Market capitalisation is calculated as shares outstanding multiplied by the closing price on a stated date, never taken from a data feed.</p>' +
+    '</div></div>' +
+
+    '<div class="grid2">' +
+      '<div class="panel"><p class="kicker">Dividends per share</p><table><tbody>' +
+        c.div.map(function(d){ return '<tr><th scope="row">' + d[0] + '</th><td class="n">' + COCUR + d[1] + '</td></tr>'; }).join("") +
+        '</tbody></table><p class="cap" style="margin-top:8px">A dividend is cash paid out to owners from the company\'s profits. It is decided each time and can be increased, reduced or stopped.</p>' +
+        '<p class="cap" style="margin-top:8px">Whether you receive one depends on whether you held the shares at the entitlement cut-off associated with the ex-dividend date. The record date is shown for provenance and does not itself create entitlement. The cash then arrives on the payment date, which is usually weeks later. Entitlement and receipt are two separate events.</p></div>' +
+      '<div class="panel"><p class="kicker">Price range, ' + (exerciseStarted() ? "up to the current stage" : "research history only") + '</p><table><tbody>' +
+        '<tr><th scope="row">First close</th><td class="n">' + COCUR + first.c.toFixed(2) + '</td></tr>' +
+        '<tr><th scope="row">Last close</th><td class="n">' + COCUR + last.c.toFixed(2) + '</td></tr>' +
+        '<tr><th scope="row">Highest</th><td class="n">' + COCUR + hiK.h.toFixed(2) + ', ' + periodLabel(hiK.t) + '</td></tr>' +
+        '<tr><th scope="row">Lowest</th><td class="n">' + COCUR + loK.l.toFixed(2) + ', ' + periodLabel(loK.t) + '</td></tr>' +
+        '</tbody></table><p class="cap" style="margin-top:8px">This describes what the price did. It is not a range the price is expected to stay within.</p></div>' +
+    '</div>' +
+
+    '<div class="grid2" style="margin-top:18px">' +
+      '<div class="panel"><p class="kicker">Three things that may support the business</p><ul class="sm" style="margin:0;padding-left:18px">' +
+        c.support.map(function(x){ return '<li style="margin-bottom:8px">' + x + '</li>'; }).join("") + '</ul></div>' +
+      '<div class="panel"><p class="kicker">Three uncertainties</p><ul class="sm" style="margin:0;padding-left:18px">' +
+        c.risks.map(function(x){ return '<li style="margin-bottom:8px">' + x + '</li>'; }).join("") + '</ul></div>' +
+    '</div>' +
+
+    '<div class="callout"><p class="kicker">Questions to sit with</p><ul class="sm" style="margin:0;padding-left:18px">' +
+      '<li style="margin-bottom:6px">If this company\'s largest market slowed down, which part of its business would feel it first?</li>' +
+      '<li style="margin-bottom:6px">Does its profit rise and fall with the economy, or is demand fairly steady?</li>' +
+      '<li style="margin-bottom:6px">Who else sells what it sells, and what would make a customer choose one over the other?</li>' +
+      '<li>Where did the share price and the revenue move differently, and what might explain the gap?</li>' +
+    '</ul></div>' +
+    '<p class="sm"><strong>No rating appears on this page.</strong> There is no buy, sell or hold, no target price, no score and no ranking. What to do with this information is the exercise.</p>' +
+
+    '<div class="actions">' +
+      '<button class="btn btn-primary" onclick="window.__wia1.go(\'allocate\')">Build my virtual portfolio</button>' +
+      '<button class="btn btn-secondary" onclick="window.__wia1.go(\'library\')">Back to the library</button>' +
+    '</div>' +
+    '<p class="disc">' + COMPANY_DISCLAIMER + '</p>';
+  addArrows(shadowRoot.getElementById("s-profile"));
+}
+
 
 /* ============================================================
    BOOT
@@ -3242,6 +3876,7 @@ load().then(function(){
 window.__wia1 = window.__wia1 || {};
 window.__wia1.go = go;
 window.__wia1.restartJourney = restartJourney;
+window.__wia1.openProfile = openProfile;
 
     })(shadow, wiaMember);
   }
